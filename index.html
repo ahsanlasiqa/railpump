@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kereta Pompa — Petualangan Rel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a0a2e;
+      overflow: hidden;
+      font-family: 'Georgia', serif;
+    }
+
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    canvas { display: block; }
+
+    /* HUD */
+    #hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 24px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-panel {
+      background: rgba(10, 5, 20, 0.75);
+      border: 1px solid rgba(255, 200, 80, 0.4);
+      border-radius: 12px;
+      padding: 10px 18px;
+      color: #ffe680;
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 220, 120, 0.6);
+      margin-bottom: 2px;
+    }
+
+    .hud-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #ffe680;
+      text-shadow: 0 0 10px rgba(255, 200, 80, 0.8);
+    }
+
+    /* Speed / Slope indicator */
+    #slope-indicator {
+      position: fixed;
+      left: 50%;
+      bottom: 100px;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #slope-text {
+      font-size: 15px;
+      letter-spacing: 1px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 6px 20px;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+
+    /* Pump bar */
+    #pump-bar-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 260px;
+      z-index: 10;
+      text-align: center;
+    }
+
+    #pump-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: rgba(255,220,120,0.7);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    #pump-bar-bg {
+      width: 100%;
+      height: 22px;
+      background: rgba(10,5,20,0.8);
+      border: 1px solid rgba(255,200,80,0.4);
+      border-radius: 11px;
+      overflow: hidden;
+    }
+
+    #pump-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 11px;
+      background: linear-gradient(90deg, #ff6b35, #ffe680);
+      transition: width 0.1s, background 0.3s;
+      box-shadow: 0 0 12px rgba(255, 150, 50, 0.7);
+    }
+
+    #pump-hint {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 6px;
+    }
+
+    /* Pump flash effect */
+    #pump-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(ellipse at center, rgba(255,200,80,0.15), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    /* Overlay screens */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(5, 2, 15, 0.92);
+      z-index: 100;
+      backdrop-filter: blur(6px);
+    }
+
+    .overlay h1 {
+      font-size: clamp(28px, 6vw, 56px);
+      color: #ffe680;
+      text-shadow: 0 0 30px rgba(255,200,80,0.8);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .overlay p {
+      color: rgba(255,220,150,0.8);
+      font-size: 15px;
+      margin-bottom: 8px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .btn {
+      margin-top: 28px;
+      padding: 14px 40px;
+      font-size: 16px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ff6b35, #ffe680);
+      color: #1a0a2e;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      font-family: 'Georgia', serif;
+      font-weight: bold;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 0 20px rgba(255,150,50,0.5);
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 32px rgba(255,150,50,0.8);
+    }
+
+    #score-final {
+      font-size: 48px;
+      color: #ffe680;
+      text-shadow: 0 0 20px rgba(255,200,80,1);
+      margin: 10px 0;
+    }
+
+    .controls-list {
+      list-style: none;
+      margin-top: 12px;
+      text-align: left;
+    }
+
+    .controls-list li {
+      color: rgba(255,220,150,0.9);
+      margin: 6px 0;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .key {
+      display: inline-block;
+      background: rgba(255,220,80,0.2);
+      border: 1px solid rgba(255,220,80,0.5);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 13px;
+      color: #ffe680;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    #mobile-pump-btn {
+      position: fixed;
+      bottom: 120px;
+      right: 30px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6b35, #ffe680);
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      z-index: 20;
+      box-shadow: 0 0 20px rgba(255,150,50,0.6);
+      display: none;
+    }
+
+    #mobile-brake-btn {
+      position: fixed;
+      bottom: 120px;
+      left: 30px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      z-index: 20;
+      box-shadow: 0 0 20px rgba(200,50,50,0.6);
+      color: white;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      #mobile-pump-btn, #mobile-brake-btn { display: flex; justify-content: center; align-items: center; }
+    }
+
+    #distance-bar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+
+    #distance-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff6b35, #ffe680);
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- Distance progress -->
+<div id="distance-bar-container"><div id="distance-bar"></div></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-panel">
+    <div class="hud-label">Jarak</div>
+    <div class="hud-value" id="hud-distance">0 m</div>
+  </div>
+  <div class="hud-panel">
+    <div class="hud-label">Kecepatan</div>
+    <div class="hud-value" id="hud-speed">0 km/h</div>
+  </div>
+  <div class="hud-panel">
+    <div class="hud-label">Skor</div>
+    <div class="hud-value" id="hud-score">0</div>
+  </div>
+</div>
+
+<!-- Slope indicator -->
+<div id="slope-indicator">
+  <div id="slope-text">▶ Rel Datar</div>
+</div>
+
+<!-- Pump energy bar -->
+<div id="pump-bar-container">
+  <div id="pump-label">⚡ Energi Pompa</div>
+  <div id="pump-bar-bg"><div id="pump-bar-fill"></div></div>
+  <div id="pump-hint">Tekan SPASI / klik layar untuk pompa</div>
+</div>
+
+<!-- Pump flash -->
+<div id="pump-flash"></div>
+
+<!-- Mobile buttons -->
+<button id="mobile-pump-btn">⬆</button>
+<button id="mobile-brake-btn">🛑</button>
+
+<!-- Start screen -->
+<div class="overlay" id="start-screen">
+  <h1>🚂 Kereta Pompa</h1>
+  <p>Bantu si anak memacu kereta pompa sejauh mungkin di sepanjang rel berkelok!</p>
+  <ul class="controls-list">
+    <li><span class="key">SPASI</span> Pompa tangan untuk maju</li>
+    <li><span class="key">B / ↓</span> Rem saat turun bukit</li>
+    <li><span class="key">⬆ Layar</span> Tombol pompa mobile</li>
+  </ul>
+  <p style="margin-top:14px; font-size:13px; color:rgba(255,200,100,0.6)">
+    🏔️ Naik bukit → pompa cepat! &nbsp; ➡️ Datar → pompa santai &nbsp; ⛰️ Turun → rem!
+  </p>
+  <button class="btn" onclick="startGame()">MULAI PETUALANGAN</button>
+</div>
+
+<!-- Game over screen -->
+<div class="overlay" id="gameover-screen" style="display:none">
+  <h1>💨 Kehabisan Tenaga!</h1>
+  <p>Jarak tempuh kamu:</p>
+  <div id="score-final">0 m</div>
+  <p id="gameover-msg">Coba lagi dan pompa lebih semangat!</p>
+  <button class="btn" onclick="restartGame()">MAIN LAGI</button>
+</div>
+
+<!-- Three.js via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ─────────────────────────────────────────────
+//  GAME STATE
+// ─────────────────────────────────────────────
+const GOAL_DISTANCE = 2000; // meters to win
+let gameRunning = false;
+let gameOver = false;
+
+const state = {
+  speed: 0,           // m/s
+  distance: 0,        // m
+  score: 0,
+  pumpEnergy: 60,     // 0-100
+  maxEnergy: 100,
+  pumpCooldown: 0,
+  braking: false,
+  trackPosition: 0,   // along the spline
+  cameraShake: 0,
+};
+
+// ─────────────────────────────────────────────
+//  THREE.JS SETUP
+// ─────────────────────────────────────────────
+const container = document.getElementById('canvas-container');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x87CEEB);
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0xc9e8ff, 0.018);
+
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─────────────────────────────────────────────
+//  LIGHTING
+// ─────────────────────────────────────────────
+const ambientLight = new THREE.AmbientLight(0xfff4e0, 0.7);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff0cc, 1.4);
+sunLight.position.set(50, 80, 30);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 1;
+sunLight.shadow.camera.far = 300;
+sunLight.shadow.camera.left = -60;
+sunLight.shadow.camera.right = 60;
+sunLight.shadow.camera.top = 60;
+sunLight.shadow.camera.bottom = -60;
+scene.add(sunLight);
+
+const rimLight = new THREE.DirectionalLight(0x80c8ff, 0.4);
+rimLight.position.set(-30, 20, -50);
+scene.add(rimLight);
+
+// ─────────────────────────────────────────────
+//  SKY & ENVIRONMENT
+// ─────────────────────────────────────────────
+function makeSky() {
+  const skyGeo = new THREE.SphereGeometry(400, 32, 16);
+  const skyMat = new THREE.ShaderMaterial({
+    uniforms: { topColor: { value: new THREE.Color(0x4488cc) }, bottomColor: { value: new THREE.Color(0xc9e8ff) } },
+    vertexShader: `varying float vY; void main(){ vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `uniform vec3 topColor; uniform vec3 bottomColor; varying float vY;
+    void main(){ float t = clamp((vY + 200.0) / 400.0, 0.0, 1.0); gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0); }`,
+    side: THREE.BackSide,
+  });
+  scene.add(new THREE.Mesh(skyGeo, skyMat));
+}
+makeSky();
+
+// Sun disc
+const sunGeo = new THREE.CircleGeometry(8, 32);
+const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffacd });
+const sun = new THREE.Mesh(sunGeo, sunMat);
+sun.position.set(150, 120, -200);
+scene.add(sun);
+
+// ─────────────────────────────────────────────
+//  TRACK SPLINE GENERATION
+// ─────────────────────────────────────────────
+const NUM_SEGMENTS = 80;
+const SEG_LEN = 8;
+
+function generateTrackPoints() {
+  const pts = [];
+  let x = 0, y = 0, z = 0;
+  let angle = 0;
+  pts.push(new THREE.Vector3(x, y, z));
+
+  for (let i = 1; i <= NUM_SEGMENTS; i++) {
+    // Vary height for hills
+    const t = i / NUM_SEGMENTS;
+    const hillY = Math.sin(t * Math.PI * 4) * 12 + Math.sin(t * Math.PI * 7) * 5;
+    const turnA = (Math.random() - 0.5) * 0.25;
+    angle += turnA;
+    x += Math.cos(angle) * SEG_LEN;
+    z += Math.sin(angle) * SEG_LEN;
+    y = hillY;
+    pts.push(new THREE.Vector3(x, y, z));
+  }
+  return pts;
+}
+
+const trackPoints = generateTrackPoints();
+const trackSpline = new THREE.CatmullRomCurve3(trackPoints, false, 'catmullrom', 0.5);
+
+// Pre-compute slope at each t
+const SPLINE_SAMPLES = 1000;
+const slopeSamples = [];
+for (let i = 0; i < SPLINE_SAMPLES; i++) {
+  const t0 = i / SPLINE_SAMPLES;
+  const t1 = Math.min((i + 1) / SPLINE_SAMPLES, 1);
+  const p0 = trackSpline.getPoint(t0);
+  const p1 = trackSpline.getPoint(t1);
+  slopeSamples.push((p1.y - p0.y) / (p1.distanceTo(p0) || 0.01));
+}
+
+function getSlopeAt(t) {
+  const idx = Math.floor(t * SPLINE_SAMPLES);
+  return slopeSamples[Math.min(idx, SPLINE_SAMPLES - 1)];
+}
+
+const TOTAL_TRACK_LENGTH = trackSpline.getLength();
+
+// ─────────────────────────────────────────────
+//  RAIL GEOMETRY
+// ─────────────────────────────────────────────
+function buildRails() {
+  const railGroup = new THREE.Group();
+  const pts = trackSpline.getPoints(600);
+  const railMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.3 });
+  const tieMat = new THREE.MeshStandardMaterial({ color: 0x6b4226 });
+
+  // Compute binormals for offset
+  function makeRail(offset) {
+    const railPts = [];
+    for (let i = 0; i < pts.length; i++) {
+      const t = i / (pts.length - 1);
+      const tangent = trackSpline.getTangent(t).normalize();
+      const up = new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+      railPts.push(pts[i].clone().addScaledVector(right, offset));
+    }
+    const curve = new THREE.CatmullRomCurve3(railPts);
+    const geo = new THREE.TubeGeometry(curve, 600, 0.06, 6, false);
+    const mesh = new THREE.Mesh(geo, railMat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+  }
+
+  railGroup.add(makeRail(-0.75));
+  railGroup.add(makeRail(0.75));
+
+  // Sleepers (ties)
+  for (let i = 0; i < pts.length - 1; i += 4) {
+    const t = i / (pts.length - 1);
+    const pos = pts[i];
+    const tangent = trackSpline.getTangent(t).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+
+    const tieGeo = new THREE.BoxGeometry(2.0, 0.12, 0.28);
+    const tie = new THREE.Mesh(tieGeo, tieMat);
+    tie.position.copy(pos);
+    tie.position.y -= 0.1;
+    tie.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), right);
+    tie.castShadow = true;
+    tie.receiveShadow = true;
+    railGroup.add(tie);
+  }
+
+  scene.add(railGroup);
+}
+buildRails();
+
+// ─────────────────────────────────────────────
+//  TERRAIN
+// ─────────────────────────────────────────────
+function buildTerrain() {
+  // Ground plane following track roughly
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x5a8a40, roughness: 0.95 });
+  const groundGeo = new THREE.PlaneGeometry(600, 600, 40, 40);
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -8;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Trees
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4226 });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d7a2d });
+  const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x3da03d });
+
+  const pts = trackSpline.getPoints(200);
+  for (let i = 0; i < 120; i++) {
+    const idx = Math.floor(Math.random() * pts.length);
+    const t = idx / pts.length;
+    const pos = pts[idx].clone();
+    const tangent = trackSpline.getTangent(t).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+    const side = (Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 8);
+    pos.addScaledVector(right, side);
+    pos.y -= 0.5;
+
+    const h = 2.5 + Math.random() * 3;
+    const tGeo = new THREE.CylinderGeometry(0.15, 0.25, h, 6);
+    const trunk = new THREE.Mesh(tGeo, trunkMat);
+    trunk.position.copy(pos);
+    trunk.position.y += h / 2;
+    trunk.castShadow = true;
+    scene.add(trunk);
+
+    const lGeo = new THREE.ConeGeometry(1.2 + Math.random() * 0.8, 3 + Math.random() * 2, 7);
+    const leaf = new THREE.Mesh(lGeo, Math.random() > 0.5 ? leafMat : leafMat2);
+    leaf.position.copy(pos);
+    leaf.position.y += h + 1;
+    leaf.castShadow = true;
+    scene.add(leaf);
+  }
+
+  // Mountains in background
+  const mtnMat = new THREE.MeshStandardMaterial({ color: 0x7a8c6e, roughness: 1 });
+  for (let i = 0; i < 8; i++) {
+    const r = 80 + Math.random() * 40;
+    const h = 30 + Math.random() * 40;
+    const geo = new THREE.ConeGeometry(r, h, 8);
+    const mtn = new THREE.Mesh(geo, mtnMat);
+    const angle = (i / 8) * Math.PI * 2;
+    mtn.position.set(Math.cos(angle) * 180, -8, Math.sin(angle) * 180);
+    mtn.castShadow = true;
+    scene.add(mtn);
+  }
+
+  // Clouds
+  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+  for (let i = 0; i < 12; i++) {
+    const cg = new THREE.Group();
+    for (let j = 0; j < 5; j++) {
+      const geo = new THREE.SphereGeometry(3 + Math.random() * 3, 8, 6);
+      const m = new THREE.Mesh(geo, cloudMat);
+      m.position.set((Math.random()-0.5)*8, (Math.random()-0.5)*3, (Math.random()-0.5)*5);
+      cg.add(m);
+    }
+    cg.position.set((Math.random()-0.5)*300, 50 + Math.random()*30, (Math.random()-0.5)*300);
+    scene.add(cg);
+  }
+}
+buildTerrain();
+
+// ─────────────────────────────────────────────
+//  PUMP TROLLEY (Kereta Pompa)
+// ─────────────────────────────────────────────
+const trolley = new THREE.Group();
+scene.add(trolley);
+
+function buildTrolley() {
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xcc3300, metalness: 0.3, roughness: 0.6 });
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.3 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8B5E3C, roughness: 0.9 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.4 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xf4a261 });
+  const shirtMat = new THREE.MeshStandardMaterial({ color: 0x2255cc });
+  const pantsMat = new THREE.MeshStandardMaterial({ color: 0x334455 });
+  const hairMat = new THREE.MeshStandardMaterial({ color: 0x2c1810 });
+  const hatMat = new THREE.MeshStandardMaterial({ color: 0xe8c84a });
+
+  // Platform
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(2, 0.2, 1.2), woodMat);
+  platform.position.y = 0.5;
+  platform.castShadow = true;
+  trolley.add(platform);
+
+  // Frame sides
+  [-0.85, 0.85].forEach(x => {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.6, 1.2), metalMat);
+    bar.position.set(x, 0.9, 0);
+    trolley.add(bar);
+  });
+
+  // Wheels (4)
+  const wheelGeo = new THREE.TorusGeometry(0.28, 0.07, 8, 18);
+  [[-0.75,-0.5],[-0.75,0.5],[0.75,-0.5],[0.75,0.5]].forEach(([x,z]) => {
+    const w = new THREE.Mesh(wheelGeo, wheelMat);
+    w.position.set(x, 0.28, z);
+    w.rotation.y = Math.PI / 2;
+    w.castShadow = true;
+    trolley.add(w);
+    // Axle
+    const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6), metalMat);
+    axle.position.set(x, 0.28, 0);
+    axle.rotation.x = Math.PI / 2;
+    trolley.add(axle);
+  });
+
+  // Pump handle assembly
+  const pumpGroup = new THREE.Group();
+  pumpGroup.name = 'pump';
+  // Vertical post
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8), metalMat);
+  post.position.set(0, 0.6, 0);
+  pumpGroup.add(post);
+  // Horizontal handle bar
+  const hbar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.4, 8), bodyMat);
+  hbar.rotation.z = Math.PI / 2;
+  hbar.position.set(0, 1.05, 0);
+  pumpGroup.add(hbar);
+  // Grips
+  [-0.65, 0.65].forEach(x => {
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.25, 8), bodyMat);
+    grip.position.set(x, 1.05, 0);
+    pumpGroup.add(grip);
+  });
+  pumpGroup.position.set(0, 0.5, 0);
+  trolley.add(pumpGroup);
+
+  // ── Child figure ──
+  const child = new THREE.Group();
+
+  // Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.55, 0.28), shirtMat);
+  body.position.y = 0.28;
+  child.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), skinMat);
+  head.position.y = 0.72;
+  child.add(head);
+
+  // Hair
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 8), hairMat);
+  hair.position.set(0, 0.82, -0.02);
+  hair.scale.set(1, 0.6, 1);
+  child.add(hair);
+
+  // Hat
+  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 12), hatMat);
+  hatBrim.position.y = 0.87;
+  child.add(hatBrim);
+  const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.2, 12), hatMat);
+  hatTop.position.y = 0.97;
+  child.add(hatTop);
+
+  // Legs
+  [[-0.1, 0.1]].forEach(([lx, rx]) => {
+    [lx, rx].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.35, 0.18), pantsMat);
+      leg.position.set(x, -0.17, 0);
+      child.add(leg);
+    });
+  });
+
+  // Arms (will animate)
+  const leftArm = new THREE.Group();
+  const laGeo = new THREE.BoxGeometry(0.12, 0.35, 0.14);
+  const laMesh = new THREE.Mesh(laGeo, shirtMat);
+  laMesh.position.y = -0.17;
+  leftArm.add(laMesh);
+  leftArm.position.set(-0.28, 0.55, 0);
+  leftArm.name = 'leftArm';
+  child.add(leftArm);
+
+  const rightArm = new THREE.Group();
+  const raMesh = new THREE.Mesh(laGeo, shirtMat);
+  raMesh.position.y = -0.17;
+  rightArm.add(raMesh);
+  rightArm.position.set(0.28, 0.55, 0);
+  rightArm.name = 'rightArm';
+  child.add(rightArm);
+
+  child.position.set(0, 0.6, 0);
+  child.name = 'child';
+  trolley.add(child);
+
+  return { pumpGroup };
+}
+
+const { pumpGroup } = buildTrolley();
+
+// ─────────────────────────────────────────────
+//  PARTICLE SYSTEM (dust / sparks)
+// ─────────────────────────────────────────────
+const particleCount = 80;
+const particleGeo = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+const particleVels = [];
+particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particleMat = new THREE.PointsMaterial({ color: 0xffdd88, size: 0.12, transparent: true, opacity: 0.7 });
+const particles = new THREE.Points(particleGeo, particleMat);
+scene.add(particles);
+
+const pData = [];
+for (let i = 0; i < particleCount; i++) {
+  pData.push({ x: 0, y: -999, z: 0, vx: 0, vy: 0, vz: 0, life: 0 });
+}
+
+function spawnParticles(pos) {
+  for (let i = 0; i < 6; i++) {
+    const p = pData[Math.floor(Math.random() * particleCount)];
+    p.x = pos.x + (Math.random() - 0.5) * 0.5;
+    p.y = pos.y + 0.3;
+    p.z = pos.z + (Math.random() - 0.5) * 0.5;
+    p.vx = (Math.random() - 0.5) * 0.05;
+    p.vy = 0.04 + Math.random() * 0.06;
+    p.vz = (Math.random() - 0.5) * 0.05;
+    p.life = 1.0;
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = 0; i < particleCount; i++) {
+    const p = pData[i];
+    if (p.life > 0) {
+      p.life -= dt * 1.5;
+      p.x += p.vx; p.y += p.vy; p.z += p.vz;
+      p.vy -= 0.002;
+    } else {
+      p.y = -999;
+    }
+    positions[i * 3] = p.x;
+    positions[i * 3 + 1] = p.y;
+    positions[i * 3 + 2] = p.z;
+  }
+  particleGeo.attributes.position.needsUpdate = true;
+}
+
+// ─────────────────────────────────────────────
+//  INPUT
+// ─────────────────────────────────────────────
+const keys = { space: false, brake: false };
+let pumpPressed = false;
+let pumpHeld = false;
+
+document.addEventListener('keydown', e => {
+  if (!gameRunning) return;
+  if (e.code === 'Space') { e.preventDefault(); if (!pumpHeld) { pumpPressed = true; pumpHeld = true; } }
+  if (e.code === 'KeyB' || e.code === 'ArrowDown') keys.brake = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') pumpHeld = false;
+  if (e.code === 'KeyB' || e.code === 'ArrowDown') keys.brake = false;
+});
+
+// Touch / click to pump
+document.getElementById('mobile-pump-btn').addEventListener('touchstart', e => { e.preventDefault(); if (!pumpHeld) { pumpPressed = true; pumpHeld = true; } });
+document.getElementById('mobile-pump-btn').addEventListener('touchend', () => { pumpHeld = false; });
+document.getElementById('mobile-brake-btn').addEventListener('touchstart', e => { e.preventDefault(); keys.brake = true; });
+document.getElementById('mobile-brake-btn').addEventListener('touchend', () => { keys.brake = false; });
+
+// ─────────────────────────────────────────────
+//  GAME LOGIC
+// ─────────────────────────────────────────────
+let pumpAngle = 0;
+let armSwing = 0;
+let armDir = 1;
+let pumpFlashTimer = 0;
+
+function pump() {
+  if (!gameRunning || state.pumpCooldown > 0) return;
+  const slope = getSlopeAt(state.trackPosition);
+  const energyCost = 8 + Math.max(0, slope * 40);
+  if (state.pumpEnergy < energyCost * 0.3) return; // too tired
+
+  state.pumpEnergy = Math.max(0, state.pumpEnergy - energyCost * 0.5);
+  const boost = 1.2 + Math.max(0, -slope) * 0.5; // faster boost going downhill
+  state.speed = Math.min(state.speed + 1.8 * boost, 12);
+  state.pumpCooldown = 0.18;
+
+  spawnParticles(trolley.position);
+  pumpFlashTimer = 0.15;
+
+  const flash = document.getElementById('pump-flash');
+  flash.style.opacity = '1';
+  setTimeout(() => flash.style.opacity = '0', 150);
+}
+
+function updatePhysics(dt) {
+  if (!gameRunning || gameOver) return;
+
+  const t = state.trackPosition;
+  const slope = getSlopeAt(t); // positive = uphill, negative = downhill
+
+  // Gravity effect on speed
+  const gravityForce = -slope * 6.0;
+  state.speed += gravityForce * dt;
+
+  // Friction / drag
+  const drag = state.braking ? 5.0 : 0.6;
+  state.speed = Math.max(0, state.speed - drag * dt);
+  state.speed = Math.min(state.speed, 14);
+
+  // Pump cooldown
+  state.pumpCooldown = Math.max(0, state.pumpCooldown - dt);
+
+  // Energy recovery (slow)
+  state.pumpEnergy = Math.min(state.maxEnergy, state.pumpEnergy + 3 * dt);
+
+  // Advance along track
+  const advance = (state.speed * dt) / TOTAL_TRACK_LENGTH;
+  state.trackPosition = Math.min(state.trackPosition + advance, 0.999);
+  state.distance += state.speed * dt;
+
+  // Score
+  state.score = Math.floor(state.distance);
+
+  // Check if stopped (game over)
+  if (state.speed < 0.05 && state.pumpEnergy < 5 && state.trackPosition < 0.98) {
+    triggerGameOver();
+  }
+
+  // Win
+  if (state.trackPosition >= 0.98) {
+    triggerGameOver(true);
+  }
+}
+
+function updateTrolleyPosition() {
+  const t = state.trackPosition;
+  const pos = trackSpline.getPoint(t);
+  const tangent = trackSpline.getTangent(t).normalize();
+  trolley.position.copy(pos);
+  trolley.position.y += 0.35;
+
+  const up = new THREE.Vector3(0, 1, 0);
+  const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+  const correctedUp = new THREE.Vector3().crossVectors(right, tangent).normalize();
+  const mat = new THREE.Matrix4().makeBasis(right.negate(), correctedUp, tangent.negate());
+  trolley.setRotationFromMatrix(mat);
+}
+
+function updateCamera(dt) {
+  const t = state.trackPosition;
+  const pos = trackSpline.getPoint(t);
+  const tangent = trackSpline.getTangent(t).normalize();
+  const up = new THREE.Vector3(0, 1, 0);
+  const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+
+  // Camera behind and above
+  const camOffset = tangent.clone().multiplyScalar(-5)
+    .add(new THREE.Vector3(0, 3.2, 0));
+
+  const shake = state.cameraShake;
+  camOffset.x += (Math.random() - 0.5) * shake * 0.1;
+  camOffset.y += (Math.random() - 0.5) * shake * 0.05;
+  state.cameraShake *= 0.85;
+
+  const targetPos = pos.clone().add(camOffset).add(new THREE.Vector3(0, 0.35, 0));
+  camera.position.lerp(targetPos, 0.12);
+
+  const lookAt = pos.clone().add(tangent.multiplyScalar(3)).add(new THREE.Vector3(0, 1, 0));
+  camera.lookAt(lookAt);
+}
+
+function updateAnimations(dt) {
+  // Pump handle animation
+  const speed = state.speed;
+  pumpAngle += speed * 1.5 * dt;
+  if (pumpGroup) {
+    pumpGroup.rotation.x = Math.sin(pumpAngle) * 0.4;
+  }
+
+  // Child arm swing
+  const child = trolley.getObjectByName('child');
+  if (child) {
+    const la = child.getObjectByName('leftArm');
+    const ra = child.getObjectByName('rightArm');
+    if (la && ra) {
+      const swing = Math.sin(pumpAngle) * 0.5 * Math.min(speed / 3, 1);
+      la.rotation.x = swing;
+      ra.rotation.x = -swing;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  HUD UPDATE
+// ─────────────────────────────────────────────
+function updateHUD() {
+  const slope = getSlopeAt(state.trackPosition);
+  const speedKmh = Math.round(state.speed * 3.6);
+
+  document.getElementById('hud-distance').textContent = Math.round(state.distance) + ' m';
+  document.getElementById('hud-speed').textContent = speedKmh + ' km/h';
+  document.getElementById('hud-score').textContent = state.score;
+
+  const pct = (state.pumpEnergy / state.maxEnergy) * 100;
+  document.getElementById('pump-bar-fill').style.width = pct + '%';
+  if (pct < 20) {
+    document.getElementById('pump-bar-fill').style.background = 'linear-gradient(90deg, #cc2200, #ff4400)';
+  } else {
+    document.getElementById('pump-bar-fill').style.background = 'linear-gradient(90deg, #ff6b35, #ffe680)';
+  }
+
+  const slopeEl = document.getElementById('slope-text');
+  if (slope > 0.05) {
+    slopeEl.textContent = '⛰️ NAIK BUKIT — Pompa Kencang!';
+    slopeEl.style.color = '#ff6b35';
+    slopeEl.style.background = 'rgba(255,80,30,0.3)';
+  } else if (slope < -0.05) {
+    slopeEl.textContent = '⬇️ TURUN BUKIT — Rem!';
+    slopeEl.style.color = '#44ccff';
+    slopeEl.style.background = 'rgba(40,120,200,0.3)';
+  } else {
+    slopeEl.textContent = '▶ Rel Datar — Jaga Kecepatan';
+    slopeEl.style.color = '#ffe680';
+    slopeEl.style.background = 'rgba(0,0,0,0.4)';
+  }
+
+  const progPct = (state.distance / (TOTAL_TRACK_LENGTH)) * 100;
+  document.getElementById('distance-bar').style.width = Math.min(progPct, 100) + '%';
+
+  // Brake indicator
+  state.braking = keys.brake;
+}
+
+// ─────────────────────────────────────────────
+//  GAME FLOW
+// ─────────────────────────────────────────────
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  gameRunning = true;
+  gameOver = false;
+  resetState();
+}
+
+function restartGame() {
+  document.getElementById('gameover-screen').style.display = 'none';
+  gameRunning = true;
+  gameOver = false;
+  resetState();
+}
+
+function resetState() {
+  state.speed = 0;
+  state.distance = 0;
+  state.score = 0;
+  state.pumpEnergy = 60;
+  state.trackPosition = 0;
+  state.braking = false;
+  state.pumpCooldown = 0;
+}
+
+function triggerGameOver(win = false) {
+  if (gameOver) return;
+  gameOver = true;
+  gameRunning = false;
+  const screen = document.getElementById('gameover-screen');
+  document.getElementById('score-final').textContent = Math.round(state.distance) + ' m';
+  const msg = document.getElementById('gameover-msg');
+  if (win) {
+    document.querySelector('#gameover-screen h1').textContent = '🎉 Selamat!';
+    msg.textContent = 'Kamu berhasil mencapai ujung rel! Luar biasa!';
+  } else {
+    document.querySelector('#gameover-screen h1').textContent = '💨 Kehabisan Tenaga!';
+    const tips = [
+      'Coba pompa lebih sering di tanjakan!',
+      'Jangan lupa rem saat turun bukit!',
+      'Hemat energi di jalan datar!',
+      'Pompa ritme konstan lebih efisien!',
+    ];
+    msg.textContent = tips[Math.floor(Math.random() * tips.length)];
+  }
+  screen.style.display = 'flex';
+}
+
+// ─────────────────────────────────────────────
+//  MAIN LOOP
+// ─────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  if (gameRunning && !gameOver) {
+    if (pumpPressed) {
+      pump();
+      pumpPressed = false;
+      state.cameraShake = 0.8;
+    }
+    updatePhysics(dt);
+    updateTrolleyPosition();
+    updateAnimations(dt);
+    updateHUD();
+  }
+
+  updateCamera(dt);
+  updateParticles(dt);
+
+  // Move sun light loosely with trolley
+  sunLight.target.position.copy(trolley.position);
+  sunLight.target.updateMatrixWorld();
+
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>

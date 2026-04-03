@@ -6,7 +6,7 @@
   <title>Rail Pumper — Track Adventure</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1a0a2e; overflow:f hidden; font-family: 'Georgia', serif; }
+    body { background: #1a0a2e; overflow: hidden; font-family: 'Georgia', serif; }
     #canvas-container { width: 100vw; height: 100vh; position: relative; }
     canvas { display: block; }
 
@@ -373,6 +373,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0xc9e8ff, 1);
 container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -392,6 +393,7 @@ sunLight.position.set(50,80,30); sunLight.castShadow = true;
 sunLight.shadow.mapSize.set(2048,2048);
 Object.assign(sunLight.shadow.camera, {near:1,far:300,left:-60,right:60,top:60,bottom:-60});
 scene.add(sunLight);
+scene.add(sunLight.target);
 scene.add(Object.assign(new THREE.DirectionalLight(0x80c8ff,0.4), {position: new THREE.Vector3(-30,20,-50)}));
 
 // Sky
@@ -439,7 +441,7 @@ const TLEN = spline.getLength();
       const tan=spline.getTangent(i/(pts.length-1)).normalize();
       const r=new THREE.Vector3().crossVectors(tan,new THREE.Vector3(0,1,0)).normalize();
       return p.clone().addScaledVector(r,off);
-    });
+    }).filter((p,i,arr)=>i===0||p.distanceTo(arr[i-1])>0.001);
     const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rp),600,.06,6,false),railM);
     m.castShadow=m.receiveShadow=true; return m;
   };
@@ -624,112 +626,36 @@ function hud(){
 // ════════════════════════════════════════════
 function startGame(){ document.getElementById('scr-start').style.display='none'; gameRunning=true; gameOver=false; reset(); }
 function restartGame(){ document.getElementById('scr-over').style.display='none'; gameRunning=true; gameOver=false; reset(); }
-// ════════════════════════════════════════════
-//  REVISED GAME FLOW (FIXED)
-// ════════════════════════════════════════════
-function reset() {
-  state.speed = 0;
-  state.distance = 0;
-  state.score = 0;
-  state.pumpEnergy = 60;
-  state.trackPosition = 0;
-  state.braking = false;
-  state.pumpCooldown = 0;
-  
-  // Pastikan posisi kereta kembali ke awal secara visual
-  moveTrolley(); 
-}
+function reset(){ Object.assign(state,{speed:0,distance:0,score:0,pumpEnergy:60,trackPosition:0,braking:false,pumpCooldown:0}); }
 
-function startGame() {
-  document.getElementById('scr-start').style.display = 'none';
-  reset();
-  gameRunning = true;
-  gameOver = false;
-}
-
-function restartGame() {
-  document.getElementById('scr-over').style.display = 'none';
-  reset();
-  gameRunning = true;
-  gameOver = false;
-}
-
-function doGameOver(win = false) {
-  if (gameOver) return;
-  gameOver = true;
-  gameRunning = false;
-  
-  document.getElementById('score-final').textContent = Math.round(state.distance) + ' m';
-  
-  const titleEl = document.getElementById('over-title');
-  const msgEl = document.getElementById('over-msg');
-  
-  if (win) {
-    titleEl.textContent = '🎉 You Made It!';
-    msgEl.textContent = 'You reached the end of the track! Incredible!';
-  } else {
-    titleEl.textContent = '💨 Out of Steam!';
-    const tips = [
-      'Pump harder on the uphill sections!',
-      'Remember to brake going downhill!',
-      'Save energy on flat stretches!',
-      'A steady pump rhythm is more efficient!'
-    ];
-    msgEl.textContent = tips[Math.floor(Math.random() * tips.length)];
+function doGameOver(win=false){
+  if(gameOver)return; gameOver=true; gameRunning=false;
+  document.getElementById('score-final').textContent=Math.round(state.distance)+' m';
+  if(win){ document.getElementById('over-title').textContent='🎉 You Made It!'; document.getElementById('over-msg').textContent='You reached the end of the track! Incredible!'; }
+  else{ document.getElementById('over-title').textContent='💨 Out of Steam!';
+    document.getElementById('over-msg').textContent=['Pump harder on the uphill sections!','Remember to brake going downhill!','Save energy on flat stretches!','A steady pump rhythm is more efficient!'][Math.floor(Math.random()*4)];
   }
-  document.getElementById('scr-over').style.display = 'flex';
+  document.getElementById('scr-over').style.display='flex';
 }
 
 // ════════════════════════════════════════════
-//  MAIN LOOP & INITIALIZATION (FIXED)
+//  MAIN LOOP
 // ════════════════════════════════════════════
-const clock = new THREE.Clock();
-
-function loop() {
+const clock=new THREE.Clock();
+(function loop(){
   requestAnimationFrame(loop);
-  const dt = Math.min(clock.getDelta(), .05);
-  
-  if (gameRunning && !gameOver) {
-    if (pumpPressed) { 
-      doPump(); 
-      pumpPressed = false; 
-      state.cameraShake = .8; 
-    }
-    physics(dt); 
-    moveTrolley(); 
-    animate2(dt); 
-    hud();
+  const dt=Math.min(clock.getDelta(),.05);
+  if(gameRunning&&!gameOver){
+    if(pumpPressed){ doPump(); pumpPressed=false; state.cameraShake=.8; }
+    physics(dt); moveTrolley(); animate2(dt); hud();
   }
-  
-  // Kamera dan partikel harus tetap update agar layar tidak freeze
-  moveCamera(); 
-  updateP(dt);
-  
-  // Pastikan matahari mengikuti kereta
-  if (trolley && sunLight.target) {
-    sunLight.target.position.copy(trolley.position);
-    sunLight.target.updateMatrixWorld();
-  }
-  
-  renderer.render(scene, camera);
-}
+  moveCamera(); updateP(dt);
+  sunLight.target.position.copy(trolley.position);
+  renderer.render(scene,camera);
+})();
 
-// FUNGSI INISIALISASI (Ini yang tadi kamu cari)
-function initGame() {
-  syncBtnLabels();
-  syncHints();
-  
-  // Render satu frame awal supaya kereta muncul di posisi start
-  moveTrolley();
-  moveCamera();
-  
-  // Jalankan loop game
-  loop();
-  
-  console.log("Game Rail Pumper Berhasil Dimuat!");
-}
-
-// Jalankan inisialisasi
-initGame();</script>
+// Init UI
+syncHints();
+</script>
 </body>
 </html>

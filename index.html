@@ -391,10 +391,12 @@ scene.add(new THREE.AmbientLight(0xfff4e0, 0.7));
 const sunLight = new THREE.DirectionalLight(0xfff0cc, 1.4);
 sunLight.position.set(50,80,30); sunLight.castShadow = true;
 sunLight.shadow.mapSize.set(2048,2048);
-Object.assign(sunLight.shadow.camera, {near:1,far:300,left:-60,right:60,top:60,bottom:-60});
+sunLight.shadow.camera.near=1; sunLight.shadow.camera.far=300;
+sunLight.shadow.camera.left=-60; sunLight.shadow.camera.right=60;
+sunLight.shadow.camera.top=60; sunLight.shadow.camera.bottom=-60;
 scene.add(sunLight);
 scene.add(sunLight.target);
-scene.add(Object.assign(new THREE.DirectionalLight(0x80c8ff,0.4), {position: new THREE.Vector3(-30,20,-50)}));
+const fillLight=new THREE.DirectionalLight(0x80c8ff,0.4); fillLight.position.set(-30,20,-50); scene.add(fillLight);
 
 // Sky
 (()=>{
@@ -519,22 +521,24 @@ let pumpGrp;
   });
 
   pumpGrp=new THREE.Group();
-  pumpGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.9,8),mM),{position:new THREE.Vector3(0,.6,0)}));
+  const pumpPole=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.9,8),mM); pumpPole.position.set(0,.6,0); pumpGrp.add(pumpPole);
   const hbar=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.4,8),bM); hbar.rotation.z=Math.PI/2; hbar.position.set(0,1.05,0); pumpGrp.add(hbar);
   [-0.65,.65].forEach(x=>{ const gr=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.25,8),bM); gr.position.set(x,1.05,0); pumpGrp.add(gr); });
   pumpGrp.position.set(0,.5,0); trolley.add(pumpGrp);
 
   // Child
   const ch=new THREE.Group();
-  ch.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.4,.55,.28),shM),{position:new THREE.Vector3(0,.28,0)}));
-  ch.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),skM),{position:new THREE.Vector3(0,.72,0)}));
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.4,.55,.28),shM); body.position.set(0,.28,0); ch.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),skM); head.position.set(0,.72,0); ch.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),hM); hair.position.set(0,.82,-.02); hair.scale.set(1,.6,1); ch.add(hair);
-  ch.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.04,12),htM),{position:new THREE.Vector3(0,.87,0)}));
-  ch.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.2,12),htM),{position:new THREE.Vector3(0,.97,0)}));
+  const hat1=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.04,12),htM); hat1.position.set(0,.87,0); ch.add(hat1);
+  const hat2=new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.2,12),htM); hat2.position.set(0,.97,0); ch.add(hat2);
   [-.1,.1].forEach(x=>{ const l=new THREE.Mesh(new THREE.BoxGeometry(.14,.35,.18),pM); l.position.set(x,-.17,0); ch.add(l); });
   const aGeo=new THREE.BoxGeometry(.12,.35,.14);
-  const la=new THREE.Group(); la.add(Object.assign(new THREE.Mesh(aGeo,shM),{position:new THREE.Vector3(0,-.17,0)})); la.position.set(-.28,.55,0); la.name='la'; ch.add(la);
-  const ra=new THREE.Group(); ra.add(Object.assign(new THREE.Mesh(aGeo,shM),{position:new THREE.Vector3(0,-.17,0)})); ra.position.set(.28,.55,0); ra.name='ra'; ch.add(ra);
+  const laMesh=new THREE.Mesh(aGeo,shM); laMesh.position.set(0,-.17,0);
+  const la=new THREE.Group(); la.add(laMesh); la.position.set(-.28,.55,0); la.name='la'; ch.add(la);
+  const raMesh=new THREE.Mesh(aGeo,shM); raMesh.position.set(0,-.17,0);
+  const ra=new THREE.Group(); ra.add(raMesh); ra.position.set(.28,.55,0); ra.name='ra'; ch.add(ra);
   ch.position.set(0,.6,0); ch.name='child'; trolley.add(ch);
 })();
 

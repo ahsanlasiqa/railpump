@@ -681,35 +681,32 @@ function doGameOver(win = false) {
 }
 
 // ════════════════════════════════════════════
-//  MAIN LOOP (FIXED LOGIC)
+//  MAIN LOOP & INITIALIZATION (FIXED)
 // ════════════════════════════════════════════
 const clock = new THREE.Clock();
 
 function loop() {
   requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), .05);
   
-  const dt = Math.min(clock.getDelta(), 0.05);
-
   if (gameRunning && !gameOver) {
-    // Input handling
-    if (pumpPressed) {
-      doPump();
-      pumpPressed = false;
-      state.cameraShake = 0.8;
+    if (pumpPressed) { 
+      doPump(); 
+      pumpPressed = false; 
+      state.cameraShake = .8; 
     }
-    
-    // Core engine
-    physics(dt);
-    moveTrolley();
-    animate2(dt);
+    physics(dt); 
+    moveTrolley(); 
+    animate2(dt); 
     hud();
   }
-
-  // Update visual yang tetap berjalan meski game pause (kamera & partikel)
-  moveCamera();
+  
+  // Kamera dan partikel harus tetap update agar layar tidak freeze
+  moveCamera(); 
   updateP(dt);
   
-  if (trolley) {
+  // Pastikan matahari mengikuti kereta
+  if (trolley && sunLight.target) {
     sunLight.target.position.copy(trolley.position);
     sunLight.target.updateMatrixWorld();
   }
@@ -717,11 +714,22 @@ function loop() {
   renderer.render(scene, camera);
 }
 
-// Jalankan loop pertama kali
-loop();
+// FUNGSI INISIALISASI (Ini yang tadi kamu cari)
+function initGame() {
+  syncBtnLabels();
+  syncHints();
+  
+  // Render satu frame awal supaya kereta muncul di posisi start
+  moveTrolley();
+  moveCamera();
+  
+  // Jalankan loop game
+  loop();
+  
+  console.log("Game Rail Pumper Berhasil Dimuat!");
+}
 
-// Sinkronisasi awal UI
-syncHints();
-</script>
+// Jalankan inisialisasi
+initGame();</script>
 </body>
 </html>

@@ -299,35 +299,35 @@ sunLight.position.set(50,80,30);sunLight.castShadow=true;
 sunLight.shadow.mapSize.set(2048,2048);sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=300;
 sunLight.shadow.camera.left=-60;sunLight.shadow.camera.right=60;sunLight.shadow.camera.top=60;sunLight.shadow.camera.bottom=-60;
 scene.add(sunLight);scene.add(sunLight.target);
-scene.add(Object.assign(new THREE.DirectionalLight(0x80c8ff,0.4),{position:new THREE.Vector3(-30,20,-50)}));
+const fillLight=new THREE.DirectionalLight(0x80c8ff,0.4);fillLight.position.set(-30,20,-50);scene.add(fillLight);
 
 // Trolley (persistent)
 const trolley=new THREE.Group();scene.add(trolley);
 let pumpGrp;
 (()=>{
   const bM=new THREE.MeshStandardMaterial({color:0xcc3300,metalness:.3,roughness:.6}),mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.8,roughness:.3}),wM=new THREE.MeshStandardMaterial({color:0x8B5E3C,roughness:.9}),wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.6,roughness:.4}),skM=new THREE.MeshStandardMaterial({color:0xf4a261}),shM=new THREE.MeshStandardMaterial({color:0x2255cc}),pM=new THREE.MeshStandardMaterial({color:0x334455}),hM=new THREE.MeshStandardMaterial({color:0x2c1810}),htM=new THREE.MeshStandardMaterial({color:0xe8c84a});
-  trolley.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(2,.2,1.2),wM),{position:new THREE.Vector3(0,.5,0),castShadow:true}));
-  [-0.85,0.85].forEach(x=>trolley.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.08,.6,1.2),mM),{position:new THREE.Vector3(x,.9,0)})));
+  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.2,1.2),wM);plat.position.set(0,.5,0);plat.castShadow=true;trolley.add(plat);
+  [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.08,.6,1.2),mM);b.position.set(x,.9,0);trolley.add(b);});
   const wGeo=new THREE.TorusGeometry(.28,.07,8,18);
   [[-0.75,-.5],[-0.75,.5],[.75,-.5],[.75,.5]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.28,z);w.rotation.y=Math.PI/2;w.castShadow=true;trolley.add(w);
     const ax=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.2,6),mM);ax.position.set(x,.28,0);ax.rotation.x=Math.PI/2;trolley.add(ax);
   });
   pumpGrp=new THREE.Group();
-  pumpGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.9,8),mM),{position:new THREE.Vector3(0,.6,0)}));
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.9,8),mM);pole.position.set(0,.6,0);pumpGrp.add(pole);
   const hbar=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.4,8),bM);hbar.rotation.z=Math.PI/2;hbar.position.set(0,1.05,0);pumpGrp.add(hbar);
-  [-0.65,.65].forEach(x=>pumpGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.25,8),bM),{position:new THREE.Vector3(x,1.05,0)})));
+  [-0.65,.65].forEach(x=>{const gr=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.25,8),bM);gr.position.set(x,1.05,0);pumpGrp.add(gr);});
   pumpGrp.position.set(0,.5,0);trolley.add(pumpGrp);
   const ch=new THREE.Group();
-  ch.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.4,.55,.28),shM),{position:new THREE.Vector3(0,.28,0)}));
-  ch.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),skM),{position:new THREE.Vector3(0,.72,0)}));
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.4,.55,.28),shM);body.position.set(0,.28,0);ch.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),skM);head.position.set(0,.72,0);ch.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),hM);hair.position.set(0,.82,-.02);hair.scale.set(1,.6,1);ch.add(hair);
-  ch.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.04,12),htM),{position:new THREE.Vector3(0,.87,0)}));
-  ch.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.2,12),htM),{position:new THREE.Vector3(0,.97,0)}));
-  [-.1,.1].forEach(x=>ch.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.14,.35,.18),pM),{position:new THREE.Vector3(x,-.17,0)})));
+  const hatBrim=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.04,12),htM);hatBrim.position.set(0,.87,0);ch.add(hatBrim);
+  const hatTop=new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.2,12),htM);hatTop.position.set(0,.97,0);ch.add(hatTop);
+  [-.1,.1].forEach(x=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.14,.35,.18),pM);l.position.set(x,-.17,0);ch.add(l);});
   const aGeo=new THREE.BoxGeometry(.12,.35,.14);
-  const la=new THREE.Group();la.add(Object.assign(new THREE.Mesh(aGeo,shM),{position:new THREE.Vector3(0,-.17,0)}));la.position.set(-.28,.55,0);la.name='la';ch.add(la);
-  const ra=new THREE.Group();ra.add(Object.assign(new THREE.Mesh(aGeo,shM),{position:new THREE.Vector3(0,-.17,0)}));ra.position.set(.28,.55,0);ra.name='ra';ch.add(ra);
+  const la=new THREE.Group();const laMesh=new THREE.Mesh(aGeo,shM);laMesh.position.set(0,-.17,0);la.add(laMesh);la.position.set(-.28,.55,0);la.name='la';ch.add(la);
+  const ra=new THREE.Group();const raMesh=new THREE.Mesh(aGeo,shM);raMesh.position.set(0,-.17,0);ra.add(raMesh);ra.position.set(.28,.55,0);ra.name='ra';ch.add(ra);
   ch.position.set(0,.6,0);ch.name='child';trolley.add(ch);
 })();
 
@@ -351,6 +351,7 @@ function showNotif(txt,ci){const cols=['#ffd700','#44ff88','#ff6666','#44ccff'];
 // ══════════════════════════
 let spline, slopes_arr, TLEN;
 const SLEN=1000;
+// worldGroup declared here so clearWorld() can safely reference it before buildWorld runs
 let worldGroup=null;
 let coinItems=[], puItems=[], obsItems=[], warnSigns=[], stationMeshes=[], stationDefs=[];
 
@@ -434,9 +435,9 @@ function buildStations(ts){
     const pos=spline.getPoint(t),tan=spline.getTangent(t).normalize(),up=new THREE.Vector3(0,1,0);
     const right=new THREE.Vector3().crossVectors(tan,up).normalize();
     const grp=new THREE.Group();
-    grp.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(3,.3,2),new THREE.MeshStandardMaterial({color:ST_COLORS[i%ST_COLORS.length],roughness:.6})),{position:new THREE.Vector3(0,.15,0)}));
+    const platMesh=new THREE.Mesh(new THREE.BoxGeometry(3,.3,2),new THREE.MeshStandardMaterial({color:ST_COLORS[i%ST_COLORS.length],roughness:.6}));platMesh.position.set(0,.15,0);grp.add(platMesh);
     [-1.2,1.2].forEach(lx=>{const post=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.5,8),new THREE.MeshStandardMaterial({color:0x554433,roughness:.8}));post.position.set(lx,1.25,0);grp.add(post);});
-    grp.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(3.2,.15,2.2),new THREE.MeshStandardMaterial({color:0xcc4422,roughness:.7})),{position:new THREE.Vector3(0,2.6,0)}));
+    const roofMesh=new THREE.Mesh(new THREE.BoxGeometry(3.2,.15,2.2),new THREE.MeshStandardMaterial({color:0xcc4422,roughness:.7}));roofMesh.position.set(0,2.6,0);grp.add(roofMesh);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.09,8,32),new THREE.MeshStandardMaterial({color:0xffffff,emissive:new THREE.Color(0xaaaaaa),emissiveIntensity:.3,transparent:true,opacity:.85}));
     ring.rotation.x=Math.PI/2;ring.position.y=.05;ring.name='ring';grp.add(ring);
     // Station label

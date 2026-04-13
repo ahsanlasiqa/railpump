@@ -233,12 +233,12 @@ body{background:#080810;overflow:hidden;font-family:'Georgia',serif;}
 // ═══════════════════════════════════════════════════
 //  GRID CONSTANTS
 // ═══════════════════════════════════════════════════
-const GRID_W = 20;   // columns  → 21 vertical streets
-const GRID_H = 20;   // rows     → 21 horizontal streets
-const CELL   = 14;   // world units per cell
-// Total intersections: 21×21 = 441
-const NX = GRID_W + 1;  // 21
-const NZ = GRID_H + 1;  // 21
+const GRID_W = 10;   // columns  → 11 vertical streets
+const GRID_H = 10;   // rows     → 11 horizontal streets
+const CELL   = 18;   // world units per cell  (city = 180×180 units)
+// Total intersections: 11×11 = 121
+const NX = GRID_W + 1;  // 11
+const NZ = GRID_H + 1;  // 11
 const OX = -(GRID_W * CELL) / 2;
 const OZ = -(GRID_H * CELL) / 2;
 
@@ -262,12 +262,12 @@ const ST_NAMES=[
 const ST_EMOJIS=['🏛','🛒','🏗','🏡','⚓','🍖','🏛','🚢','💻','🏠','🌊','🎨','🏟','📚','✈️','🌳','🖼','🏭','🏮','⛵'];
 const ST_COLORS=[0xff6644,0x44aaff,0xff44aa,0x44ff88,0xffdd00,0xaa44ff,0x44ffee,0xff8833,0x88ff44,0x4488ff,0xff4488,0x88ffaa,0xffaa44,0x44ffdd,0xdd44ff,0xff6688,0x88ff66,0x4466ff,0xff8866,0x66ff88];
 
-// Station positions on grid (spread evenly across the 20×20 grid)
+// Station positions on grid (spread across the 10×10 grid)
 const ST_GRID_POS=[
-  [1,1],[5,1],[10,1],[15,1],[19,1],
-  [1,5],[5,5],[10,5],[15,5],[19,5],
-  [1,10],[5,10],[10,10],[15,10],[19,10],
-  [1,15],[5,15],[10,15],[15,15],[19,15],
+  [0,0],[5,0],[10,0],[2,0],[8,0],
+  [0,5],[5,5],[10,5],[2,5],[8,5],
+  [0,10],[5,10],[10,10],[2,10],[8,10],
+  [0,3],[10,3],[0,7],[10,7],[5,8],
 ];
 
 // Missions pool
@@ -352,27 +352,28 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.setClearColor(0x080810,1);
+renderer.setClearColor(0x0d1020,1);
 
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x080810,0.006);
+scene.fog=new THREE.FogExp2(0x0d1020,0.003);
 
-const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,600);
-camera.position.set(0,22,-18);
-camera.lookAt(0,0,0);
+const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,600);
+camera.position.set(0,20,-16);
+camera.lookAt(0,0,8);
 
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Lights
-const ambLight=new THREE.AmbientLight(0xfff0e0,0.55);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0xfff8e0,1.1);
+const ambLight=new THREE.AmbientLight(0xfff0e0,1.2);scene.add(ambLight);
+const sunLight=new THREE.DirectionalLight(0xfff8e0,1.6);
 sunLight.position.set(50,90,30);sunLight.castShadow=true;
-sunLight.shadow.mapSize.set(2048,2048);
-sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
-sunLight.shadow.camera.left=-200;sunLight.shadow.camera.right=200;
-sunLight.shadow.camera.top=200;sunLight.shadow.camera.bottom=-200;
+sunLight.shadow.mapSize.set(1024,1024);
+sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=400;
+sunLight.shadow.camera.left=-120;sunLight.shadow.camera.right=120;
+sunLight.shadow.camera.top=120;sunLight.shadow.camera.bottom=-120;
 scene.add(sunLight);scene.add(sunLight.target);
-const fillLight=new THREE.DirectionalLight(0x6688ff,0.25);fillLight.position.set(-40,30,-60);scene.add(fillLight);
+const fillLight=new THREE.DirectionalLight(0x8899ff,0.5);fillLight.position.set(-40,30,-60);scene.add(fillLight);
+const fillLight2=new THREE.DirectionalLight(0xffeedd,0.4);fillLight2.position.set(40,20,60);scene.add(fillLight2);
 
 // ── Trolley (persistent) ──
 const trolley=new THREE.Group();scene.add(trolley);
@@ -424,7 +425,18 @@ leverHandle.position.set(0,.65,0);leverGrp.add(leverHandle);
 leverGrp.position.set(.8,.48,.35);
 trolley.add(leverGrp);
 
-// Particles
+// Trolley is ALWAYS visible — add a dedicated point light that follows it
+const trolleyLight=new THREE.PointLight(0xffeedd,2.5,20);
+trolleyLight.position.set(0,5,0);
+scene.add(trolleyLight);
+
+// Emissive beacon on top of trolley so it glows
+const beaconMat=new THREE.MeshBasicMaterial({color:0xff4422});
+const beacon=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),beaconMat);
+beacon.position.set(0,1.6,0);
+trolley.add(beacon);
+
+
 const PCNT=60,pPos=new Float32Array(PCNT*3);
 const pGeo=new THREE.BufferGeometry();pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
 scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0xffdd88,size:.1,transparent:true,opacity:.65})));
@@ -461,12 +473,12 @@ function buildWorld(){
   const rng=mkRng(12345);
 
   // ── Ground ──
-  const gndMat=new THREE.MeshStandardMaterial({color:0x14182a,roughness:1});
+  const gndMat=new THREE.MeshStandardMaterial({color:0x1a2030,roughness:1});
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GRID_W*CELL+80,GRID_H*CELL+80),gndMat);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-.06;gnd.receiveShadow=true;worldGroup.add(gnd);
 
   // ── Road surfaces ──
-  const roadMat=new THREE.MeshStandardMaterial({color:0x22263a,roughness:.95});
+  const roadMat=new THREE.MeshStandardMaterial({color:0x2a2e42,roughness:.95});
   const roadW=4;
   for(let row=0;row<=GRID_H;row++){
     const rm=new THREE.Mesh(new THREE.BoxGeometry(GRID_W*CELL+6,0.05,roadW),roadMat);
@@ -519,7 +531,7 @@ function buildWorld(){
   }
 
   // ── Intersection plates ──
-  const plateMat=new THREE.MeshStandardMaterial({color:0x1e2236,roughness:.85});
+  const plateMat=new THREE.MeshStandardMaterial({color:0x252840,roughness:.85});
   for(let row=0;row<=GRID_H;row++){
     for(let col=0;col<=GRID_W;col++){
       const p=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.07,4.2),plateMat);
@@ -545,16 +557,16 @@ function buildWorld(){
   }
 
   // ── Buildings ──
-  const bldPal=[0x1a1e2e,0x1e2238,0x22183a,0x1a2818,0x2a201a];
+  const bldPal=[0x2a3050,0x303060,0x3a2840,0x284038,0x403828,0x2a3550,0x383060];
   const acPal=[0x3a66cc,0x3acc66,0xcc663a,0x663acc,0xcc3a66,0x3acccc];
-  const winMat=new THREE.MeshBasicMaterial({color:0xffffaa,transparent:true,opacity:.45});
-  const winMatB=new THREE.MeshBasicMaterial({color:0x88aaff,transparent:true,opacity:.45});
+  const winMat=new THREE.MeshBasicMaterial({color:0xffffcc,transparent:true,opacity:.75});
+  const winMatB=new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:.75});
   for(let row=0;row<GRID_H;row++){
     for(let col=0;col<GRID_W;col++){
       const bx=OX+col*CELL+CELL/2, bz=OZ+row*CELL+CELL/2;
       const bw=CELL-5, bd=CELL-5;
-      const floors=2+Math.floor(rng()*7);
-      const bh=floors*2.5+rng()*2;
+      const floors=1+Math.floor(rng()*5);
+      const bh=floors*2.2+rng()*1.5;
       const mat=new THREE.MeshStandardMaterial({color:bldPal[Math.floor(rng()*bldPal.length)],roughness:.8});
       const bld=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat);
       bld.position.set(bx,bh/2,bz);bld.castShadow=true;bld.receiveShadow=true;worldGroup.add(bld);
@@ -590,7 +602,7 @@ function buildWorld(){
   }
 
   // ── Sky + Stars ──
-  const skyMat=new THREE.MeshBasicMaterial({color:0x080810,side:THREE.BackSide});
+  const skyMat=new THREE.MeshBasicMaterial({color:0x0d1020,side:THREE.BackSide});
   worldGroup.add(new THREE.Mesh(new THREE.SphereGeometry(550,16,8),skyMat));
   const sPos=new Float32Array(500*3);
   for(let i=0;i<500;i++){const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;sPos[i*3]=Math.sin(b)*Math.cos(a)*520;sPos[i*3+1]=Math.abs(Math.cos(b))*520;sPos[i*3+2]=Math.sin(b)*Math.sin(a)*520;}
@@ -642,7 +654,7 @@ function buildStation(idx,col,row){
   const plat=new THREE.Mesh(new THREE.BoxGeometry(4.5,.4,2.8),platM);plat.position.set(0,.2,0);g.add(plat);
   const pilM=new THREE.MeshStandardMaterial({color:0x444456,roughness:.7});
   [-1.7,1.7].forEach(lx=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,3,8),pilM);p.position.set(lx,1.5,0);g.add(p);});
-  const roofM=new THREE.MeshStandardMaterial({color:0x1e2032,roughness:.8});
+  const roofM=new THREE.MeshStandardMaterial({color:0x252035,roughness:.8});
   const roof=new THREE.Mesh(new THREE.BoxGeometry(4.7,.18,3),roofM);roof.position.set(0,3.1,0);g.add(roof);
   // Glow ring (on ground, around station)
   const ringM=new THREE.MeshStandardMaterial({color:c,emissive:new THREE.Color(c),emissiveIntensity:.5,transparent:true,opacity:.75});
@@ -882,20 +894,33 @@ function moveTrolley(){
   if(pkgBox.visible)pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
 }
 
+let camInitialized=false;
 function moveCam(){
-  const nc=tNode%NX, nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr), p1=npos(nnc,nnr);
+  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr),p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT, pz=p0.z+(p1.z-p0.z)*tEdgeT;
   const dx=p1.x-p0.x, dz=p1.z-p0.z;
-  // Camera behind trolley
-  const camDist=14, camH=10;
-  const tx=px-dx*camDist, tz=pz-dz*camDist;
+  // Camera: behind trolley and above
+  const camDist=16, camH=12;
+  const fdx=Math.abs(dx)>.001?dx:0, fdz=Math.abs(dz)>.001?dz:1;
+  const flen=Math.sqrt(fdx*fdx+fdz*fdz)||1;
+  const tx=px-(fdx/flen)*camDist;
+  const tz=pz-(fdz/flen)*camDist;
   const sh=GS.shake;
-  const tp=new THREE.Vector3(tx+(Math.random()-.5)*sh*.15,camH+(Math.random()-.5)*sh*.08,tz+(Math.random()-.5)*sh*.15);
+  const tp=new THREE.Vector3(
+    tx+(Math.random()-.5)*sh*.15,
+    camH+(Math.random()-.5)*sh*.08,
+    tz+(Math.random()-.5)*sh*.15
+  );
   GS.shake*=.84;
-  camera.position.lerp(tp,.1);
-  camera.lookAt(px,1.2,pz);
+  if(!camInitialized){
+    camera.position.copy(tp);
+    camInitialized=true;
+  } else {
+    camera.position.lerp(tp,.14);
+  }
+  camera.lookAt(px,1.5,pz);
 }
 
 function animTrolley(dt){
@@ -1114,8 +1139,12 @@ function startGame(){
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
   setSwitchDir(0);
-  // Start position: intersection (1,1)
-  tNode=nid(1,1);tNextNode=nid(2,1);tEdgeT=0;tFacing=0;
+  camInitialized=false;
+  // Start at center of grid, heading East
+  tNode=nid(5,5); tNextNode=nid(6,5); tEdgeT=0; tFacing=0;
+  // Snap trolley to start position immediately
+  const sp=npos(5,5);
+  trolley.position.set(sp.x,.35,sp.z);
   buildWorld();
   gameRunning=true;
   startMissions();
@@ -1146,6 +1175,7 @@ const clock=new THREE.Clock();let gt=0;
   }
   moveCam();updP(dt);
   sunLight.target.position.copy(trolley.position);
+  trolleyLight.position.set(trolley.position.x,trolley.position.y+5,trolley.position.z);
   sunLight.target.updateMatrixWorld();
   renderer.render(scene,camera);
 })();

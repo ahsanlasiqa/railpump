@@ -25,7 +25,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #mission-panel{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:12;min-width:260px;max-width:380px;background:rgba(6,10,22,0.92);border-radius:12px;padding:9px 16px;text-align:center;backdrop-filter:blur(10px);display:none;}
 #mission-panel.pickup{border:1.5px solid rgba(255,190,40,0.8);}
 #mission-panel.deliver{border:1.5px solid rgba(60,200,255,0.8);}
-#mission-panel.vip{border:2px solid rgba(255,80,200,0.9);box-shadow:0 0 16px rgba(255,80,200,0.25);}
+#mission-panel.vip{border:2px solid rgba(255,200,0,0.9);box-shadow:0 0 18px rgba(255,200,0,0.3);}
 #mp-phase{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,220,120,0.6);margin-bottom:2px;}
 #mp-from{font-size:10px;color:rgba(255,255,255,0.45);}
 #mp-to{font-size:14px;font-weight:bold;color:#ffe680;}
@@ -34,30 +34,10 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #mp-bar-fill{height:100%;width:100%;border-radius:3px;transition:width .1s,background .3s;}
 #mp-timer{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;}
 
-/* ── In-world package choice panel (bottom of screen, game keeps running) ── */
-#pkg-choice{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);z-index:30;display:none;flex-direction:column;align-items:center;gap:8px;pointer-events:all;}
-#pkg-choice-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,220,120,0.8);text-align:center;text-shadow:0 0 8px rgba(255,200,80,0.5);}
-#pkg-cards{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:680px;}
-.pkg-card{background:rgba(6,10,22,0.94);border:1.5px solid rgba(255,200,80,0.35);border-radius:11px;padding:9px 12px;cursor:pointer;transition:background .15s,border-color .15s,transform .12s;position:relative;min-width:150px;max-width:160px;text-align:center;backdrop-filter:blur(8px);}
-.pkg-card:hover{background:rgba(255,200,80,0.12);border-color:rgba(255,200,80,0.7);transform:scale(1.04) translateY(-3px);}
-.pkg-card.vip{border-color:rgba(255,80,200,0.8);background:rgba(60,0,60,0.88);box-shadow:0 0 12px rgba(255,80,200,0.3);}
-.pkg-card.vip:hover{background:rgba(255,80,200,0.16);border-color:rgba(255,80,200,1);}
-.pkg-card-tag{font-size:7px;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
-.pkg-card-tag.normal{color:rgba(255,220,120,0.55);}
-.pkg-card-tag.expr{color:#ffaa44;}
-.pkg-card-tag.vip-tag{color:#ff50c8;text-shadow:0 0 6px rgba(255,80,200,0.8);}
-.pkg-card-icon{font-size:22px;margin-bottom:2px;}
-.pkg-card-name{font-size:11px;font-weight:bold;color:#ffe680;margin-bottom:2px;line-height:1.2;}
-.pkg-card-dest{font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:4px;}
-.pkg-card-row{display:flex;justify-content:space-between;align-items:center;}
-.pkg-timer{font-size:10px;font-weight:bold;}
-.pkg-timer.tight{color:#ff5555;}
-.pkg-timer.ok{color:#44cc88;}
-.pkg-bonus{font-size:10px;color:#ffd700;font-weight:bold;}
-.vip-badge{position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff50c8,#ff8844);color:#fff;font-size:7px;letter-spacing:1.5px;padding:2px 7px;border-radius:8px;font-weight:bold;white-space:nowrap;}
-
-/* ── Slope indicator ── */
-#slope-txt{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:10;pointer-events:none;font-size:13px;font-weight:bold;padding:4px 16px;border-radius:14px;opacity:0;transition:opacity .3s,background .3s;white-space:nowrap;}
+/* ── Map hint: choose package ── */
+#map-hint{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:12;background:rgba(6,10,22,0.92);border:1.5px solid rgba(255,200,80,0.5);border-radius:12px;padding:7px 20px;text-align:center;backdrop-filter:blur(10px);display:none;pointer-events:none;}
+#map-hint-txt{font-size:11px;letter-spacing:2px;color:#ffe680;text-transform:uppercase;}
+#map-hint-sub{font-size:9px;color:rgba(255,220,120,0.5);margin-top:2px;}
 
 /* ── Switch HUD ── */
 #switch-hud{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center;}
@@ -95,7 +75,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #f-pump{background:radial-gradient(ellipse at center,rgba(255,200,80,0.1),transparent 70%);z-index:5;}
 #f-pick{background:radial-gradient(ellipse at center,rgba(80,220,255,0.28),transparent 70%);}
 #f-drop{background:radial-gradient(ellipse at center,rgba(80,255,140,0.32),transparent 70%);}
-#f-vip{background:radial-gradient(ellipse at center,rgba(255,80,200,0.35),transparent 65%);}
+#f-vip{background:radial-gradient(ellipse at center,rgba(255,220,0,0.38),transparent 65%);}
 
 /* ── Notif ── */
 #notif{position:fixed;left:50%;top:26%;transform:translateX(-50%);pointer-events:none;z-index:20;font-size:19px;font-weight:bold;color:#ffd700;text-shadow:0 0 12px rgba(255,220,80,1);opacity:0;transition:opacity .2s,top .35s;white-space:nowrap;letter-spacing:2px;}
@@ -152,7 +132,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   </div>
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
-<button id="quit-btn" title="End session & see results" onclick="if(gameRunning||MS.choosing){levelComplete();}">🏁</button>
+<button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
 
 <!-- Streak -->
 <div id="streak-hud"><div id="streak-box"><div id="streak-val">x2</div><div id="streak-lbl">Streak</div></div></div>
@@ -167,14 +147,11 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div id="mp-timer">⏱ 60s</div>
 </div>
 
-<!-- In-world package choice panel -->
-<div id="pkg-choice">
-  <div id="pkg-choice-title">📬 CHOOSE YOUR NEXT PACKAGE</div>
-  <div id="pkg-cards"></div>
+<!-- Map hint: pick package from dots -->
+<div id="map-hint">
+  <div id="map-hint-txt">📍 Choose a package on the map</div>
+  <div id="map-hint-sub">Head to a glowing dot — gold = VIP bonus!</div>
 </div>
-
-<!-- Slope indicator -->
-<div id="slope-txt"></div>
 
 <!-- Switch HUD -->
 <div id="switch-hud">
@@ -216,13 +193,13 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <!-- START -->
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
-  <p>Navigate the city grid — choose packages, dodge hills, race the clock!</p>
+  <p>Flat city grid — ride to glowing dots on the map to pick up packages!</p>
   <ul class="ctrl-list">
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
-    <li><span class="key" id="s-brake-key">B</span> Brake (on hills!)</li>
+    <li><span class="key" id="s-brake-key">B</span> Brake</li>
     <li><span class="key">← →</span> Switch at junctions</li>
   </ul>
-  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">12×12 grid · 169 intersections · Hills &amp; slopes · VIP packages · Infinite deliveries</p>
+  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">12×12 grid · Flat city · Gold dots = VIP · Head to glowing dots to pick up packages · Trolley never stops!</p>
   <button class="btn" onclick="startGame()">START GAME</button>
   <button class="btn btn-ghost" onclick="showScr('scr-keys')">⚙ Controls</button>
 </div>
@@ -271,44 +248,25 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <script>
 'use strict';
 // ═══════════════════════════════════════════
-//  GRID — 15×15  (256 intersections)
+//  GRID — 12×12  FLAT CITY (no elevation)
 // ═══════════════════════════════════════════
 const GW=12, GH=12, CELL=18;
 const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
 const nid=(c,r)=>r*NX+c;
-const npos=(c,r)=>new THREE.Vector3(OX+c*CELL, nodeY[r*NX+c]||0, OZ+r*CELL);
 
-// ── Elevation map — gentle hills across the grid ──
-// Amplitudes kept small so slopes stay navigable and camera stays clear
-const nodeY=new Float32Array(NX*NZ);
-(()=>{
-  for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    const nx=c/GW, nz=r/GH;
-    // Smooth, gentle rolling hills — max total ±2.5 units
-    const y = Math.sin(nx*Math.PI*2)*1.2
-             + Math.sin(nz*Math.PI*1.8)*1.0
-             + Math.cos((nx+nz)*Math.PI*1.4)*0.7
-             + Math.sin(nx*Math.PI*3.2+0.8)*0.4;
-    nodeY[r*NX+c]=y;
-  }
-})();
+// ALL FLAT — elevation = 0 everywhere
+const nodeY=new Float32Array(NX*NZ); // all zeros
 
-// Slope: sin(angle) = rise / 3D-length. Returns value -1..1
-function edgeSlope(nA,nB){
-  const yA=nodeY[nA]||0, yB=nodeY[nB]||0;
-  const rise=yB-yA;
-  const dist3d=Math.sqrt(CELL*CELL+rise*rise);
-  return rise/dist3d; // sine of slope angle, clamped naturally
-}
+const npos=(c,r)=>new THREE.Vector3(OX+c*CELL, 0, OZ+r*CELL);
 
 // ═══════════════════════════════════════════
-//  STATION POSITIONS (20 stations on 15×15)
+//  STATION POSITIONS
 // ═══════════════════════════════════════════
 const ST_NAMES=['Central Hub','Market Sq','East Gate','West End','North Port','South Mkt','City Hall','Harbour','Tech Park','Old Town','River Bend','Art District','Arena','University','Airport','Green Park','Museum','Factory','Chinatown','Waterfront'];
 const ST_EMOJIS=['🏛','🛒','🏗','🏡','⚓','🍖','🏛','🚢','💻','🏠','🌊','🎨','🏟','📚','✈️','🌳','🖼','🏭','🏮','⛵'];
 const ST_COLS=[0xff6644,0x44aaff,0xff44aa,0x44ff88,0xffdd00,0xaa44ff,0x44ffee,0xff8833,0x88ff44,0x4488ff,0xff4488,0x88ffaa,0xffaa44,0x44ffdd,0xdd44ff,0xff6688,0x88ff66,0x4466ff,0xff8866,0x66ff88];
-const ST_POS=[ // [col,row] within 0..12
+const ST_POS=[
   [0,0],[6,0],[12,0],[2,0],[9,0],
   [0,6],[6,6],[12,6],[2,6],[9,6],
   [0,12],[6,12],[12,12],[2,12],[9,12],
@@ -318,9 +276,7 @@ const ST_POS=[ // [col,row] within 0..12
 // ═══════════════════════════════════════════
 //  PACKAGE POOL
 // ═══════════════════════════════════════════
-// tier: 'normal'|'express'|'vip'
 const PKG_POOL=[
-  // Normal
   {emoji:'📦',name:'Fresh Produce',   tier:'normal', timerMult:1.0, bonus:4},
   {emoji:'📮',name:'Mail Bag',         tier:'normal', timerMult:1.0, bonus:4},
   {emoji:'🛒',name:'Groceries',        tier:'normal', timerMult:0.95,bonus:4},
@@ -328,13 +284,11 @@ const PKG_POOL=[
   {emoji:'☕',name:'Coffee Beans',     tier:'normal', timerMult:0.95,bonus:5},
   {emoji:'📚',name:'Library Books',    tier:'normal', timerMult:1.1, bonus:3},
   {emoji:'🪴',name:'Flower Bouquet',   tier:'normal', timerMult:0.9, bonus:5},
-  // Express
   {emoji:'💊',name:'Medicine',         tier:'express',timerMult:0.75,bonus:7},
   {emoji:'🐟',name:'Fresh Fish',       tier:'express',timerMult:0.7, bonus:7},
   {emoji:'🎂',name:'Birthday Cake',    tier:'express',timerMult:0.65,bonus:8},
   {emoji:'🧊',name:'Ice Cream',        tier:'express',timerMult:0.6, bonus:8},
   {emoji:'⚗️',name:'Lab Samples',      tier:'express',timerMult:0.7, bonus:7},
-  // VIP
   {emoji:'💎',name:'Diamond Ring',     tier:'vip',    timerMult:0.4, bonus:18},
   {emoji:'🏦',name:'Bank Documents',   tier:'vip',    timerMult:0.45,bonus:16},
   {emoji:'🖥️',name:'Server Rack',      tier:'vip',    timerMult:0.5, bonus:15},
@@ -342,27 +296,18 @@ const PKG_POOL=[
   {emoji:'🎤',name:'Stage Equipment',  tier:'vip',    timerMult:0.45,bonus:16},
   {emoji:'🚀',name:'Rocket Component', tier:'vip',    timerMult:0.4, bonus:18},
 ];
-const BASE_TIMER=100; // seconds base for distance 1 cell
+const BASE_TIMER=120;
+const VIP_MIN_INTERVAL=3;
+const VIP_MAX_INTERVAL=4;
 
-// VIP frequency: appears every 3-4 deliveries, randomly
-const VIP_MIN_INTERVAL=3; // earliest VIP can appear
-const VIP_MAX_INTERVAL=4; // latest
-
-// Build 4 package choices. vipSlot: index 0-3 where VIP is injected, or -1 for no VIP
 function makeChoices(fromSt, includeVip){
   const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
   const normals=shuffle(PKG_POOL.filter(p=>p.tier==='normal'));
   const express=shuffle(PKG_POOL.filter(p=>p.tier==='express'));
-  const vips   =shuffle(PKG_POOL.filter(p=>p.tier==='vip'));
-
+  const vips=shuffle(PKG_POOL.filter(p=>p.tier==='vip'));
   let pool;
-  if(includeVip){
-    // 2 normal + 1 express + 1 VIP
-    pool=[normals[0],normals[1],express[0],vips[0]];
-  } else {
-    // 3 normal + 1 express, no VIP
-    pool=[normals[0],normals[1],normals[2]||normals[0],express[0]];
-  }
+  if(includeVip){pool=[normals[0],normals[1],express[0],vips[0]];}
+  else{pool=[normals[0],normals[1],normals[2]||normals[0],express[0]];}
   return shuffle(pool).map(pkg=>{
     let to=fromSt;
     while(to===fromSt) to=Math.floor(Math.random()*20);
@@ -377,10 +322,10 @@ function makeChoices(fromSt, includeVip){
 //  KEY BINDINGS
 // ═══════════════════════════════════════════
 const DEFAULTS={pump:{code:'Space',label:'SPACE'},pump2:{code:'KeyW',label:'W'},brake:{code:'KeyB',label:'B'},brake2:{code:'ArrowDown',label:'↓ Arrow'},left:{code:'ArrowLeft',label:'← Arrow'},right:{code:'ArrowRight',label:'→ Arrow'}};
-function loadKB(){try{return JSON.parse(localStorage.getItem('crp3_kb'))||cln(DEFAULTS);}catch(e){return cln(DEFAULTS);}}
+function loadKB(){try{return JSON.parse(localStorage.getItem('crp4_kb'))||cln(DEFAULTS);}catch(e){return cln(DEFAULTS);}}
 function cln(o){return JSON.parse(JSON.stringify(o));}
 let KB=loadKB(),listening=null;
-function saveKB(){localStorage.setItem('crp3_kb',JSON.stringify(KB));}
+function saveKB(){localStorage.setItem('crp4_kb',JSON.stringify(KB));}
 function listenFor(a){if(listening)stopListen(true);listening=a;const b=document.getElementById('kb-'+a);b.classList.add('listening');b.textContent='[ press key ]';}
 function stopListen(c){if(!listening)return;document.getElementById('kb-'+listening).classList.remove('listening');if(c)syncKBL();listening=null;}
 function k2l(e){if(e.key.length===1)return e.key.toUpperCase();const m={Space:'SPACE',ArrowUp:'↑ Arrow',ArrowDown:'↓ Arrow',ArrowLeft:'← Arrow',ArrowRight:'→ Arrow',Enter:'ENTER',Backspace:'BKSP',Escape:'ESC'};return m[e.code]||e.code.replace(/^Key/,'').replace(/^Digit/,'').replace(/^Numpad/,'Num');}
@@ -408,28 +353,28 @@ const GS={speed:0,score:0,coins:0,energy:60,maxE:100,cd:0,braking:false,shake:0,
 const keys={brake:false};
 let pumpPressed=false,pumpHeld=false;
 
-// Navigation
 let tNode=0,tNextNode=1,tEdgeT=0,tFacing=0;
 let swChoice=0,jCool=0;
 
-// Mission
+// Mission — trolley NEVER stops for choices
+// choices are shown as floating orbs; trolley just needs to arrive at the pickup station
 const MS={
-  active:false,       // currently on a delivery run?
-  choosing:false,     // showing in-world package choice?
-  carrying:null,      // {pkg,to,timer,maxT,isVip,carrying}
+  active:false,
+  carrying:null,
   fromSt:-1,toSt:-1,
-  delivsDone:0,       // infinite — no limit
+  delivsDone:0,
   timeSaved:0,mScore:0,
   streak:0,bestStreak:0,
   vipDone:0,
-  nextVipAt:0,        // delivsDone count when next VIP appears
-  choiceMarkers:[],   // 3D objects for in-world package choice
-  pendingChoices:null,// choices waiting for user to pick
+  nextVipAt:0,
+  choiceMarkers:[],
+  pendingChoices:null,
   pendingFrom:-1,
+  choosing:false, // kept for compatibility — but trolley never halts
 };
 
 // ═══════════════════════════════════════════
-//  THREE.JS
+//  THREE.JS SETUP
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -443,9 +388,8 @@ scene.fog=new THREE.FogExp2(0x0d1020,0.004);
 const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
-// Lights
-const ambLight=new THREE.AmbientLight(0xfff0e0,1.1);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0xfff8e0,1.5);
+const ambLight=new THREE.AmbientLight(0xfff0e0,1.2);scene.add(ambLight);
+const sunLight=new THREE.DirectionalLight(0xfff8e0,1.6);
 sunLight.position.set(60,100,40);sunLight.castShadow=true;
 sunLight.shadow.mapSize.set(1024,1024);
 sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
@@ -455,7 +399,7 @@ scene.add(sunLight);scene.add(sunLight.target);
 const fill1=new THREE.DirectionalLight(0x8899ff,0.45);fill1.position.set(-50,30,-70);scene.add(fill1);
 const fill2=new THREE.DirectionalLight(0xffeedd,0.35);fill2.position.set(50,20,60);scene.add(fill2);
 
-// Trolley
+// ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
 let pumpGrp;
 (()=>{
@@ -491,7 +435,6 @@ let pumpGrp;
   const la=new THREE.Group();const lam=new THREE.Mesh(aGeo,shM);lam.position.set(0,-.16,0);la.add(lam);la.position.set(-.26,.52,0);la.name='la';ch.add(la);
   const ra=new THREE.Group();const ram=new THREE.Mesh(aGeo,shM);ram.position.set(0,-.16,0);ra.add(ram);ra.position.set(.26,.52,0);ra.name='ra';ch.add(ra);
   ch.position.set(0,.58,0);ch.name='child';trolley.add(ch);
-  // Lever
   const lv=new THREE.Group();
   const lm2=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.5,metalness:.4});
   const lvPole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.6,6),new THREE.MeshStandardMaterial({color:0x888888,metalness:.6}));
@@ -499,13 +442,13 @@ let pumpGrp;
   const lh=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),lm2);lh.position.set(0,.65,0);lv.add(lh);
   lv.name='lever';lv.position.set(.8,.48,.35);trolley.add(lv);
 })();
+
 const pkgBox=new THREE.Mesh(new THREE.BoxGeometry(.42,.32,.42),new THREE.MeshStandardMaterial({color:0xcc8833,roughness:.8}));
 pkgBox.position.set(0,1.05,0);pkgBox.visible=false;trolley.add(pkgBox);
-// VIP shimmer on pkg box
-const vipGlow=new THREE.Mesh(new THREE.BoxGeometry(.5,.4,.5),new THREE.MeshBasicMaterial({color:0xff50c8,transparent:true,opacity:.5,wireframe:true}));
+// VIP gold shimmer
+const vipGlow=new THREE.Mesh(new THREE.BoxGeometry(.58,.48,.58),new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:.55,wireframe:true}));
 vipGlow.position.set(0,1.05,0);vipGlow.visible=false;trolley.add(vipGlow);
 
-// Trolley light + beacon
 const trolleyLight=new THREE.PointLight(0xffeedd,2.5,22);scene.add(trolleyLight);
 const beaconMat=new THREE.MeshBasicMaterial({color:0xff4422});
 const beacon=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),beaconMat);
@@ -524,7 +467,7 @@ function showNotif(txt,col='#ffd700'){const el=document.getElementById('notif');
 function flash(id,dur=350){const el=document.getElementById(id);el.style.opacity='1';setTimeout(()=>el.style.opacity='0',dur);}
 
 // ═══════════════════════════════════════════
-//  WORLD BUILDING
+//  WORLD BUILDING — FLAT
 // ═══════════════════════════════════════════
 let worldGrp=null, stationMeshes=[], stationRings=[], coinMeshes=[], puMeshes=[];
 
@@ -543,24 +486,13 @@ function buildWorld(){
   worldGrp=new THREE.Group();
   const rng=mkRng(54321);
 
-  // Ground (terrain mesh following elevation)
-  const geoG=new THREE.PlaneGeometry(GW*CELL+60,GH*CELL+60,GW,GH);
-  const posArr=geoG.attributes.position;
-  // Lift ground vertices to match nodeY (approx)
-  for(let i=0;i<posArr.count;i++){
-    const gx=(posArr.getX(i)+(GW*CELL/2))/(GW*CELL)*GW;
-    const gz=(posArr.getY(i)+(GH*CELL/2))/(GH*CELL)*GH;
-    const c=Math.round(Math.max(0,Math.min(GW,gx)));
-    const r=Math.round(Math.max(0,Math.min(GH,gz)));
-    posArr.setZ(i,nodeY[r*NX+c]-0.1);
-  }
-  geoG.computeVertexNormals();
-  const gndM=new THREE.MeshStandardMaterial({color:0x1c2235,roughness:1});
-  const gnd=new THREE.Mesh(geoG,gndM);
-  gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;worldGrp.add(gnd);
+  // ── Flat ground ──
+  const gndM=new THREE.MeshStandardMaterial({color:0x1a2030,roughness:1});
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+60,GH*CELL+60),gndM);
+  gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
 
-  // Roads + rails along every edge
-  const roadM=new THREE.MeshStandardMaterial({color:0x2a2e42,roughness:.95});
+  // ── Roads + rails (flat) ──
+  const roadM=new THREE.MeshStandardMaterial({color:0x252840,roughness:.95});
   const railM=new THREE.MeshStandardMaterial({color:0x8888a0,metalness:.85,roughness:.25});
   const tieM=new THREE.MeshStandardMaterial({color:0x4a3828,roughness:.95});
   const ROFF=0.52;
@@ -568,103 +500,91 @@ function buildWorld(){
   // Horizontal edges
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
-      const p0=npos(c,r), p1=npos(c+1,r);
-      const cx=(p0.x+p1.x)/2, cy=(p0.y+p1.y)/2+.02, cz=(p0.z+p1.z)/2;
-      const len=CELL, rise=p1.y-p0.y;
-      const angle=Math.atan2(rise,len);
-      const actualLen=Math.sqrt(len*len+rise*rise);
-      // Road strip
-      const rd=new THREE.Mesh(new THREE.BoxGeometry(actualLen,.05,3.8),roadM);
-      rd.position.set(cx,cy,cz);rd.rotation.z=-angle;rd.receiveShadow=true;worldGrp.add(rd);
-      // Rails
+      const p0=npos(c,r),p1=npos(c+1,r);
+      const cx=(p0.x+p1.x)/2,cz=(p0.z+p1.z)/2;
+      const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        const rl=new THREE.Mesh(new THREE.BoxGeometry(actualLen,.06,.1),railM);
-        rl.position.set(cx,cy+.07,cz+off);rl.rotation.z=-angle;worldGrp.add(rl);
+        const rl=new THREE.Mesh(new THREE.BoxGeometry(CELL,.07,.1),railM);
+        rl.position.set(cx,.07,cz+off);worldGrp.add(rl);
       });
-      // Ties
       for(let s=1;s<4;s++){
         const t=s/4;
-        const tx=p0.x+(p1.x-p0.x)*t, ty=p0.y+(p1.y-p0.y)*t, tz=p0.z+(p1.z-p0.z)*t;
-        const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.07,1.2),tieM);
-        tie.position.set(tx,ty+.06,tz);worldGrp.add(tie);
+        const tx=p0.x+(p1.x-p0.x)*t,tz=p0.z+(p1.z-p0.z)*t;
+        const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,1.2),tieM);
+        tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
     }
   }
   // Vertical edges
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
-      const p0=npos(c,r), p1=npos(c,r+1);
-      const cx=(p0.x+p1.x)/2, cy=(p0.y+p1.y)/2+.02, cz=(p0.z+p1.z)/2;
-      const len=CELL, rise=p1.y-p0.y;
-      const angle=Math.atan2(rise,len);
-      const actualLen=Math.sqrt(len*len+rise*rise);
-      const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.05,actualLen),roadM);
-      rd.position.set(cx,cy,cz);rd.rotation.x=angle;rd.receiveShadow=true;worldGrp.add(rd);
+      const p0=npos(c,r),p1=npos(c,r+1);
+      const cx=(p0.x+p1.x)/2,cz=(p0.z+p1.z)/2;
+      const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        const rl=new THREE.Mesh(new THREE.BoxGeometry(.1,.06,actualLen),railM);
-        rl.position.set(cx+off,cy+.07,cz);rl.rotation.x=angle;worldGrp.add(rl);
+        const rl=new THREE.Mesh(new THREE.BoxGeometry(.1,.07,CELL),railM);
+        rl.position.set(cx+off,.07,cz);worldGrp.add(rl);
       });
       for(let s=1;s<4;s++){
         const t=s/4;
-        const tx=p0.x+(p1.x-p0.x)*t, ty=p0.y+(p1.y-p0.y)*t, tz=p0.z+(p1.z-p0.z)*t;
-        const tie=new THREE.Mesh(new THREE.BoxGeometry(1.2,.07,.12),tieM);
-        tie.position.set(tx,ty+.06,tz);worldGrp.add(tie);
+        const tx=p0.x+(p1.x-p0.x)*t,tz=p0.z+(p1.z-p0.z)*t;
+        const tie=new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.12),tieM);
+        tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
     }
   }
 
-  // Intersection plates
+  // ── Intersection plates ──
   const platM=new THREE.MeshStandardMaterial({color:0x252840,roughness:.85});
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     const p=npos(c,r);
-    const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.07,4),platM);
-    pl.position.set(p.x,p.y+.01,p.z);worldGrp.add(pl);
-    // Small lever post
+    const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.08,4),platM);
+    pl.position.set(p.x,.04,p.z);worldGrp.add(pl);
     const lp=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.7,6),new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.25,metalness:.5}));
-    lp.position.set(p.x+1.4,p.y+.35,p.z+1.4);worldGrp.add(lp);
+    lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
   }
 
-  // Buildings
+  // ── Buildings ──
   const bldPal=[0x2a3050,0x303060,0x3a2840,0x284038,0x403828,0x2a3550,0x383060];
   const acPal=[0x3a66cc,0x3acc66,0xcc663a,0x663acc,0xcc3a66];
   const winM=new THREE.MeshBasicMaterial({color:0xffffcc,transparent:true,opacity:.75});
   const winMB=new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:.75});
   for(let r=0;r<GH;r++) for(let c=0;c<GW;c++){
-    const p0=npos(c,r),p1=npos(c+1,r),p2=npos(c,r+1);
-    const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
-    const baseY=(p0.y+p1.y+p2.y+npos(c+1,r+1).y)/4;
-    const bw=CELL-5.5, bd=CELL-5.5;
+    const bx=OX+c*CELL+CELL/2,bz=OZ+r*CELL+CELL/2;
+    const bw=CELL-5.5,bd=CELL-5.5;
     const floors=1+Math.floor(rng()*5);
     const bh=floors*2.4+rng()*1.5;
     const mat=new THREE.MeshStandardMaterial({color:bldPal[Math.floor(rng()*bldPal.length)],roughness:.8});
     const bld=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat);
-    bld.position.set(bx,baseY+bh/2,bz);bld.castShadow=true;bld.receiveShadow=true;worldGrp.add(bld);
+    bld.position.set(bx,bh/2,bz);bld.castShadow=true;bld.receiveShadow=true;worldGrp.add(bld);
     if(rng()>.5){
       const ac=new THREE.MeshStandardMaterial({color:acPal[Math.floor(rng()*acPal.length)],roughness:.6,emissive:new THREE.Color(acPal[Math.floor(rng()*acPal.length)]),emissiveIntensity:.1});
-      const rf=new THREE.Mesh(new THREE.BoxGeometry(bw*.65,.5,bd*.65),ac);rf.position.set(bx,baseY+bh+.3,bz);worldGrp.add(rf);
+      const rf=new THREE.Mesh(new THREE.BoxGeometry(bw*.65,.5,bd*.65),ac);rf.position.set(bx,bh+.3,bz);worldGrp.add(rf);
     }
     for(let f=1;f<Math.min(floors,4);f++){
       for(let w=0;w<3;w++){
         const wn=new THREE.Mesh(new THREE.PlaneGeometry(.52,.72),rng()>.5?winM:winMB);
-        wn.position.set(bx-bw/2-.01,baseY+f*2.4+.7,bz-bd/3+w*bd/3);wn.rotation.y=Math.PI/2;worldGrp.add(wn);
+        wn.position.set(bx-bw/2-.01,f*2.4+.7,bz-bd/3+w*bd/3);wn.rotation.y=Math.PI/2;worldGrp.add(wn);
         const wn2=wn.clone();wn2.position.x=bx+bw/2+.01;wn2.rotation.y=-Math.PI/2;worldGrp.add(wn2);
       }
     }
   }
 
-  // Street lights
+  // ── Street lights ──
   const polM=new THREE.MeshStandardMaterial({color:0x88889a,metalness:.7,roughness:.4});
   const lampM2=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:new THREE.Color(0xffffaa),emissiveIntensity:1.8});
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     if(rng()>.5){
       const p=npos(c,r);
-      const lp=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,4,6),polM);lp.position.set(p.x+1.5,p.y,p.z+1.5);worldGrp.add(lp);
-      const ll=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lampM2);ll.position.set(p.x+1.5,p.y+4.2,p.z+1.5);worldGrp.add(ll);
-      if(rng()>.6){const ptL=new THREE.PointLight(0xffffcc,.3,10);ptL.position.set(p.x+1.5,p.y+4,p.z+1.5);worldGrp.add(ptL);}
+      const lp=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,4,6),polM);lp.position.set(p.x+1.5,2,p.z+1.5);worldGrp.add(lp);
+      const ll=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lampM2);ll.position.set(p.x+1.5,4.2,p.z+1.5);worldGrp.add(ll);
+      if(rng()>.6){const ptL=new THREE.PointLight(0xffffcc,.3,10);ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);}
     }
   }
 
-  // Sky + stars
+  // ── Sky + stars ──
   worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),new THREE.MeshBasicMaterial({color:0x0d1020,side:THREE.BackSide})));
   const sPos=new Float32Array(600*3);
   for(let i=0;i<600;i++){const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;sPos[i*3]=Math.sin(b)*Math.cos(a)*550;sPos[i*3+1]=Math.abs(Math.cos(b))*550;sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;}
@@ -680,24 +600,24 @@ function buildWorld(){
   const cMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.9,roughness:.1,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.6});
   const cGeo=new THREE.CylinderGeometry(.2,.2,.07,14);
   for(let i=0;i<50;i++){
-    const c=Math.floor(rng()*(GW+1)), r=Math.floor(rng()*(GH+1));
+    const c=Math.floor(rng()*(GW+1)),r=Math.floor(rng()*(GH+1));
     const isSt=ST_POS.some(([sc,sr])=>sc===c&&sr===r);
     if(!isSt){
       const p=npos(c,r);
       const m=new THREE.Mesh(cGeo,cMat);
-      m.position.set(p.x,p.y+1.2,p.z);
-      m.userData={baseY:p.y+1.2,phase:rng()*Math.PI*2,c,r};
+      m.position.set(p.x,1.2,p.z);
+      m.userData={baseY:1.2,phase:rng()*Math.PI*2,c,r};
       scene.add(m);coinMeshes.push({m,c,r,collected:false});
     }
   }
 
   // Power-ups
   for(let i=0;i<8;i++){
-    const c=1+Math.floor(rng()*(GW-1)), r=1+Math.floor(rng()*(GH-1));
-    const p=npos(c,r), t=PU_DEFS[i%PU_DEFS.length];
+    const c=1+Math.floor(rng()*(GW-1)),r=1+Math.floor(rng()*(GH-1));
+    const p=npos(c,r),t=PU_DEFS[i%PU_DEFS.length];
     const grp=new THREE.Group();
     const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:.8,metalness:.4,roughness:.2}));
-    grp.add(core);grp.position.set(p.x,p.y+1.5,p.z);grp.userData={baseY:p.y+1.5,phase:rng()*Math.PI*2,c,r,type:t};
+    grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
 }
@@ -719,16 +639,16 @@ function buildStation(idx,col,row){
   ctx.fillText(`${ST_EMOJIS[idx]} ${ST_NAMES[idx]}`,128,28);
   const lm=new THREE.Mesh(new THREE.PlaneGeometry(3.5,.77),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
   lm.position.set(0,3.7,0);g.add(lm);
-  g.position.set(p.x,.0,p.z);
+  g.position.set(p.x,0,p.z);
   scene.add(g);stationMeshes.push(g);stationRings.push(ring);
 }
 
 function setRing(idx,mode){
   if(!stationRings[idx])return;
-  const mat=stationRings[idx].material, orig=ST_COLS[idx];
+  const mat=stationRings[idx].material,orig=ST_COLS[idx];
   if(mode==='pickup'){mat.color.set(0xffee00);mat.emissive.set(0xffcc00);mat.emissiveIntensity=3.0;}
   else if(mode==='deliver'){mat.color.set(0x44ccff);mat.emissive.set(0x44ccff);mat.emissiveIntensity=3.0;}
-  else if(mode==='vip'){mat.color.set(0xff50c8);mat.emissive.set(0xff50c8);mat.emissiveIntensity=3.5;}
+  else if(mode==='vip'){mat.color.set(0xffdd00);mat.emissive.set(0xffcc00);mat.emissiveIntensity=3.8;}
   else if(mode==='done'){mat.color.set(0x44ff88);mat.emissive.set(0x44ff88);mat.emissiveIntensity=1.2;}
   else{mat.color.set(orig);mat.emissive.set(orig);mat.emissiveIntensity=.5;}
 }
@@ -765,7 +685,7 @@ function collectPU(pu){
 }
 
 // ═══════════════════════════════════════════
-//  GRAPH NAVIGATION
+//  NAVIGATION
 // ═══════════════════════════════════════════
 const DIR_VEC=[[1,0],[0,1],[-1,0],[0,-1]];
 function getNeighbors(col,row,excl){
@@ -776,7 +696,7 @@ function getNeighbors(col,row,excl){
   }).filter(Boolean);
 }
 function chooseDir(facing,choice,nbrs){
-  const left=(facing+3)%4, right=(facing+1)%4;
+  const left=(facing+3)%4,right=(facing+1)%4;
   const order=choice===0?[facing,left,right]:choice===-1?[left,facing,right]:[right,facing,left];
   for(const d of order){const n=nbrs.find(nb=>nb.dir===d);if(n)return n;}
   return nbrs[0]||null;
@@ -795,118 +715,162 @@ function updateSwitchHUD(show){
 }
 
 // ═══════════════════════════════════════════
-//  PACKAGE CHOICE UI (in-world, game continues)
+//  PACKAGE CHOICE — MAP DOTS ONLY (no stop, no UI panel)
 // ═══════════════════════════════════════════
+const choiceMarkerMeshes=[];
+
 function showPackageChoice(fromSt){
   MS.choosing=true;
-  // Determine if this round gets a VIP slot
-  const includeVip=(MS.delivsDone>=MS.nextVipAt);
-  const choices=makeChoices(fromSt, includeVip);
-  MS.pendingChoices=choices;
   MS.pendingFrom=fromSt;
+  const includeVip=(MS.delivsDone>=MS.nextVipAt);
+  const choices=makeChoices(fromSt,includeVip);
+  MS.pendingChoices=choices;
 
-  const cards=document.getElementById('pkg-cards');
-  cards.innerHTML='';
-  choices.forEach((ch)=>{
-    const isVip=ch.pkg.tier==='vip';
-    const isExpress=ch.pkg.tier==='express';
-    const timerTight=ch.timer<45;
-    const card=document.createElement('div');
-    card.className='pkg-card'+(isVip?' vip':'');
-    card.innerHTML=`
-      ${isVip?'<div class="vip-badge">⭐ VIP</div>':''}
-      <div class="pkg-card-tag ${isVip?'vip-tag':isExpress?'expr':'normal'}">${isVip?'★ VIP':isExpress?'EXPRESS':'STANDARD'}</div>
-      <div class="pkg-card-icon">${ch.pkg.emoji}</div>
-      <div class="pkg-card-name">${ch.pkg.name}</div>
-      <div class="pkg-card-dest">→ ${ST_EMOJIS[ch.to]} ${ST_NAMES[ch.to]}</div>
-      <div class="pkg-card-row">
-        <span class="pkg-timer ${timerTight?'tight':'ok'}">⏱ ${ch.timer}s</span>
-        <span class="pkg-bonus">+${ch.pkg.bonus*100}</span>
-      </div>
-    `;
-    card.onclick=()=>selectPackage(ch,fromSt);
-    cards.appendChild(card);
-  });
-  document.getElementById('pkg-choice').style.display='flex';
+  // Show map hint bar (no card panel)
+  document.getElementById('map-hint').style.display='block';
 
-  // Spawn 3D floating markers at destination stations in the world
+  // Spawn 3D glowing orbs at destination stations — trolley keeps moving freely
   spawnChoiceMarkers(choices);
-  gameRunning=true; // game keeps running while choosing!
+  // gameRunning stays true — trolley doesn't stop
 }
 
-// 3D glowing orbs at each possible destination station
-const choiceMarkerMeshes=[];
 function spawnChoiceMarkers(choices){
   clearChoiceMarkers();
   choices.forEach((ch,i)=>{
     const [sc,sr]=ST_POS[ch.to];
     const p=npos(sc,sr);
     const isVip=ch.pkg.tier==='vip';
-    const col=isVip?0xff50c8:ch.pkg.tier==='express'?0xff8833:0x44aaff;
+    const isExpress=ch.pkg.tier==='express';
+
+    // VIP = gold/amber glow; Express = orange; Normal = blue
+    const col=isVip?0xffd700:isExpress?0xff8833:0x44aaff;
+    const emCol=isVip?0xffaa00:isExpress?0xff6600:0x2288ff;
+
     const grp=new THREE.Group();
-    // Floating box
-    const bx=new THREE.Mesh(
-      new THREE.BoxGeometry(.7,.7,.7),
-      new THREE.MeshStandardMaterial({color:col,emissive:new THREE.Color(col),emissiveIntensity:.9,metalness:.3,roughness:.3})
-    );
-    grp.add(bx);
-    // Outer ring
-    const ring=new THREE.Mesh(
-      new THREE.TorusGeometry(1.1,.08,8,24),
-      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.7})
-    );
+
+    // Core orb
+    const orbGeo=new THREE.SphereGeometry(isVip?0.85:0.65,16,12);
+    const orbMat=new THREE.MeshStandardMaterial({
+      color:col,emissive:new THREE.Color(emCol),
+      emissiveIntensity:isVip?2.0:1.2,
+      metalness:isVip?.7:.2,roughness:.2,
+      transparent:true,opacity:isVip?.95:.85
+    });
+    const orb=new THREE.Mesh(orbGeo,orbMat);
+    grp.add(orb);
+
+    // Spinning ring around orb
+    const ringGeo=new THREE.TorusGeometry(isVip?1.3:1.05,0.09,8,28);
+    const ringMat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:isVip?.9:.65});
+    const ring=new THREE.Mesh(ringGeo,ringMat);
     ring.rotation.x=Math.PI/2;grp.add(ring);
-    // Vertical beam
+
+    // Second tilted ring for VIP
+    if(isVip){
+      const ring2=new THREE.Mesh(new THREE.TorusGeometry(1.4,.07,8,28),new THREE.MeshBasicMaterial({color:0xffee88,transparent:true,opacity:.6}));
+      ring2.rotation.x=Math.PI/4;ring2.rotation.z=Math.PI/4;grp.add(ring2);
+    }
+
+    // Vertical beam to ground
+    const beamH=4.5;
     const beam=new THREE.Mesh(
-      new THREE.CylinderGeometry(.04,.04,6,6),
-      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.25})
+      new THREE.CylinderGeometry(.05,.22,beamH,8),
+      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:isVip?.4:.2})
     );
-    beam.position.y=-3;grp.add(beam);
-    grp.position.set(p.x,p.y+3.5,p.z);
-    grp.userData={baseY:p.y+3.5,phase:i*Math.PI/2,choiceIdx:i,isVip};
+    beam.position.y=-beamH/2-0.5;grp.add(beam);
+
+    // Point light for bright glow
+    const ptL=new THREE.PointLight(col,isVip?3:1.8,isVip?14:10);
+    ptL.position.y=0;grp.add(ptL);
+
+    grp.position.set(p.x,4.0,p.z);
+    grp.userData={baseY:4.0,phase:i*Math.PI*.6,choiceIdx:i,isVip,ch};
     scene.add(grp);
     choiceMarkerMeshes.push(grp);
   });
 }
 
 function clearChoiceMarkers(){
-  choiceMarkerMeshes.forEach(m=>scene.remove(m));
+  choiceMarkerMeshes.forEach(m=>{
+    m.children.forEach(child=>{
+      if(child.isLight)m.remove(child);
+    });
+    scene.remove(m);
+  });
   choiceMarkerMeshes.length=0;
 }
 
 function updateChoiceMarkers(gt){
   if(!MS.choosing)return;
   choiceMarkerMeshes.forEach(m=>{
-    m.position.y=m.userData.baseY+Math.sin(gt*2+m.userData.phase)*.3;
-    m.rotation.y+=0.025;
-    // Pulse emissive
-    const pulse=0.6+Math.sin(gt*3+m.userData.phase)*0.4;
-    if(m.children[0]&&m.children[0].material.emissiveIntensity!==undefined)
-      m.children[0].material.emissiveIntensity=pulse*1.2;
+    m.position.y=m.userData.baseY+Math.sin(gt*2.2+m.userData.phase)*.35;
+    m.rotation.y+=0.022;
+    const pulse=0.55+Math.sin(gt*3.5+m.userData.phase)*0.45;
+    const orb=m.children[0];
+    if(orb&&orb.material.emissiveIntensity!==undefined){
+      orb.material.emissiveIntensity=m.userData.isVip?pulse*2.8:pulse*1.6;
+    }
+    // Spin rings independently
+    const ring=m.children[1];
+    if(ring)ring.rotation.z+=0.018;
+    const ring2=m.children[2];
+    if(ring2&&m.userData.isVip)ring2.rotation.y+=0.03;
   });
 }
 
-function selectPackage(ch,fromSt){
-  document.getElementById('pkg-choice').style.display='none';
+// Trolley arrives at a choice marker station → auto-select that package
+function checkChoiceArrival(col,row){
+  if(!MS.choosing||!MS.pendingChoices)return;
+  const arrivedIdx=MS.pendingChoices.findIndex(ch=>{
+    const [sc,sr]=ST_POS[ch.to];
+    return sc===col&&sr===row;
+  });
+  if(arrivedIdx<0)return;
+  const ch=MS.pendingChoices[arrivedIdx];
+  // Remove only the arrived marker immediately; others will vanish too
+  selectPackageFromArrival(ch,MS.pendingFrom);
+}
+
+function selectPackageFromArrival(ch,fromSt){
+  document.getElementById('map-hint').style.display='none';
   clearChoiceMarkers();
   MS.choosing=false;
+  MS.pendingChoices=null;
   MS.fromSt=fromSt;
   MS.toSt=ch.to;
-  MS.carrying={pkg:ch.pkg, timer:ch.timer, maxT:ch.timer, isVip:ch.pkg.tier==='vip', carrying:false};
+  MS.carrying={pkg:ch.pkg,timer:ch.timer,maxT:ch.timer,isVip:ch.pkg.tier==='vip',carrying:false};
 
   stationRings.forEach((_,i)=>setRing(i,'idle'));
-  setRing(fromSt, MS.carrying.isVip?'vip':'pickup');
+  setRing(fromSt,MS.carrying.isVip?'vip':'pickup');
   const panel=document.getElementById('mission-panel');
   panel.style.display='block';
   panel.className='pickup'+(MS.carrying.isVip?' vip':'');
-  document.getElementById('mp-phase').textContent=`MISSION ${MS.delivsDone+1} — PICKUP${MS.carrying.isVip?' ⭐VIP':''}`;
+  document.getElementById('mp-phase').textContent=`MISSION ${MS.delivsDone+1} — PICKUP${MS.carrying.isVip?' ★VIP':''}`;
   document.getElementById('mp-from').textContent='📍 Your location';
   document.getElementById('mp-to').textContent=`${MS.carrying.pkg.emoji} ${ST_NAMES[fromSt]}`;
   document.getElementById('mp-pkg').textContent=MS.carrying.pkg.name;
   MS.active=true;
-  showNotif(`${MS.carrying.pkg.emoji} Head to ${ST_NAMES[fromSt]}!`,MS.carrying.isVip?'#ff88ee':'#ffdd44');
-  if(MS.carrying.isVip)flash('f-vip',500);
+
+  // When VIP is chosen, flash gold
+  if(MS.carrying.isVip){flash('f-vip',600);showNotif(`★ VIP: ${MS.carrying.pkg.name}! → ${ST_NAMES[fromSt]}`,'#ffd700');}
+  else showNotif(`${MS.carrying.pkg.emoji} Head to ${ST_NAMES[fromSt]}!`,'#ffdd44');
 }
+
+// ── Also allow clicking a choice marker (3D picking via raycaster) ──
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+canvas.addEventListener('click',e=>{
+  if(!MS.choosing)return;
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(choiceMarkerMeshes,true);
+  if(hits.length>0){
+    let grp=hits[0].object;
+    while(grp.parent&&!grp.userData.ch)grp=grp.parent;
+    if(grp.userData.ch)selectPackageFromArrival(grp.userData.ch,MS.pendingFrom);
+  }
+});
 
 // ═══════════════════════════════════════════
 //  MISSION SYSTEM
@@ -915,14 +879,13 @@ function startMissions(){
   MS.active=false;MS.choosing=false;MS.carrying=null;
   MS.delivsDone=0;MS.timeSaved=0;MS.mScore=0;MS.streak=0;MS.bestStreak=0;MS.vipDone=0;
   MS.fromSt=-1;MS.toSt=-1;MS.pendingChoices=null;MS.pendingFrom=-1;
-  // First VIP appears after 3-4 deliveries
   MS.nextVipAt=VIP_MIN_INTERVAL+Math.floor(Math.random()*(VIP_MAX_INTERVAL-VIP_MIN_INTERVAL+1));
   clearChoiceMarkers();
   stationRings.forEach((_,i)=>setRing(i,'idle'));
   pkgBox.visible=false;vipGlow.visible=false;
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
-  document.getElementById('pkg-choice').style.display='none';
+  document.getElementById('map-hint').style.display='none';
   setTimeout(()=>showPackageChoice(Math.floor(Math.random()*20)),600);
 }
 
@@ -939,36 +902,53 @@ function updateMission(dt){
   document.getElementById('mp-timer').textContent=`⏱ ${Math.ceil(c.timer)}s`;
   document.getElementById('mp-timer').style.color=frac>.3?'rgba(255,255,255,0.4)':'#ff6644';
 
-  // Pulse target ring
   const tgt=c.carrying?MS.toSt:MS.fromSt;
   if(stationRings[tgt])stationRings[tgt].material.emissiveIntensity=2.2+Math.sin(Date.now()*.006)*1.0;
-  updateArrow(c.carrying?MS.toSt:MS.fromSt);
+  updateArrow(tgt);
 
   if(c.timer<=0){missionFailed();return;}
+}
 
-  // Arrival check — only when actively carrying (not in choice phase)
-  const nc=tNode%NX, nr=Math.floor(tNode/NX);
-  const arrivedAt=ST_POS.findIndex(([sc,sr])=>sc===nc&&sr===nr);
-  if(arrivedAt<0)return;
-  if(!c.carrying&&arrivedAt===MS.fromSt)doPickup();
-  else if(c.carrying&&arrivedAt===MS.toSt)doDeliver();
+function checkArrival(col,row){
+  // First check if we're selecting a package choice by arriving at its destination
+  if(MS.choosing)checkChoiceArrival(col,row);
+
+  if(!MS.active||!MS.carrying)return;
+  const idx=ST_POS.findIndex(([sc,sr])=>sc===col&&sr===row);
+  if(idx<0)return;
+  const c=MS.carrying;
+  if(!c.carrying&&idx===MS.fromSt)doPickup();
+  else if(c.carrying&&idx===MS.toSt)doDeliver();
+}
+
+function checkPickups(col,row){
+  coinMeshes.forEach(c=>{
+    if(!c.collected&&c.c===col&&c.r===row){
+      c.collected=true;scene.remove(c.m);GS.coins++;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
+    }
+  });
+  puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});
 }
 
 function doPickup(){
   const c=MS.carrying;
   c.carrying=true;
   pkgBox.visible=true;
-  if(c.isVip){vipGlow.visible=true;pkgBox.material.color.set(0xdd44aa);}
+  if(c.isVip){
+    vipGlow.visible=true;
+    pkgBox.material.color.set(0xdd9900);
+    vipGlow.material.color.set(0xffdd00);
+  }
   spawnP(trolley.position);GS.shake=1.5;
   setRing(MS.fromSt,'done');
   setRing(MS.toSt,c.isVip?'vip':'deliver');
   const panel=document.getElementById('mission-panel');
   panel.className='deliver'+(c.isVip?' vip':'');
-  document.getElementById('mp-phase').textContent=`MISSION ${MS.delivsDone+1} — DELIVER${c.isVip?' ⭐':''}`;
+  document.getElementById('mp-phase').textContent=`MISSION ${MS.delivsDone+1} — DELIVER${c.isVip?' ★':''}`;
   document.getElementById('mp-from').textContent=`From: ${ST_NAMES[MS.fromSt]}`;
   document.getElementById('mp-to').textContent=`🚚 ${ST_NAMES[MS.toSt]}`;
   flash('f-pick',350);
-  showNotif(`${c.pkg.emoji} Picked up! → ${ST_NAMES[MS.toSt]}`,c.isVip?'#ff88ee':'#44ffaa');
+  showNotif(`${c.pkg.emoji} Picked up! → ${ST_NAMES[MS.toSt]}`,c.isVip?'#ffd700':'#44ffaa');
 }
 
 function doDeliver(){
@@ -981,7 +961,6 @@ function doDeliver(){
   if(MS.streak>MS.bestStreak)MS.bestStreak=MS.streak;
   if(c.isVip){
     MS.vipDone++;
-    // Schedule next VIP after 3-4 more deliveries
     MS.nextVipAt=MS.delivsDone+VIP_MIN_INTERVAL+Math.floor(Math.random()*(VIP_MAX_INTERVAL-VIP_MIN_INTERVAL+1));
   }
   pkgBox.visible=false;vipGlow.visible=false;
@@ -992,14 +971,13 @@ function doDeliver(){
   flash('f-drop',400);
   if(c.isVip)flash('f-vip',600);
   const streakTxt=MS.streak>1?` 🔥 ${MS.streak}×`:'';
-  showNotif(`🎉 +${bonus}${streakTxt}`,c.isVip?'#ff88ee':'#44ffdd');
-  // Update streak HUD
+  showNotif(`🎉 +${bonus}${streakTxt}`,c.isVip?'#ffd700':'#44ffdd');
   if(MS.streak>=2){
     document.getElementById('streak-hud').style.display='block';
     document.getElementById('streak-val').textContent=`×${MS.streak}`;
   }
   MS.active=false;
-  // Next package choice after short delay — game keeps running
+  // Next package choice — trolley keeps moving, just spawn new orbs
   setTimeout(()=>{if(gameRunning)showPackageChoice(MS.toSt);},1200);
 }
 
@@ -1007,18 +985,17 @@ function missionFailed(){
   MS.active=false;MS.streak=0;MS.choosing=false;
   clearChoiceMarkers();
   document.getElementById('streak-hud').style.display='none';
-  document.getElementById('pkg-choice').style.display='none';
+  document.getElementById('map-hint').style.display='none';
   gameRunning=false;
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
   pkgBox.visible=false;vipGlow.visible=false;pkgBox.material.color.set(0xcc8833);
   const c=MS.carrying;
   document.getElementById('fail-desc').textContent=c?.carrying?`Didn't deliver ${c.pkg.name} to ${ST_NAMES[MS.toSt]} in time.`:`Didn't reach ${ST_NAMES[MS.fromSt]} in time.`;
-  document.getElementById('fail-tip').textContent=['💡 Pump steadily uphill!','💡 Grab ⏱️ power-ups for more time!','💡 Use ← → to plan shorter routes!','💡 Choose packages with longer timers!'][Math.floor(Math.random()*4)];
-  // Show session stats in fail screen
+  document.getElementById('fail-tip').textContent=['💡 Pump steadily to reach faster!','💡 Grab ⏱️ power-ups for more time!','💡 Use ← → to plan shorter routes!','💡 Choose packages with longer timers!'][Math.floor(Math.random()*4)];
   document.getElementById('score-final').textContent=GS.score;
   document.getElementById('r-del').textContent=MS.delivsDone;
-  document.getElementById('r-vip').textContent=MS.vipDone+' ⭐';
+  document.getElementById('r-vip').textContent=MS.vipDone+' ★';
   document.getElementById('r-str').textContent=MS.bestStreak+'×';
   document.getElementById('r-coins').textContent=GS.coins+' 🪙';
   document.getElementById('r-time').textContent=`+${Math.floor(MS.timeSaved*10)}`;
@@ -1031,10 +1008,10 @@ function levelComplete(){
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
   document.getElementById('streak-hud').style.display='none';
-  document.getElementById('pkg-choice').style.display='none';
+  document.getElementById('map-hint').style.display='none';
   document.getElementById('score-final').textContent=GS.score;
   document.getElementById('r-del').textContent=MS.delivsDone;
-  document.getElementById('r-vip').textContent=MS.vipDone+' ⭐';
+  document.getElementById('r-vip').textContent=MS.vipDone+' ★';
   document.getElementById('r-str').textContent=MS.bestStreak+'×';
   document.getElementById('r-coins').textContent=GS.coins+' 🪙';
   document.getElementById('r-time').textContent=`+${Math.floor(MS.timeSaved*10)}`;
@@ -1065,58 +1042,31 @@ function updateArrow(tgtIdx){
 }
 
 // ═══════════════════════════════════════════
-//  SLOPE INDICATOR
-// ═══════════════════════════════════════════
-let lastSlopeShow=0;
-function updSlope(dt){
-  const sl=edgeSlope(tNode,tNextNode);
-  const el=document.getElementById('slope-txt');
-  if(Math.abs(sl)>.03){  // gentler threshold for smaller hills
-    el.style.opacity='1';
-    if(sl>0){el.textContent='⛰️ UPHILL — Pump harder!';el.style.background='rgba(255,80,30,0.4)';el.style.color='#ff9966';}
-    else{el.textContent='⬇️ DOWNHILL — Brake!';el.style.background='rgba(30,120,220,0.4)';el.style.color='#66aaff';}
-    lastSlopeShow=Date.now();
-  }else if(Date.now()-lastSlopeShow>1500){
-    el.style.opacity='0';
-  }
-}
-
-// ═══════════════════════════════════════════
-//  PHYSICS
+//  PHYSICS (flat — no gravity/slope)
 // ═══════════════════════════════════════════
 let pumpAng=0;
 function doPump(){
   if(!gameRunning||GS.cd>0)return;
-  const sl=edgeSlope(tNode,tNextNode);
-  const cost=6+Math.max(0,sl*25); // costs more uphill
-  if(GS.energy<cost*.3)return;
+  if(GS.energy<3)return;
   const boost=GS.activePU?.type.id==='speed'?1.5:1.0;
-  GS.energy=Math.max(0,GS.energy-cost*.55);
-  // Uphill: reduced boost. Downhill: slight bonus
-  const slopeBoost=1-Math.max(0,sl)*1.2+Math.max(0,-sl)*0.3;
-  GS.speed=Math.min(GS.speed+2.2*boost*Math.max(0.4,slopeBoost),18);
+  GS.energy=Math.max(0,GS.energy-5.5);
+  GS.speed=Math.min(GS.speed+2.4*boost,18);
   GS.cd=.15;
   spawnP(trolley.position);
   flash('f-pump',130);
 }
 
 function physics(dt){
-  const sl=edgeSlope(tNode,tNextNode);
-  // Gravity: stronger effect so hills feel significant
-  const gravity=-sl*8.0; // downhill speeds up, uphill slows
-  // Drag: normal flat drag + extra uphill resistance
-  const drag=GS.braking?6:(.3+Math.max(0,sl)*4);
-  GS.speed=Math.max(0,Math.min(GS.speed+gravity*dt-drag*dt,18));
+  const drag=GS.braking?7.0:0.35;
+  GS.speed=Math.max(0,GS.speed-drag*dt);
   GS.cd=Math.max(0,GS.cd-dt);
   GS.energy=Math.min(GS.maxE,GS.energy+3.5*dt);
   GS.inv=Math.max(0,GS.inv-dt);
   jCool=Math.max(0,jCool-dt);
 
-  // Advance
   const advance=(GS.speed*dt)/CELL;
   tEdgeT=Math.min(tEdgeT+advance,1.0);
 
-  // Show switch HUD approaching junction
   if(tEdgeT>.6&&jCool<=0){
     const nc=tNextNode%NX,nr=Math.floor(tNextNode/NX);
     const back=(tFacing+2)%4;
@@ -1124,7 +1074,6 @@ function physics(dt){
     else updateSwitchHUD(false);
   }else if(tEdgeT<=.6)updateSwitchHUD(false);
 
-  // Arrived at next node
   if(tEdgeT>=1.0){
     tNode=tNextNode;jCool=.45;updateSwitchHUD(false);
     const nc=tNode%NX,nr=Math.floor(tNode/NX);
@@ -1134,62 +1083,27 @@ function physics(dt){
     if(!chosen){tNextNode=nid(Math.max(0,Math.min(GW,nc-DIR_VEC[tFacing][0])),Math.max(0,Math.min(GH,nr-DIR_VEC[tFacing][1])));tFacing=(tFacing+2)%4;}
     else{tNextNode=chosen.nodeId;tFacing=chosen.dir;}
     tEdgeT=0;setSW(0);
-    // Arrivals
-    if(MS.active)checkArrival(nc,nr);
+    checkArrival(nc,nr);
     checkPickups(nc,nr);
   }
-}
-
-function checkArrival(col,row){
-  const idx=ST_POS.findIndex(([sc,sr])=>sc===col&&sr===row);
-  if(idx<0)return;
-  const c=MS.carrying;
-  if(!c)return;
-  if(!c.carrying&&idx===MS.fromSt)doPickup();
-  else if(c.carrying&&idx===MS.toSt)doDeliver();
-}
-
-function checkPickups(col,row){
-  coinMeshes.forEach(c=>{
-    if(!c.collected&&c.c===col&&c.r===row){
-      c.collected=true;scene.remove(c.m);GS.coins++;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
-    }
-  });
-  puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});
 }
 
 // ═══════════════════════════════════════════
 //  RENDERING
 // ═══════════════════════════════════════════
-// Smooth tilt target (lerped to avoid snapping)
-let trolleyTiltX=0, trolleyTiltZ=0;
-
 function moveTrolley(){
-  const nc=tNode%NX, nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr), p1=npos(nnc,nnr);
+  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr),p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
-  const py=p0.y+(p1.y-p0.y)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
 
-  trolley.position.set(px, py+.35, pz);
+  trolley.position.set(px,.35,pz);
+  trolley.rotation.x=0;trolley.rotation.z=0;
 
-  // Direction vector (world space, including Y rise)
-  const dx=p1.x-p0.x, dy=p1.y-p0.y, dz=p1.z-p0.z;
-  const hlen=Math.sqrt(dx*dx+dz*dz); // horizontal length
-
-  // Yaw: horizontal facing direction
-  if(hlen>0.01) trolley.rotation.y=Math.atan2(dx,dz);
-
-  // Pitch: tilt forward/back along slope, in the trolley's local X axis
-  // atan2 gives the true slope angle regardless of horizontal direction
-  const pitchAngle=Math.atan2(dy, hlen);
-  // Smooth the pitch to avoid jitter at node transitions
-  trolleyTiltX+=(pitchAngle-trolleyTiltX)*0.15;
-  trolley.rotation.x=trolleyTiltX;
-
-  // No Z roll — keeps trolley upright and always visible
-  trolley.rotation.z=0;
+  const dx=p1.x-p0.x,dz=p1.z-p0.z;
+  const hlen=Math.sqrt(dx*dx+dz*dz);
+  if(hlen>0.01)trolley.rotation.y=Math.atan2(dx,dz);
 
   trolley.visible=GS.inv>0?Math.floor(Date.now()/100)%2===0:true;
   if(pkgBox.visible)pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
@@ -1197,64 +1111,52 @@ function moveTrolley(){
 }
 
 let camInit=false;
-// Smooth camera target position (lerped separately to be extra smooth)
 const camTargetPos=new THREE.Vector3();
 const camLookTarget=new THREE.Vector3();
 
 function moveCam(){
-  const nc=tNode%NX, nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr), p1=npos(nnc,nnr);
+  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr),p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
-  const py=p0.y+(p1.y-p0.y)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
 
-  // Forward direction (horizontal only for cam offset)
-  const dx=p1.x-p0.x, dz=p1.z-p0.z;
+  const dx=p1.x-p0.x,dz=p1.z-p0.z;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
-  const fdx=dx/hlen, fdz=dz/hlen;
+  const fdx=dx/hlen,fdz=dz/hlen;
 
-  // Camera sits behind trolley, well above terrain
-  const camBack=13, camUp=9;
+  const camBack=13,camUp=9;
   const sh=GS.shake;
-  const tx=px - fdx*camBack + (Math.random()-.5)*sh*.1;
-  const ty=py + camUp       + (Math.random()-.5)*sh*.06;
-  const tz=pz - fdz*camBack + (Math.random()-.5)*sh*.1;
+  const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
+  const ty=camUp+(Math.random()-.5)*sh*.06;
+  const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
   GS.shake*=.82;
 
-  // Prevent camera from going below a minimum height above terrain
-  const minCamY=py+4;
-  const finalTy=Math.max(ty, minCamY);
-
   if(!camInit){
-    camera.position.set(tx,finalTy,tz);
-    camTargetPos.set(tx,finalTy,tz);
+    camera.position.set(tx,ty,tz);
+    camTargetPos.set(tx,ty,tz);
     camInit=true;
-  } else {
-    camTargetPos.set(tx,finalTy,tz);
+  }else{
+    camTargetPos.set(tx,ty,tz);
     camera.position.lerp(camTargetPos,.12);
   }
-
-  // Look slightly ahead of trolley, at trolley height
-  camLookTarget.set(px+fdx*3, py+1.8, pz+fdz*3);
+  camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
   camera.lookAt(camLookTarget);
 }
 
 let pumpAngV=0;
 function animTrolley(dt){
   pumpAngV+=GS.speed*1.4*dt;
-  pumpAng=pumpAngV; // keep in sync (used for pkgBox bob)
+  pumpAng=pumpAngV;
   if(pumpGrp)pumpGrp.rotation.x=Math.sin(pumpAngV)*.38;
   const ch=trolley.getObjectByName('child');
   if(ch){
     const la=ch.getObjectByName('la'),ra=ch.getObjectByName('ra');
     if(la&&ra){const sw=Math.sin(pumpAngV)*.44*Math.min(GS.speed/5,1);la.rotation.x=sw;ra.rotation.x=-sw;}
   }
-  // Pulse the beacon so trolley is always visible
   const pulse=0.7+Math.sin(Date.now()*.006)*0.3;
-  beacon.material.color.setRGB(1, 0.2+pulse*0.3, 0.1);
+  beacon.material.color.setRGB(1,0.2+pulse*0.3,0.1);
   trolleyLight.intensity=2.0+pulse*0.8;
-
   stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*(i%2===0?1.1:-1.1);});
 }
 
@@ -1276,38 +1178,59 @@ function updHUD(){
 const mmCtx=document.getElementById('mm-cv').getContext('2d');
 const MM=148,mmPad=5;
 function mmP(c,r){return{x:mmPad+(c/GW)*(MM-mmPad*2),y:mmPad+(r/GH)*(MM-mmPad*2)};}
+
 function drawMM(){
   mmCtx.clearRect(0,0,MM,MM);
   // Grid
   mmCtx.strokeStyle='rgba(255,200,80,0.1)';mmCtx.lineWidth=.5;
   for(let c=0;c<=GW;c++){const{x}=mmP(c,0);mmCtx.beginPath();mmCtx.moveTo(x,mmPad);mmCtx.lineTo(x,MM-mmPad);mmCtx.stroke();}
   for(let r=0;r<=GH;r++){const{y}=mmP(0,r);mmCtx.beginPath();mmCtx.moveTo(mmPad,y);mmCtx.lineTo(MM-mmPad,y);mmCtx.stroke();}
-  // Elevation hint (color coded)
-  for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    const y=nodeY[r*NX+c];const t=(y+6)/12;
-    if(Math.abs(y)>.5){const{x:px,y:py}=mmP(c,r);mmCtx.beginPath();mmCtx.arc(px,py,1.2,0,Math.PI*2);mmCtx.fillStyle=y>0?`rgba(255,100,30,${t*.4})`:`rgba(30,100,255,${(1-t)*.3})`;mmCtx.fill();}
-  }
+
   // Stations
   ST_POS.forEach(([sc,sr],i)=>{
     const{x,y}=mmP(sc,sr);
     mmCtx.beginPath();mmCtx.arc(x,y,3.5,0,Math.PI*2);
     let col='rgba(255,255,255,0.22)';
     if(MS.carrying&&i===MS.fromSt&&!MS.carrying.carrying)col='#ffee00';
-    else if(MS.carrying&&i===MS.toSt&&MS.carrying.carrying)col=MS.carrying.isVip?'#ff88ee':'#44ccff';
+    else if(MS.carrying&&i===MS.toSt&&MS.carrying.carrying)col=MS.carrying.isVip?'#ffd700':'#44ccff';
     mmCtx.fillStyle=col;mmCtx.fill();
   });
-  // Choice marker destinations
+
+  // Choice dots — animated glow
   if(MS.choosing&&MS.pendingChoices){
-    MS.pendingChoices.forEach(ch=>{
-      const [sc,sr]=ST_POS[ch.to];
+    const t=Date.now()/1000;
+    MS.pendingChoices.forEach((ch,idx)=>{
+      const[sc,sr]=ST_POS[ch.to];
       const{x,y}=mmP(sc,sr);
       const isVip=ch.pkg.tier==='vip';
-      mmCtx.beginPath();mmCtx.arc(x,y,5,0,Math.PI*2);
-      mmCtx.fillStyle=isVip?'rgba(255,80,200,0.8)':'rgba(68,170,255,0.7)';mmCtx.fill();
-      mmCtx.beginPath();mmCtx.arc(x,y,5,0,Math.PI*2);
-      mmCtx.strokeStyle='#fff';mmCtx.lineWidth=1;mmCtx.stroke();
+      const pulse=0.5+Math.sin(t*3+idx)*0.5;
+
+      // Outer glow ring
+      const r=isVip?8:6;
+      const gradient=mmCtx.createRadialGradient(x,y,0,x,y,r);
+      if(isVip){
+        gradient.addColorStop(0,`rgba(255,220,0,${0.5+pulse*0.5})`);
+        gradient.addColorStop(1,'rgba(255,180,0,0)');
+      }else{
+        gradient.addColorStop(0,`rgba(68,170,255,${0.4+pulse*0.4})`);
+        gradient.addColorStop(1,'rgba(30,100,255,0)');
+      }
+      mmCtx.beginPath();mmCtx.arc(x,y,r,0,Math.PI*2);
+      mmCtx.fillStyle=gradient;mmCtx.fill();
+
+      // Core dot
+      mmCtx.beginPath();mmCtx.arc(x,y,isVip?4.5:3.5,0,Math.PI*2);
+      mmCtx.fillStyle=isVip?`rgba(255,220,0,${0.8+pulse*0.2})`:`rgba(68,170,255,${0.7+pulse*0.3})`;
+      mmCtx.fill();
+
+      // White center spark for VIP
+      if(isVip){
+        mmCtx.beginPath();mmCtx.arc(x,y,1.5,0,Math.PI*2);
+        mmCtx.fillStyle='rgba(255,255,200,0.9)';mmCtx.fill();
+      }
     });
   }
+
   // Trolley
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
@@ -1322,21 +1245,20 @@ function drawMM(){
 // ═══════════════════════════════════════════
 function startGame(){
   ['scr-start','scr-fail','scr-win','scr-keys'].forEach(s=>document.getElementById(s).style.display='none');
-  document.getElementById('pkg-choice').style.display='none';
+  document.getElementById('map-hint').style.display='none';
   document.getElementById('streak-hud').style.display='none';
   clearChoiceMarkers();
   Object.assign(GS,{speed:0,score:0,coins:0,energy:60,cd:0,braking:false,shake:0,inv:0,activePU:null});
   document.getElementById('pu-bar').style.display='none';
   setSW(0);camInit=false;
-  // Start at center of 12x12 grid
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
-  const sp=npos(6,6);trolley.position.set(sp.x,sp.y+.35,sp.z);
+  const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
   buildWorld();
   gameRunning=true;
   startMissions();
 }
 
-// Mobile
+// Mobile controls
 document.getElementById('mob-pump').addEventListener('touchstart',e=>{e.preventDefault();if(!pumpHeld){pumpPressed=true;pumpHeld=true;}});
 document.getElementById('mob-pump').addEventListener('touchend',()=>{pumpHeld=false;});
 document.getElementById('mob-brake').addEventListener('touchstart',e=>{e.preventDefault();keys.brake=true;});
@@ -1351,10 +1273,10 @@ const clock=new THREE.Clock();let gt=0;
 (function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(clock.getDelta(),.05);gt+=dt;
-  if(gameRunning&&!MS.choosing){
+  if(gameRunning){
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
-    updPUs(dt,gt);updateMission(dt);updSlope(dt);updateChoiceMarkers(gt);drawMM();
+    updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);drawMM();
   }
   moveCam();updP(dt);
   sunLight.target.position.copy(trolley.position);

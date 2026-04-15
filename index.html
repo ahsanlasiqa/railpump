@@ -280,24 +280,26 @@ const nid=(c,r)=>r*NX+c;
 const npos=(c,r)=>new THREE.Vector3(OX+c*CELL, nodeY[r*NX+c]||0, OZ+r*CELL);
 
 // ── Elevation map — gentle hills across the grid ──
-// Each node gets a Y offset. We use a smooth sin/cos blend.
+// Amplitudes kept small so slopes stay navigable and camera stays clear
 const nodeY=new Float32Array(NX*NZ);
 (()=>{
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     const nx=c/GW, nz=r/GH;
-    // Several overlapping sine waves → organic hills
-    const y = Math.sin(nx*Math.PI*2.5)*3.5
-             + Math.sin(nz*Math.PI*2)*3
-             + Math.cos((nx+nz)*Math.PI*1.8)*2
-             + Math.sin(nx*Math.PI*4+1)*1.2;
+    // Smooth, gentle rolling hills — max total ±2.5 units
+    const y = Math.sin(nx*Math.PI*2)*1.2
+             + Math.sin(nz*Math.PI*1.8)*1.0
+             + Math.cos((nx+nz)*Math.PI*1.4)*0.7
+             + Math.sin(nx*Math.PI*3.2+0.8)*0.4;
     nodeY[r*NX+c]=y;
   }
 })();
 
-// Slope at edge between two nodes (rise/run)
+// Slope: sin(angle) = rise / 3D-length. Returns value -1..1
 function edgeSlope(nA,nB){
   const yA=nodeY[nA]||0, yB=nodeY[nB]||0;
-  return (yB-yA)/CELL;
+  const rise=yB-yA;
+  const dist3d=Math.sqrt(CELL*CELL+rise*rise);
+  return rise/dist3d; // sine of slope angle, clamped naturally
 }
 
 // ═══════════════════════════════════════════
@@ -1069,7 +1071,7 @@ let lastSlopeShow=0;
 function updSlope(dt){
   const sl=edgeSlope(tNode,tNextNode);
   const el=document.getElementById('slope-txt');
-  if(Math.abs(sl)>.08){
+  if(Math.abs(sl)>.03){  // gentler threshold for smaller hills
     el.style.opacity='1';
     if(sl>0){el.textContent='⛰️ UPHILL — Pump harder!';el.style.background='rgba(255,80,30,0.4)';el.style.color='#ff9966';}
     else{el.textContent='⬇️ DOWNHILL — Brake!';el.style.background='rgba(30,120,220,0.4)';el.style.color='#66aaff';}
@@ -1086,23 +1088,24 @@ let pumpAng=0;
 function doPump(){
   if(!gameRunning||GS.cd>0)return;
   const sl=edgeSlope(tNode,tNextNode);
-  const cost=6+Math.max(0,sl*30); // costs more uphill
+  const cost=6+Math.max(0,sl*25); // costs more uphill
   if(GS.energy<cost*.3)return;
   const boost=GS.activePU?.type.id==='speed'?1.5:1.0;
   GS.energy=Math.max(0,GS.energy-cost*.55);
-  // Uphill slows, downhill helps
-  const slopeBoost=1-Math.max(0,sl)*1.5;
-  GS.speed=Math.min(GS.speed+2.0*boost*Math.max(0.3,slopeBoost),18);
-  GS.cd=.16;
+  // Uphill: reduced boost. Downhill: slight bonus
+  const slopeBoost=1-Math.max(0,sl)*1.2+Math.max(0,-sl)*0.3;
+  GS.speed=Math.min(GS.speed+2.2*boost*Math.max(0.4,slopeBoost),18);
+  GS.cd=.15;
   spawnP(trolley.position);
   flash('f-pump',130);
 }
 
 function physics(dt){
-  // Slope-based gravity & drag
   const sl=edgeSlope(tNode,tNextNode);
-  const gravity=-sl*5.5; // downhill accelerates, uphill brakes
-  const drag=GS.braking?6:(.35+Math.max(0,sl)*3); // more drag uphill
+  // Gravity: stronger effect so hills feel significant
+  const gravity=-sl*8.0; // downhill speeds up, uphill slows
+  // Drag: normal flat drag + extra uphill resistance
+  const drag=GS.braking?6:(.3+Math.max(0,sl)*4);
   GS.speed=Math.max(0,Math.min(GS.speed+gravity*dt-drag*dt,18));
   GS.cd=Math.max(0,GS.cd-dt);
   GS.energy=Math.min(GS.maxE,GS.energy+3.5*dt);
@@ -1158,50 +1161,100 @@ function checkPickups(col,row){
 // ═══════════════════════════════════════════
 //  RENDERING
 // ═══════════════════════════════════════════
-let camInit=false;
+// Smooth tilt target (lerped to avoid snapping)
+let trolleyTiltX=0, trolleyTiltZ=0;
+
 function moveTrolley(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
+  const nc=tNode%NX, nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr), p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
   const py=p0.y+(p1.y-p0.y)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
-  trolley.position.set(px,py+.35,pz);
-  const dx=p1.x-p0.x,dz=p1.z-p0.z;
-  if(Math.abs(dx)>.01||Math.abs(dz)>.01)trolley.rotation.y=Math.atan2(dx,dz);
-  // Tilt trolley along slope
-  const sl=edgeSlope(tNode,tNextNode);
-  trolley.rotation.z=-sl*0.4;
+
+  trolley.position.set(px, py+.35, pz);
+
+  // Direction vector (world space, including Y rise)
+  const dx=p1.x-p0.x, dy=p1.y-p0.y, dz=p1.z-p0.z;
+  const hlen=Math.sqrt(dx*dx+dz*dz); // horizontal length
+
+  // Yaw: horizontal facing direction
+  if(hlen>0.01) trolley.rotation.y=Math.atan2(dx,dz);
+
+  // Pitch: tilt forward/back along slope, in the trolley's local X axis
+  // atan2 gives the true slope angle regardless of horizontal direction
+  const pitchAngle=Math.atan2(dy, hlen);
+  // Smooth the pitch to avoid jitter at node transitions
+  trolleyTiltX+=(pitchAngle-trolleyTiltX)*0.15;
+  trolley.rotation.x=trolleyTiltX;
+
+  // No Z roll — keeps trolley upright and always visible
+  trolley.rotation.z=0;
+
   trolley.visible=GS.inv>0?Math.floor(Date.now()/100)%2===0:true;
   if(pkgBox.visible)pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
   if(vipGlow.visible)vipGlow.rotation.y+=.04;
 }
 
+let camInit=false;
+// Smooth camera target position (lerped separately to be extra smooth)
+const camTargetPos=new THREE.Vector3();
+const camLookTarget=new THREE.Vector3();
+
 function moveCam(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
+  const nc=tNode%NX, nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr), p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
   const py=p0.y+(p1.y-p0.y)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
-  const dx=p1.x-p0.x,dz=p1.z-p0.z,len=Math.sqrt(dx*dx+dz*dz)||1;
+
+  // Forward direction (horizontal only for cam offset)
+  const dx=p1.x-p0.x, dz=p1.z-p0.z;
+  const hlen=Math.sqrt(dx*dx+dz*dz)||1;
+  const fdx=dx/hlen, fdz=dz/hlen;
+
+  // Camera sits behind trolley, well above terrain
+  const camBack=13, camUp=9;
   const sh=GS.shake;
-  const tp=new THREE.Vector3(
-    px-(dx/len)*14+(Math.random()-.5)*sh*.12,
-    py+11+(Math.random()-.5)*sh*.07,
-    pz-(dz/len)*14+(Math.random()-.5)*sh*.12
-  );
-  GS.shake*=.83;
-  if(!camInit){camera.position.copy(tp);camInit=true;}else camera.position.lerp(tp,.13);
-  camera.lookAt(px,py+1.5,pz);
+  const tx=px - fdx*camBack + (Math.random()-.5)*sh*.1;
+  const ty=py + camUp       + (Math.random()-.5)*sh*.06;
+  const tz=pz - fdz*camBack + (Math.random()-.5)*sh*.1;
+  GS.shake*=.82;
+
+  // Prevent camera from going below a minimum height above terrain
+  const minCamY=py+4;
+  const finalTy=Math.max(ty, minCamY);
+
+  if(!camInit){
+    camera.position.set(tx,finalTy,tz);
+    camTargetPos.set(tx,finalTy,tz);
+    camInit=true;
+  } else {
+    camTargetPos.set(tx,finalTy,tz);
+    camera.position.lerp(camTargetPos,.12);
+  }
+
+  // Look slightly ahead of trolley, at trolley height
+  camLookTarget.set(px+fdx*3, py+1.8, pz+fdz*3);
+  camera.lookAt(camLookTarget);
 }
 
 let pumpAngV=0;
 function animTrolley(dt){
   pumpAngV+=GS.speed*1.4*dt;
+  pumpAng=pumpAngV; // keep in sync (used for pkgBox bob)
   if(pumpGrp)pumpGrp.rotation.x=Math.sin(pumpAngV)*.38;
   const ch=trolley.getObjectByName('child');
-  if(ch){const la=ch.getObjectByName('la'),ra=ch.getObjectByName('ra');if(la&&ra){const sw=Math.sin(pumpAngV)*.44*Math.min(GS.speed/5,1);la.rotation.x=sw;ra.rotation.x=-sw;}}
+  if(ch){
+    const la=ch.getObjectByName('la'),ra=ch.getObjectByName('ra');
+    if(la&&ra){const sw=Math.sin(pumpAngV)*.44*Math.min(GS.speed/5,1);la.rotation.x=sw;ra.rotation.x=-sw;}
+  }
+  // Pulse the beacon so trolley is always visible
+  const pulse=0.7+Math.sin(Date.now()*.006)*0.3;
+  beacon.material.color.setRGB(1, 0.2+pulse*0.3, 0.1);
+  trolleyLight.intensity=2.0+pulse*0.8;
+
   stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*(i%2===0?1.1:-1.1);});
 }
 

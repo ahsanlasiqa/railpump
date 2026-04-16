@@ -308,7 +308,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 // ═══════════════════════════════════════════
 //  GRID — 12×12  FLAT CITY (no elevation)
 // ═══════════════════════════════════════════
-const GW=15, GH=15, CELL=15;
+const GW=12, GH=12, CELL=18;
 const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
 const nid=(c,r)=>r*NX+c;
@@ -604,14 +604,13 @@ function buildWorld(){
     lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
   }
 
-// ── Japanese Urban Buildings ──
-  const bldPal = [0x1a1a1a, 0x2d2d2d, 0x444444, 0xdddddd]; // Charcoal, Slate, Concrete
-  const neonPal = [0xff2d55, 0x00ffcc, 0xffd700, 0xff5e00, 0x0077ff]; // Neon Pink, Cyan, Gold, Orange, Blue
+// ── Harajuku Aesthetic ──
+  // Vibrant pastels and pop colors for the buildings
+  const bldPal = [0xffd1dc, 0xb2e2f2, 0xd0f0c0, 0xfdfd96, 0xeeeeee, 0x333333]; 
+  const neonPal = [0xff00ff, 0x00ffff, 0xffff00, 0xff3300, 0x7700ff]; // Harajuku Neons
   
-  // Materials
-  const winM = new THREE.MeshLambertMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 0.6 });
-  const winMB = new THREE.MeshLambertMaterial({ color: 0xaaccff, emissive: 0xaaccff, emissiveIntensity: 0.4 });
-  const neonMat = (col) => new THREE.MeshLambertMaterial({ color: col, emissive: col, emissiveIntensity: 1.5 });
+  const winM = new THREE.MeshLambertMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 0.8 });
+  const winMB = new THREE.MeshLambertMaterial({ color: 0xaaccff, emissive: 0xaaccff, emissiveIntensity: 0.5 });
 
   for (let r = 0; r < GH; r++) {
     for (let c = 0; c < GW; c++) {
@@ -622,88 +621,66 @@ function buildWorld(){
       bldGroup.position.set(bx, 0, bz);
       worldGrp.add(bldGroup);
 
-      const baseWidth = CELL - 6;
-      const baseDepth = CELL - 6;
-      const totalFloors = 3 + Math.floor(rng() * 10);
-      const floorH = 2.2;
-      const bldColor = bldPal[Math.floor(rng() * bldPal.length)];
-      const bodyMat = new THREE.MeshStandardMaterial({ color: bldColor, roughness: 0.6, metalness: 0.2 });
+      // Building Settings
+      const bw = CELL - 6, bd = CELL - 6;
+      const floors = 2 + Math.floor(rng() * 6);
+      const floorH = 2.5;
+      const bldCol = bldPal[Math.floor(rng() * bldPal.length)];
+      
+      // 1. Storefront (Ground Floor - usually different color/brighter)
+      const shopMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+      const ground = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.2, floorH, bd + 0.2), shopMat);
+      ground.position.y = floorH / 2;
+      ground.castShadow = true; ground.receiveShadow = true;
+      bldGroup.add(ground);
 
-      let curBottom = 0;
-      let curW = baseWidth;
-      let curD = baseDepth;
-      const numTiers = totalFloors > 6 ? 2 + Math.floor(rng() * 2) : 1;
-      const floorsPerTier = Math.floor(totalFloors / numTiers);
+      // Storefront Sign (A big glowing panel above the door)
+      const signCol = neonPal[Math.floor(rng() * neonPal.length)];
+      const shopSign = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.8, 0.6, 0.2), new THREE.MeshLambertMaterial({color: signCol, emissive: signCol, emissiveIntensity: 1.2}));
+      shopSign.position.set(0, floorH - 0.4, bd / 2 + 0.15);
+      bldGroup.add(shopSign);
 
-      for (let t = 0; t < numTiers; t++) {
-        const tierH = floorsPerTier * floorH;
+      // 2. Main Building Body
+      const bodyH = (floors - 1) * floorH;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bodyH, bd), new THREE.MeshStandardMaterial({color: bldCol}));
+      body.position.y = floorH + bodyH / 2;
+      body.castShadow = true; body.receiveShadow = true;
+      bldGroup.add(body);
+
+      // 3. Windows & Small Balconies
+      for (let f = 1; f < floors; f++) {
+        const fy = f * floorH + floorH/2;
         
-        // 1. Building Tier
-        const body = new THREE.Mesh(new THREE.BoxGeometry(curW, tierH, curD), bodyMat);
-        body.position.set(0, curBottom + tierH / 2, 0);
-        body.castShadow = true; body.receiveShadow = true;
-        bldGroup.add(body);
-
-        // 2. Overhang (Small architectural rim)
-        const rim = new THREE.Mesh(new THREE.BoxGeometry(curW + 0.4, 0.15, curD + 0.4), bodyMat);
-        rim.position.set(0, curBottom + tierH, 0);
-        bldGroup.add(rim);
-
-        // 3. Windows
-        for (let f = 0; f < floorsPerTier; f++) {
-          const winY = curBottom + f * floorH + 1.1;
-          for (let w = -1; w <= 1; w++) {
-            if (rng() < 0.2) continue; // Dark windows
-            const mat = rng() > 0.5 ? winM : winMB;
-            const wGeo = new THREE.PlaneGeometry(0.4, 0.8);
-            
-            // Side Windows
-            const w1 = new THREE.Mesh(wGeo, mat);
-            w1.position.set(w * (curW/3.5), winY, curD/2 + 0.02);
-            bldGroup.add(w1);
-            
-            const w2 = w1.clone();
-            w2.position.z = -curD/2 - 0.02; w2.rotation.y = Math.PI;
-            bldGroup.add(w2);
+        // Windows
+        for (let s = -1; s <= 1; s += 2) { // Front and Back
+          const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.2), rng() > .5 ? winM : winMB);
+          win.position.set(0, fy, s * (bd / 2 + 0.01));
+          if(s < 0) win.rotation.y = Math.PI;
+          bldGroup.add(win);
+          
+          // Tiny Balcony (Eclectic Harajuku vibe)
+          if(rng() > 0.6) {
+            const balc = new THREE.Mesh(new THREE.BoxGeometry(bw*0.7, 0.1, 0.6), new THREE.MeshStandardMaterial({color: 0x555555}));
+            balc.position.set(0, fy - 0.7, s * (bd / 2 + 0.3));
+            bldGroup.add(balc);
           }
         }
-
-        // 4. Neon "Blade" Signs (Vertical signs on side)
-        if (rng() > 0.4) {
-          const signCol = neonPal[Math.floor(rng() * neonPal.length)];
-          const sH = tierH * 0.7;
-          const sign = new THREE.Mesh(new THREE.BoxGeometry(0.1, sH, 0.8), neonMat(signCol));
-          const side = rng() > 0.5 ? 1 : -1;
-          sign.position.set(side * (curW/2 + 0.3), curBottom + tierH/2, (rng()-0.5)*curD*0.5);
-          bldGroup.add(sign);
-        }
-
-        curBottom += tierH;
-        curW *= 0.8;
-        curD *= 0.8;
       }
 
-      // 5. Ground Floor: Vending Machines
-      for (let i = 0; i < 2; i++) {
-        if (rng() > 0.3) {
-          const vmCol = rng() > 0.5 ? 0xff0000 : 0x0055ff; // Red or Blue machines
-          const vm = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.4), new THREE.MeshStandardMaterial({color: 0xeeeeee}));
-          const vFace = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.8), neonMat(vmCol));
-          vFace.position.set(0, 0.1, 0.21);
-          vm.add(vFace);
-          
-          const angle = rng() * Math.PI * 2;
-          vm.position.set(Math.cos(angle)*(baseWidth/2 + 0.3), 0.6, Math.sin(angle)*(baseDepth/2 + 0.3));
-          vm.rotation.y = angle + Math.PI/2;
-          bldGroup.add(vm);
-        }
+      // 4. Vertical "Fashion" Banners
+      if (rng() > 0.3) {
+        const bannerCol = neonPal[Math.floor(rng() * neonPal.length)];
+        const banner = new THREE.Mesh(new THREE.BoxGeometry(0.1, floorH * 2, 1.2), new THREE.MeshLambertMaterial({color: bannerCol, emissive: bannerCol, emissiveIntensity: 1.5}));
+        banner.position.set(bw/2 + 0.3, floorH * 2.5, (rng()-0.5) * bd * 0.5);
+        bldGroup.add(banner);
       }
 
-      // 6. Roof Antennas
+      // 5. Roof Clutter (Water tanks, Antennas)
+      const roofY = floors * floorH;
       if (rng() > 0.5) {
-        const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 4), bodyMat);
-        ant.position.set((rng()-0.5)*curW, curBottom + 1, (rng()-0.5)*curD);
-        bldGroup.add(ant);
+        const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.2, 8), new THREE.MeshStandardMaterial({color: 0xaaaaaa}));
+        tank.position.set((rng()-0.5)*2, roofY + 0.6, (rng()-0.5)*2);
+        bldGroup.add(tank);
       }
     }
   }

@@ -604,99 +604,32 @@ function buildWorld(){
     lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
   }
 
-import * as THREE from 'three';
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-
-// --- Configuration & Palettes ---
-const bldPal = [0x2a3050, 0x303060, 0x3a2840, 0x284038, 0x403828];
-const windowColor = 0xffffcc;
-
-function createCity(gridW, gridH, cellSize) {
-    const worldGrp = new THREE.Group();
-    const rng = Math.random;
-
-    for (let r = 0; r < gridH; r++) {
-        for (let c = 0; c < gridW; c++) {
-            const bx = (c - gridW / 2) * cellSize;
-            const bz = (r - gridH / 2) * cellSize;
-            
-            // Generate a procedurally varied building
-            const building = createBuilding(bx, bz, cellSize * 0.7, rng);
-            worldGrp.add(building);
-        }
+  // ── Buildings ──
+  const bldPal=[0x2a3050,0x303060,0x3a2840,0x284038,0x403828,0x2a3550,0x383060];
+  const acPal=[0x3a66cc,0x3acc66,0xcc663a,0x663acc,0xcc3a66];
+  const winM=new THREE.MeshBasicMaterial({color:0xffffcc,transparent:true,opacity:.75});
+  const winMB=new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:.75});
+  for(let r=0;r<GH;r++) for(let c=0;c<GW;c++){
+    const bx=OX+c*CELL+CELL/2,bz=OZ+r*CELL+CELL/2;
+    const bw=CELL-5.5,bd=CELL-5.5;
+    const floors=1+Math.floor(rng()*5);
+    const bh=floors*2.4+rng()*1.5;
+    const mat=new THREE.MeshStandardMaterial({color:bldPal[Math.floor(rng()*bldPal.length)],roughness:.8});
+    const bld=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),mat);
+    bld.position.set(bx,bh/2,bz);bld.castShadow=true;bld.receiveShadow=true;worldGrp.add(bld);
+    if(rng()>.5){
+      const ac=new THREE.MeshStandardMaterial({color:acPal[Math.floor(rng()*acPal.length)],roughness:.6,emissive:new THREE.Color(acPal[Math.floor(rng()*acPal.length)]),emissiveIntensity:.1});
+      const rf=new THREE.Mesh(new THREE.BoxGeometry(bw*.65,.5,bd*.65),ac);rf.position.set(bx,bh+.3,bz);worldGrp.add(rf);
     }
-    return worldGrp;
-}
-
-function createBuilding(x, z, baseSize, rng) {
-    const buildingParts = [];
-    const windowParts = [];
-    
-    const floors = 2 + Math.floor(rng() * 8);
-    const floorHeight = 2.4;
-    const bldColor = bldPal[Math.floor(rng() * bldPal.length)];
-    
-    // 1. Create the Body (using setbacks)
-    let currentWidth = baseSize;
-    let currentDepth = baseSize;
-    let currentBottom = 0;
-
-    // Split building into 1-3 "tiers"
-    const tiers = 1 + Math.floor(rng() * 2); 
-    const floorsPerTier = Math.floor(floors / tiers);
-
-    for (let t = 0; t < tiers; t++) {
-        const tierHeight = floorsPerTier * floorHeight;
-        const boxGeo = new THREE.BoxGeometry(currentWidth, tierHeight, currentDepth);
-        boxGeo.translate(x, currentBottom + tierHeight / 2, z);
-        buildingParts.push(boxGeo);
-
-        // 2. Add Windows for this tier
-        for (let f = 0; f < floorsPerTier; f++) {
-            const winY = currentBottom + (f * floorHeight) + (floorHeight / 2);
-            
-            // Simple window logic (one on each face)
-            const winGeo = new THREE.PlaneGeometry(0.6, 1.0);
-            
-            // Front/Back
-            for (let i = -1; i <= 1; i += 1) {
-                if (i === 0) continue;
-                const w1 = winGeo.clone();
-                w1.rotateY(i > 0 ? 0 : Math.PI);
-                w1.translate(x + (i * currentWidth / 2.01), winY, z);
-                windowParts.push(w1);
-                
-                const w2 = winGeo.clone();
-                w2.rotateY(i > 0 ? Math.PI / 2 : -Math.PI / 2);
-                w2.translate(x, winY, z + (i * currentDepth / 2.01));
-                windowParts.push(w2);
-            }
-        }
-
-        currentBottom += tierHeight;
-        currentWidth *= 0.8; // Make next tier thinner
-        currentDepth *= 0.8;
+    for(let f=1;f<Math.min(floors,4);f++){
+      for(let w=0;w<3;w++){
+        const wn=new THREE.Mesh(new THREE.PlaneGeometry(.52,.72),rng()>.5?winM:winMB);
+        wn.position.set(bx-bw/2-.01,f*2.4+.7,bz-bd/3+w*bd/3);wn.rotation.y=Math.PI/2;worldGrp.add(wn);
+        const wn2=wn.clone();wn2.position.x=bx+bw/2+.01;wn2.rotation.y=-Math.PI/2;worldGrp.add(wn2);
+      }
     }
+  }
 
-    // 3. Merge and Create Meshes
-    const mergedBldGeo = BufferGeometryUtils.mergeGeometries(buildingParts);
-    const bldMesh = new THREE.Mesh(
-        mergedBldGeo, 
-        new THREE.MeshStandardMaterial({ color: bldColor, roughness: 0.7 })
-    );
-    bldMesh.castShadow = true;
-    bldMesh.receiveShadow = true;
-
-    const mergedWinGeo = BufferGeometryUtils.mergeGeometries(windowParts);
-    const winMesh = new THREE.Mesh(
-        mergedWinGeo,
-        new THREE.MeshLambertMaterial({ color: windowColor, emissive: windowColor, emissiveIntensity: 0.5 })
-    );
-
-    const buildingGroup = new THREE.Group();
-    buildingGroup.add(bldMesh, winMesh);
-    return buildingGroup;
-}
   // ── Street lights ──
   const polM=new THREE.MeshStandardMaterial({color:0x88889a,metalness:.7,roughness:.4});
   const lampM2=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:new THREE.Color(0xffffaa),emissiveIntensity:1.8});
@@ -1338,7 +1271,7 @@ function updateNpcTrolleys(dt,gt){
 function checkNpcCollision(npc,nc,nr){
   const pc=tNode%NX,pr=Math.floor(tNode/NX);
   if(nc===pc&&nr===pr){
-    showNotif('👵 Granny in action! 🐢','#ffaa44');
+    showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
     GS.speed=Math.max(0,GS.speed*0.4);
     GS.shake=1.5;
   }

@@ -118,6 +118,34 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
+
+/* ── Bidding Dialog ── */
+#bid-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#bid-box{background:rgba(8,12,28,0.97);border:2px solid rgba(255,200,80,0.7);border-radius:18px;padding:22px 28px;width:min(380px,90vw);box-shadow:0 0 40px rgba(255,180,40,0.25);text-align:center;}
+#bid-title{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,220,120,0.7);margin-bottom:4px;}
+#bid-pkgname{font-size:20px;font-weight:bold;color:#ffe680;margin-bottom:2px;}
+#bid-sub{font-size:11px;color:rgba(255,220,150,0.55);margin-bottom:14px;}
+.bid-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.15);border-radius:9px;padding:8px 14px;margin-bottom:8px;}
+.bid-row-label{font-size:10px;color:rgba(255,220,150,0.6);text-transform:uppercase;letter-spacing:1px;}
+.bid-row-val{font-size:15px;font-weight:bold;color:#ffe680;}
+.bid-row-val.green{color:#44ffaa;}
+.bid-row-val.red{color:#ff6644;}
+#bid-slider-wrap{margin:12px 0 6px;}
+#bid-slider-label{font-size:10px;color:rgba(255,220,120,0.6);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;}
+#bid-slider{width:100%;accent-color:#ffe680;cursor:pointer;}
+#bid-preview{background:rgba(255,200,0,0.08);border:1.5px solid rgba(255,200,0,0.4);border-radius:10px;padding:9px 14px;margin:10px 0 14px;display:flex;justify-content:space-between;align-items:center;}
+#bid-prev-time{font-size:13px;color:#ff8866;}
+#bid-prev-reward{font-size:16px;font-weight:bold;color:#ffd700;text-shadow:0 0 8px rgba(255,210,0,0.6);}
+.bid-btns{display:flex;gap:10px;justify-content:center;}
+.bid-btn{padding:9px 24px;border:none;border-radius:30px;cursor:pointer;font-family:'Georgia',serif;font-size:12px;font-weight:bold;letter-spacing:1px;transition:transform .13s,box-shadow .13s;}
+#bid-accept{background:linear-gradient(135deg,#ffaa00,#ffe680);color:#080810;box-shadow:0 0 14px rgba(255,180,0,0.4);}
+#bid-accept:hover{transform:scale(1.05);box-shadow:0 0 22px rgba(255,180,0,0.7);}
+#bid-skip{background:rgba(255,255,255,0.07);color:rgba(255,220,150,0.7);border:1px solid rgba(255,200,80,0.25);}
+#bid-skip:hover{background:rgba(255,255,255,0.12);}
+#bid-countdown{font-size:9px;color:rgba(255,220,120,0.4);margin-top:8px;letter-spacing:1px;}
+
+/* ── NPC Trolley label ── */
+.npc-label{position:absolute;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -145,6 +173,36 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div id="mp-pkg">—</div>
   <div id="mp-bar-bg"><div id="mp-bar-fill"></div></div>
   <div id="mp-timer">⏱ 60s</div>
+</div>
+
+<!-- Bidding Dialog -->
+<div id="bid-overlay">
+  <div id="bid-box">
+    <div id="bid-title">🎲 Bid on this package?</div>
+    <div id="bid-pkgname">📦 Package Name</div>
+    <div id="bid-sub">Shorten your deadline — earn bigger rewards!</div>
+    <div class="bid-row">
+      <span class="bid-row-label">Current Time</span>
+      <span class="bid-row-val" id="bid-curtime">100s</span>
+    </div>
+    <div class="bid-row">
+      <span class="bid-row-label">Current Reward</span>
+      <span class="bid-row-val green" id="bid-curreward">+400</span>
+    </div>
+    <div id="bid-slider-wrap">
+      <div id="bid-slider-label">⏱ Commit to finish in: <span id="bid-slider-val">70s</span></div>
+      <input type="range" id="bid-slider" min="10" max="100" value="70">
+    </div>
+    <div id="bid-preview">
+      <span id="bid-prev-time">⏱ 70s remaining</span>
+      <span id="bid-prev-reward">🎁 +800</span>
+    </div>
+    <div class="bid-btns">
+      <button class="bid-btn" id="bid-accept" onclick="acceptBid()">✅ Accept Bid</button>
+      <button class="bid-btn" id="bid-skip" onclick="skipBid()">Skip →</button>
+    </div>
+    <div id="bid-countdown">Auto-skip in <span id="bid-cd-val">8</span>s</div>
+  </div>
 </div>
 
 <!-- Map hint: pick package from dots -->
@@ -932,6 +990,12 @@ function checkPickups(col,row){
 
 function doPickup(){
   const c=MS.carrying;
+  // Show bidding dialog before confirming pickup
+  showBidDialog(c);
+}
+
+function confirmPickup(){
+  const c=MS.carrying;
   c.carrying=true;
   pkgBox.visible=true;
   if(c.isVip){
@@ -951,11 +1015,96 @@ function doPickup(){
   showNotif(`${c.pkg.emoji} Picked up! → ${ST_NAMES[MS.toSt]}`,c.isVip?'#ffd700':'#44ffaa');
 }
 
+// ═══════════════════════════════════════════
+//  BIDDING SYSTEM
+// ═══════════════════════════════════════════
+let bidState={active:false,originalTimer:0,originalReward:0,cdTmr:null,cdVal:8};
+
+function calcBidReward(originalTimer,originalReward,bidTime){
+  // Ratio: shorter time = higher multiplier, capped at 4×
+  const ratio=originalTimer/Math.max(bidTime,5);
+  const mult=Math.min(4.0,ratio);
+  return Math.round(originalReward*mult);
+}
+
+function showBidDialog(c){
+  bidState.active=true;
+  bidState.originalTimer=c.timer;
+  // Base reward preview (same formula as doDeliver uses for full time)
+  bidState.originalReward=Math.floor(c.timer*c.pkg.bonus*8);
+
+  const slider=document.getElementById('bid-slider');
+  const maxT=Math.floor(c.timer);
+  const minT=Math.max(10,Math.floor(c.timer*0.25)); // minimum 25% of original
+  slider.min=minT;
+  slider.max=maxT;
+  slider.value=Math.floor(maxT*0.6); // default: 60% of original
+
+  document.getElementById('bid-pkgname').textContent=`${c.pkg.emoji} ${c.pkg.name}`;
+  document.getElementById('bid-sub').textContent=`→ ${ST_EMOJIS[MS.toSt]} ${ST_NAMES[MS.toSt]}`;
+  document.getElementById('bid-curtime').textContent=`${maxT}s`;
+  document.getElementById('bid-curreward').textContent=`+${bidState.originalReward}`;
+
+  updateBidPreview();
+
+  slider.oninput=updateBidPreview;
+
+  // Countdown auto-skip
+  bidState.cdVal=8;
+  document.getElementById('bid-cd-val').textContent=bidState.cdVal;
+  if(bidState.cdTmr)clearInterval(bidState.cdTmr);
+  bidState.cdTmr=setInterval(()=>{
+    bidState.cdVal--;
+    document.getElementById('bid-cd-val').textContent=bidState.cdVal;
+    if(bidState.cdVal<=0){clearInterval(bidState.cdTmr);skipBid();}
+  },1000);
+
+  document.getElementById('bid-overlay').style.display='flex';
+}
+
+function updateBidPreview(){
+  const slider=document.getElementById('bid-slider');
+  const bidTime=parseInt(slider.value);
+  const reward=calcBidReward(bidState.originalTimer,bidState.originalReward,bidTime);
+  const pctShort=Math.round((1-bidTime/bidState.originalTimer)*100);
+  document.getElementById('bid-slider-val').textContent=`${bidTime}s`;
+  document.getElementById('bid-prev-time').textContent=`⏱ ${bidTime}s remaining  (${pctShort}% faster)`;
+  document.getElementById('bid-prev-reward').textContent=`🎁 +${reward}`;
+  // Color preview based on risk
+  const riskFrac=bidTime/bidState.originalTimer;
+  document.getElementById('bid-prev-time').style.color=riskFrac<0.4?'#ff5533':riskFrac<0.6?'#ffaa33':'#88ffaa';
+}
+
+function acceptBid(){
+  if(!bidState.active)return;
+  clearInterval(bidState.cdTmr);
+  const bidTime=parseInt(document.getElementById('bid-slider').value);
+  const reward=calcBidReward(bidState.originalTimer,bidState.originalReward,bidTime);
+  // Apply bid: shorten timer, store bid reward multiplier
+  MS.carrying.timer=bidTime;
+  MS.carrying.maxT=bidTime;
+  MS.carrying.bidReward=reward; // override bonus calculation in doDeliver
+  bidState.active=false;
+  document.getElementById('bid-overlay').style.display='none';
+  showNotif(`🎲 Bid accepted! ${bidTime}s → +${reward}`,'#ffd700');
+  flash('f-vip',400);
+  confirmPickup();
+}
+
+function skipBid(){
+  if(!bidState.active)return;
+  clearInterval(bidState.cdTmr);
+  bidState.active=false;
+  document.getElementById('bid-overlay').style.display='none';
+  confirmPickup();
+}
+
 function doDeliver(){
   const c=MS.carrying;
   const saved=Math.max(0,c.timer);
   const mul=MS.streak>=3?1.5:MS.streak>=2?1.25:MS.streak>=1?1.1:1.0;
-  const bonus=Math.floor(saved*c.pkg.bonus*8*mul);
+  // Use bid reward if set, otherwise normal formula
+  const bonus=c.bidReward!=null?Math.floor(c.bidReward*mul):Math.floor(saved*c.pkg.bonus*8*mul);
   MS.timeSaved+=saved;MS.mScore+=bonus;GS.score+=bonus;
   MS.delivsDone++;MS.streak++;
   if(MS.streak>MS.bestStreak)MS.bestStreak=MS.streak;
@@ -971,15 +1120,179 @@ function doDeliver(){
   flash('f-drop',400);
   if(c.isVip)flash('f-vip',600);
   const streakTxt=MS.streak>1?` 🔥 ${MS.streak}×`:'';
-  showNotif(`🎉 +${bonus}${streakTxt}`,c.isVip?'#ffd700':'#44ffdd');
+  const bidTxt=c.bidReward!=null?' 🎲BID':'';
+  showNotif(`🎉 +${bonus}${bidTxt}${streakTxt}`,c.isVip?'#ffd700':'#44ffdd');
   if(MS.streak>=2){
     document.getElementById('streak-hud').style.display='block';
     document.getElementById('streak-val').textContent=`×${MS.streak}`;
   }
   MS.active=false;
-  // Next package choice — trolley keeps moving, just spawn new orbs
   setTimeout(()=>{if(gameRunning)showPackageChoice(MS.toSt);},1200);
 }
+
+// ═══════════════════════════════════════════
+//  NPC TROLLEYS — "Grandma" obstacle trolleys
+// ═══════════════════════════════════════════
+const NPC_COUNT=3;
+const npcTrolleys=[];
+
+function buildNpcTrolley(colorHex){
+  const grp=new THREE.Group();
+  const bM=new THREE.MeshStandardMaterial({color:colorHex,metalness:.3,roughness:.6});
+  const mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.6,roughness:.4});
+  const wM=new THREE.MeshStandardMaterial({color:0x6a4c2a,roughness:.9});
+  const wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.5,roughness:.5});
+  // Platform
+  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);grp.add(plat);
+  [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,1.1),mM);b.position.set(x,.8,0);grp.add(b);});
+  // Wheels
+  const wGeo=new THREE.TorusGeometry(.24,.06,8,14);
+  [[-0.68,-.4],[-0.68,.4],[.68,-.4],[.68,.4]].forEach(([x,z])=>{
+    const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.24,z);w.rotation.y=Math.PI/2;grp.add(w);
+  });
+  // Pump handle
+  const ph=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.75,7),mM);ph.position.set(0,.9,0);grp.add(ph);
+  const hb=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,7),bM);hb.rotation.z=Math.PI/2;hb.position.set(0,1.28,0);grp.add(hb);
+  // Grandma figure (purple shawl)
+  const bodyM=new THREE.MeshStandardMaterial({color:0x884488,roughness:.8});
+  const headM=new THREE.MeshStandardMaterial({color:0xf0d0b0});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.34,.48,.24),bodyM);body.position.set(0,.84,0);grp.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),headM);head.position.set(0,1.18,0);grp.add(head);
+  // Hair bun
+  const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
+  bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
+  // Beacon (purple)
+  const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
+  bec.position.set(0,1.48,0);grp.add(bec);
+  grp.position.set(0,.35,0);
+  scene.add(grp);
+  return grp;
+}
+
+function initNpcTrolleys(){
+  // Remove old NPC trolleys
+  npcTrolleys.forEach(n=>{if(n.mesh)scene.remove(n.mesh);});
+  npcTrolleys.length=0;
+  const colors=[0x9944cc,0x44cc99,0xcc4499];
+  // Spread starting positions across the grid
+  const startNodes=[nid(2,2),nid(10,2),nid(5,10)];
+  for(let i=0;i<NPC_COUNT;i++){
+    const mesh=buildNpcTrolley(colors[i]);
+    const startNode=startNodes[i];
+    const sc=startNode%NX,sr=Math.floor(startNode/NX);
+    const sp=npos(sc,sr);
+    mesh.position.set(sp.x,.35,sp.z);
+    const nbrs=getNeighbors(sc,sr,-1);
+    const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
+    npcTrolleys.push({
+      mesh,
+      node:startNode,
+      nextNode:nextDir?nextDir.nodeId:nid(sc+1,sr),
+      edgeT:0,
+      facing:nextDir?nextDir.dir:0,
+      speed:1.2+Math.random()*0.8, // 1.2–2.0 units/s — grandma speed
+      pumpAng:0,
+      jCool:0,
+      wobble:Math.random()*Math.PI*2, // random wobble phase
+    });
+  }
+}
+
+function updateNpcTrolleys(dt,gt){
+  npcTrolleys.forEach(npc=>{
+    npc.jCool=Math.max(0,npc.jCool-dt);
+    // Slight random speed wobble — erratic grandma driving
+    const wobbleSpeed=npc.speed*(0.85+Math.sin(gt*0.7+npc.wobble)*0.15);
+    const advance=(wobbleSpeed*dt)/CELL;
+    npc.edgeT=Math.min(npc.edgeT+advance,1.0);
+
+    if(npc.edgeT>=1.0){
+      npc.node=npc.nextNode;
+      npc.jCool=0.4;
+      const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
+      const back=(npc.facing+2)%4;
+      const nbrs=getNeighbors(nc,nr,back);
+      if(nbrs.length>0){
+        // Random direction — grandma doesn't know where she's going
+        const chosen=nbrs[Math.floor(Math.random()*nbrs.length)];
+        npc.nextNode=chosen.nodeId;
+        npc.facing=chosen.dir;
+      } else {
+        // Reverse
+        npc.facing=(npc.facing+2)%4;
+        const fwd=DIR_VEC[npc.facing];
+        const nc2=Math.max(0,Math.min(GW,nc+fwd[0]));
+        const nr2=Math.max(0,Math.min(GH,nr+fwd[1]));
+        npc.nextNode=nid(nc2,nr2);
+      }
+      npc.edgeT=0;
+
+      // Check if NPC is on same node as player — slow player down (collision)
+      checkNpcCollision(npc,nc,nr);
+    }
+
+    // Render NPC position
+    const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
+    const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
+    const p0=npos(nc,nr),p1=npos(nnc,nnr);
+    const px=p0.x+(p1.x-p0.x)*npc.edgeT;
+    const pz=p0.z+(p1.z-p0.z)*npc.edgeT;
+    npc.mesh.position.set(px,.35,pz);
+    const dx=p1.x-p0.x,dz=p1.z-p0.z;
+    const hl=Math.sqrt(dx*dx+dz*dz);
+    if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
+
+    // Animate pump wobble (slow, tired grandma motion)
+    npc.pumpAng+=wobbleSpeed*0.8*dt;
+    const pump=npc.mesh.children.find(c=>c.geometry?.type==='CylinderGeometry'&&c.position.y>.85&&c.position.y<.95);
+    // Gentle body sway
+    npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
+
+    // Pulse beacon
+    const bec=npc.mesh.children[npc.mesh.children.length-1];
+    if(bec&&bec.material){
+      const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
+      bec.material.opacity=p;bec.material.transparent=true;
+    }
+
+    // Proximity check with player trolley (continuous, not just at nodes)
+    const dist=npc.mesh.position.distanceTo(trolley.position);
+    if(dist<3.5&&GS.speed>1){
+      // Block! Slow down player
+      GS.speed=Math.max(0,GS.speed*0.85);
+      if(dist<2.0){
+        GS.speed=Math.max(0,GS.speed-3*dt);
+        GS.shake=Math.max(GS.shake,0.8);
+      }
+    }
+  });
+}
+
+function checkNpcCollision(npc,nc,nr){
+  const pc=tNode%NX,pr=Math.floor(tNode/NX);
+  if(nc===pc&&nr===pr){
+    showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
+    GS.speed=Math.max(0,GS.speed*0.4);
+    GS.shake=1.5;
+  }
+}
+
+function drawNpcsOnMinimap(){
+  npcTrolleys.forEach((npc,i)=>{
+    const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
+    const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
+    const tc=nc+(nnc-nc)*npc.edgeT,tr=nr+(nnr-nr)*npc.edgeT;
+    const{x,y}=mmP(tc,tr);
+    mmCtx.beginPath();mmCtx.arc(x,y,3.8,0,Math.PI*2);
+    mmCtx.fillStyle=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)'][i];
+    mmCtx.fill();
+    // Small grandma icon
+    mmCtx.font='7px serif';mmCtx.fillStyle='#fff';
+    mmCtx.textAlign='center';mmCtx.textBaseline='middle';
+    mmCtx.fillText('👵',x,y);
+  });
+}
+
 
 function missionFailed(){
   MS.active=false;MS.streak=0;MS.choosing=false;
@@ -1238,6 +1551,9 @@ function drawMM(){
   const{x:px,y:py}=mmP(tc,tr);
   mmCtx.beginPath();mmCtx.arc(px,py,4.5,0,Math.PI*2);mmCtx.fillStyle='rgba(255,80,30,0.8)';mmCtx.fill();
   mmCtx.beginPath();mmCtx.arc(px,py,2.5,0,Math.PI*2);mmCtx.fillStyle='#fff';mmCtx.fill();
+
+  // NPC trolleys on minimap
+  drawNpcsOnMinimap();
 }
 
 // ═══════════════════════════════════════════
@@ -1255,6 +1571,7 @@ function startGame(){
   const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
   buildWorld();
   gameRunning=true;
+  initNpcTrolleys();
   startMissions();
 }
 
@@ -1276,7 +1593,9 @@ const clock=new THREE.Clock();let gt=0;
   if(gameRunning){
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
-    updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);drawMM();
+    updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
+    updateNpcTrolleys(dt,gt);
+    drawMM();
   }
   moveCam();updP(dt);
   sunLight.target.position.copy(trolley.position);

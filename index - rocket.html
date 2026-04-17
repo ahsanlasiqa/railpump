@@ -119,6 +119,54 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
 
+/* ── View Toggle Button ── */
+#view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,200,255,0.35);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;}
+#view-btn:hover{background:rgba(100,200,255,0.12);border-color:rgba(100,200,255,0.7);}
+#view-btn.fp{border-color:rgba(100,255,150,0.6);color:#88ffaa;}
+
+/* ── Shop Button ── */
+#shop-btn{position:fixed;top:162px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,160,40,0.45);color:#ffaa44;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
+#shop-btn:hover{background:rgba(255,160,40,0.14);}
+
+/* ── Shop Overlay ── */
+#shop-overlay{position:fixed;inset:0;background:rgba(2,4,14,0.88);z-index:85;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#shop-box{background:rgba(8,12,28,0.98);border:2px solid rgba(255,160,40,0.6);border-radius:20px;padding:24px 28px;width:min(420px,92vw);box-shadow:0 0 50px rgba(255,140,20,0.2);}
+#shop-title{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,200,80,0.8);margin-bottom:4px;text-align:center;}
+#shop-coins-disp{font-size:22px;font-weight:bold;color:#ffd700;text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(255,200,0,0.5);}
+.shop-item{display:flex;align-items:center;gap:14px;background:rgba(255,160,40,0.05);border:1.5px solid rgba(255,160,40,0.2);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s,border-color .15s;}
+.shop-item:hover{background:rgba(255,160,40,0.12);border-color:rgba(255,160,40,0.55);}
+.shop-item.owned{border-color:rgba(100,255,150,0.4);background:rgba(100,255,150,0.05);}
+.shop-item-icon{font-size:28px;min-width:36px;text-align:center;}
+.shop-item-info{flex:1;}
+.shop-item-name{font-size:13px;font-weight:bold;color:#ffe680;margin-bottom:2px;}
+.shop-item-desc{font-size:10px;color:rgba(255,220,150,0.55);line-height:1.4;}
+.shop-item-price{font-size:13px;font-weight:bold;color:#ffd700;white-space:nowrap;}
+.shop-item-price.owned{color:#88ffaa;}
+#shop-close{margin-top:6px;width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;color:rgba(255,220,150,0.7);font-family:'Georgia',serif;font-size:12px;cursor:pointer;transition:background .15s;}
+#shop-close:hover{background:rgba(255,255,255,0.1);}
+
+/* ── Rocket Ammo HUD ── */
+#rocket-hud{position:fixed;bottom:60px;right:18px;z-index:15;background:rgba(6,10,22,0.9);border:1.5px solid rgba(255,80,40,0.5);border-radius:10px;padding:5px 12px;display:none;align-items:center;gap:8px;backdrop-filter:blur(8px);}
+#rocket-icon{font-size:18px;}
+#rocket-count{font-size:16px;font-weight:bold;color:#ff8844;}
+#rocket-lbl{font-size:8px;color:rgba(255,180,100,0.6);text-transform:uppercase;letter-spacing:1px;}
+#rocket-fire-btn{background:linear-gradient(135deg,#cc2200,#ff6622);border:none;border-radius:7px;color:#fff;font-size:10px;font-weight:bold;padding:4px 10px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:1px;transition:transform .1s;}
+#rocket-fire-btn:hover{transform:scale(1.07);}
+#rocket-fire-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+/* ── FPS Crosshair ── */
+#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:30;display:none;}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.85);}
+#crosshair::before{width:18px;height:2px;top:50%;left:50%;transform:translate(-50%,-50%);}
+#crosshair::after{width:2px;height:18px;top:50%;left:50%;transform:translate(-50%,-50%);}
+.ch-dot{position:absolute;width:4px;height:4px;background:rgba(255,80,80,0.9);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);}
+
+/* ── Rocket explosion flash ── */
+#f-rocket{background:radial-gradient(ellipse at center,rgba(255,120,20,0.55),transparent 65%);}
+
+/* ── NPC hit marker (brief) ── */
+#hit-marker{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:31;opacity:0;transition:opacity .12s;font-size:28px;color:#ff4422;text-shadow:0 0 12px rgba(255,80,20,1);}
+
 /* ── Bidding Dialog ── */
 #bid-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
 #bid-box{background:rgba(8,12,28,0.97);border:2px solid rgba(255,200,80,0.7);border-radius:18px;padding:22px 28px;width:min(380px,90vw);box-shadow:0 0 40px rgba(255,180,40,0.25);text-align:center;}
@@ -161,6 +209,49 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
+<button id="view-btn" title="Toggle First/Third Person [V]">👁</button>
+<button id="shop-btn" title="Shop [B]" onclick="openShop()">🛒</button>
+
+<!-- Shop Overlay -->
+<div id="shop-overlay">
+  <div id="shop-box">
+    <div id="shop-title">🛒 Rail Shop</div>
+    <div id="shop-coins-disp">🪙 <span id="shop-coins-val">0</span></div>
+    <div class="shop-item" id="si-rocket" onclick="buyItem('rocket')">
+      <div class="shop-item-icon">🚀</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">Rocket Launcher</div>
+        <div class="shop-item-desc">Tembak nenek penghalang! Kena 1 nenek → respawn jadi 2.<br>Max total nenek: 10. Tekan <b>F</b> untuk tembak.</div>
+      </div>
+      <div class="shop-item-price" id="si-rocket-price">🪙 150</div>
+    </div>
+    <div class="shop-item" id="si-ammo" onclick="buyItem('ammo')">
+      <div class="shop-item-icon">💥</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">Rocket Ammo ×3</div>
+        <div class="shop-item-desc">Tambah 3 amunisi roket. Perlu Rocket Launcher dulu.</div>
+      </div>
+      <div class="shop-item-price" id="si-ammo-price">🪙 80</div>
+    </div>
+    <button id="shop-close" onclick="closeShop()">✕ Tutup</button>
+  </div>
+</div>
+
+<!-- Rocket Ammo HUD -->
+<div id="rocket-hud">
+  <div id="rocket-icon">🚀</div>
+  <div>
+    <div id="rocket-count">3</div>
+    <div id="rocket-lbl">Rockets</div>
+  </div>
+  <button id="rocket-fire-btn" onclick="fireRocket()">🔥 FIRE [F]</button>
+</div>
+
+<!-- FPS Crosshair -->
+<div id="crosshair"><div class="ch-dot"></div></div>
+
+<!-- Hit Marker -->
+<div id="hit-marker">✕</div>
 
 <!-- Streak -->
 <div id="streak-hud"><div id="streak-box"><div id="streak-val">x2</div><div id="streak-lbl">Streak</div></div></div>
@@ -241,6 +332,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="flash" id="f-pick"></div>
 <div class="flash" id="f-drop"></div>
 <div class="flash" id="f-vip"></div>
+<div class="flash" id="f-rocket"></div>
 <div id="notif"></div>
 <div id="pu-bar"><div id="pu-icon">⚡</div><div><div id="pu-name">BOOST</div><div id="pu-fill-bg"><div id="pu-fill"></div></div></div></div>
 <button id="mob-pump">⬆</button>
@@ -308,7 +400,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 // ═══════════════════════════════════════════
 //  GRID — 12×12  FLAT CITY (no elevation)
 // ═══════════════════════════════════════════
-const GW=15, GH=15, CELL=15;
+const GW=12, GH=12, CELL=18;
 const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
 const nid=(c,r)=>r*NX+c;
@@ -400,6 +492,12 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.brake.code||e.code===KB.brake2.code){e.preventDefault();keys.brake=true;}
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
+  if(e.code==='KeyV'){e.preventDefault();toggleCamMode();}
+  if(e.code==='KeyF'){e.preventDefault();fireRocket();}
+  if(e.code==='KeyB'){e.preventDefault();
+    if(document.getElementById('shop-overlay').style.display==='flex') closeShop();
+    else openShop();
+  }
 },true);
 window.addEventListener('keyup',e=>{if(e.code===KB.pump.code||e.code===KB.pump2.code)pumpHeld=false;if(e.code===KB.brake.code||e.code===KB.brake2.code)keys.brake=false;},true);
 
@@ -440,22 +538,27 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.setClearColor(0x0d1020,1);
+renderer.setClearColor(0x03040e,1);
+// Tone mapping makes emissive neons "bloom" without post-processing
+renderer.toneMapping=THREE.ReinhardToneMapping;
+renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x0d1020,0.004);
-const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,700);
+scene.fog=new THREE.FogExp2(0x05060f,0.007);
+// Narrow FOV — cinematic, city feels denser
+const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
-const ambLight=new THREE.AmbientLight(0xfff0e0,1.2);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0xfff8e0,1.6);
+// Night city: dark ambient + cold moonlight only — neons are the key light
+const ambLight=new THREE.AmbientLight(0x0d1528,0.8);scene.add(ambLight);
+const sunLight=new THREE.DirectionalLight(0x8899cc,0.5); // cold blue moon
 sunLight.position.set(60,100,40);sunLight.castShadow=true;
 sunLight.shadow.mapSize.set(1024,1024);
 sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
 sunLight.shadow.camera.left=-160;sunLight.shadow.camera.right=160;
 sunLight.shadow.camera.top=160;sunLight.shadow.camera.bottom=-160;
 scene.add(sunLight);scene.add(sunLight.target);
-const fill1=new THREE.DirectionalLight(0x8899ff,0.45);fill1.position.set(-50,30,-70);scene.add(fill1);
-const fill2=new THREE.DirectionalLight(0xffeedd,0.35);fill2.position.set(50,20,60);scene.add(fill2);
+const fill1=new THREE.DirectionalLight(0x221133,0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
+const fill2=new THREE.DirectionalLight(0x112233,0.12);fill2.position.set(50,20,60);scene.add(fill2);
 
 // ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
@@ -507,9 +610,9 @@ pkgBox.position.set(0,1.05,0);pkgBox.visible=false;trolley.add(pkgBox);
 const vipGlow=new THREE.Mesh(new THREE.BoxGeometry(.58,.48,.58),new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:.55,wireframe:true}));
 vipGlow.position.set(0,1.05,0);vipGlow.visible=false;trolley.add(vipGlow);
 
-const trolleyLight=new THREE.PointLight(0xffeedd,2.5,22);scene.add(trolleyLight);
-const beaconMat=new THREE.MeshBasicMaterial({color:0xff4422});
-const beacon=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),beaconMat);
+const trolleyLight=new THREE.PointLight(0xffeedd,4.5,28);scene.add(trolleyLight);
+const beaconMat=new THREE.MeshBasicMaterial({color:0xff3300});
+const beacon=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),beaconMat);
 beacon.position.set(0,1.65,0);trolley.add(beacon);
 
 // Particles
@@ -544,18 +647,16 @@ function buildWorld(){
   worldGrp=new THREE.Group();
   const rng=mkRng(54321);
 
-  // ── Flat ground ──
-  const gndM=new THREE.MeshStandardMaterial({color:0x1a2030,roughness:1});
-  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+60,GH*CELL+60),gndM);
+  // ── WET ground (reflective asphalt) ──
+  const gndM=new THREE.MeshStandardMaterial({color:0x070810,roughness:0.1,metalness:0.5});
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
 
-  // ── Roads + rails (flat) ──
-  const roadM=new THREE.MeshStandardMaterial({color:0x252840,roughness:.95});
-  const railM=new THREE.MeshStandardMaterial({color:0x8888a0,metalness:.85,roughness:.25});
-  const tieM=new THREE.MeshStandardMaterial({color:0x4a3828,roughness:.95});
+  // ── Roads + rails ──
+  const roadM=new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
+  const railM=new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
+  const tieM=new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
   const ROFF=0.52;
-
-  // Horizontal edges
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
       const p0=npos(c,r),p1=npos(c+1,r);
@@ -567,14 +668,12 @@ function buildWorld(){
         rl.position.set(cx,.07,cz+off);worldGrp.add(rl);
       });
       for(let s=1;s<4;s++){
-        const t=s/4;
-        const tx=p0.x+(p1.x-p0.x)*t,tz=p0.z+(p1.z-p0.z)*t;
+        const tx=p0.x+(p1.x-p0.x)*(s/4),tz=p0.z+(p1.z-p0.z)*(s/4);
         const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,1.2),tieM);
         tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
     }
   }
-  // Vertical edges
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
       const p0=npos(c,r),p1=npos(c,r+1);
@@ -586,8 +685,7 @@ function buildWorld(){
         rl.position.set(cx+off,.07,cz);worldGrp.add(rl);
       });
       for(let s=1;s<4;s++){
-        const t=s/4;
-        const tx=p0.x+(p1.x-p0.x)*t,tz=p0.z+(p1.z-p0.z)*t;
+        const tx=p0.x+(p1.x-p0.x)*(s/4),tz=p0.z+(p1.z-p0.z)*(s/4);
         const tie=new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.12),tieM);
         tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
@@ -595,137 +693,177 @@ function buildWorld(){
   }
 
   // ── Intersection plates ──
-  const platM=new THREE.MeshStandardMaterial({color:0x252840,roughness:.85});
+  const platM=new THREE.MeshStandardMaterial({color:0x141828,roughness:.88});
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     const p=npos(c,r);
     const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.08,4),platM);
     pl.position.set(p.x,.04,p.z);worldGrp.add(pl);
-    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.7,6),new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.25,metalness:.5}));
+    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.7,6),
+      new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.4,metalness:.5}));
     lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
   }
 
-// ── Japanese Urban Buildings ──
-  const bldPal = [0x1a1a1a, 0x2d2d2d, 0x444444, 0xdddddd]; // Charcoal, Slate, Concrete
-  const neonPal = [0xff2d55, 0x00ffcc, 0xffd700, 0xff5e00, 0x0077ff]; // Neon Pink, Cyan, Gold, Orange, Blue
-  
-  // Materials
-  const winM = new THREE.MeshLambertMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 0.6 });
-  const winMB = new THREE.MeshLambertMaterial({ color: 0xaaccff, emissive: 0xaaccff, emissiveIntensity: 0.4 });
-  const neonMat = (col) => new THREE.MeshLambertMaterial({ color: col, emissive: col, emissiveIntensity: 1.5 });
+  // ── CYBERPUNK BUILDINGS ──
+  // Kanji signs use emissive ONLY — no PointLight per sign → zero MAX_UNIFORM overflow
+  const KANJI=['ラーメン','カフェ','居酒屋','タクシー','電気','薬局','ホテル','パン','焼肉','酒','夜市','特急','温泉','美容院','映画館','コンビニ','警察','病院','銀行','食堂'];
+  const NEON_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xffee00,0xff3399,0x33ffaa,0xff4400,0x0099ff,0xcc00ff,0xff8800];
+  const bldPalCyber=[0x080c18,0x0a0e1c,0x0c1020,0x080a14,0x0e1022,0x060810,0x0a0c1a];
 
-  for (let r = 0; r < GH; r++) {
-    for (let c = 0; c < GW; c++) {
-      const bx = OX + c * CELL + CELL / 2;
-      const bz = OZ + r * CELL + CELL / 2;
-      
-      const bldGroup = new THREE.Group();
-      bldGroup.position.set(bx, 0, bz);
-      worldGrp.add(bldGroup);
+  // Canvas kanji texture — create once per color/text combo
+  function makeKanjiTex(txt,hexCol){
+    const cv=document.createElement('canvas');cv.width=64;cv.height=256;
+    const cx=cv.getContext('2d');
+    cx.fillStyle='#000';cx.fillRect(0,0,64,256);
+    const cs='#'+hexCol.toString(16).padStart(6,'0');
+    cx.fillStyle=cs;cx.shadowColor=cs;cx.shadowBlur=12;
+    cx.font='bold 36px sans-serif';cx.textAlign='center';
+    for(let i=0;i<Math.min(txt.length,5);i++)cx.fillText(txt[i],32,40+i*44);
+    return new THREE.CanvasTexture(cv);
+  }
 
-      const baseWidth = CELL - 6;
-      const baseDepth = CELL - 6;
-      const totalFloors = 3 + Math.floor(rng() * 10);
-      const floorH = 2.2;
-      const bldColor = bldPal[Math.floor(rng() * bldPal.length)];
-      const bodyMat = new THREE.MeshStandardMaterial({ color: bldColor, roughness: 0.6, metalness: 0.2 });
+  // 8 shared area PointLights spread across the city — fixed count, no overflow
+  const AREA_LIGHT_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xff3399,0xcc00ff,0x33ffaa];
+  const areaLightPositions=[
+    [OX+CELL*2,  6, OZ+CELL*2],
+    [OX+CELL*10, 6, OZ+CELL*2],
+    [OX+CELL*2,  6, OZ+CELL*10],
+    [OX+CELL*10, 6, OZ+CELL*10],
+    [OX+CELL*6,  6, OZ+CELL*6],
+    [OX+CELL*4,  6, OZ+CELL*8],
+    [OX+CELL*8,  6, OZ+CELL*4],
+    [OX+CELL*6,  6, OZ+CELL*2],
+  ];
+  areaLightPositions.forEach(([x,y,z],i)=>{
+    const pl=new THREE.PointLight(AREA_LIGHT_COLS[i],3.5,40);
+    pl.position.set(x,y,z);worldGrp.add(pl);
+  });
 
-      let curBottom = 0;
-      let curW = baseWidth;
-      let curD = baseDepth;
-      const numTiers = totalFloors > 6 ? 2 + Math.floor(rng() * 2) : 1;
-      const floorsPerTier = Math.floor(totalFloors / numTiers);
+  for(let r=0;r<GH;r++){
+    for(let c=0;c<GW;c++){
+      const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
+      const bldGrp=new THREE.Group();
+      bldGrp.position.set(bx,0,bz);worldGrp.add(bldGrp);
 
-      for (let t = 0; t < numTiers; t++) {
-        const tierH = floorsPerTier * floorH;
-        
-        // 1. Building Tier
-        const body = new THREE.Mesh(new THREE.BoxGeometry(curW, tierH, curD), bodyMat);
-        body.position.set(0, curBottom + tierH / 2, 0);
-        body.castShadow = true; body.receiveShadow = true;
-        bldGroup.add(body);
+      const bW=CELL-5.5, bD=CELL-5.5;
+      const totalFloors=3+Math.floor(rng()*7);
+      const floorH=2.6;
+      const bCol=bldPalCyber[Math.floor(rng()*bldPalCyber.length)];
+      const bodyMat=new THREE.MeshStandardMaterial({color:bCol,roughness:.75,metalness:.1});
+      const numTiers=totalFloors>5?1+Math.floor(rng()*2):1;
+      const fpTier=Math.max(2,Math.floor(totalFloors/numTiers));
+      let bot=0,cW=bW,cD=bD;
 
-        // 2. Overhang (Small architectural rim)
-        const rim = new THREE.Mesh(new THREE.BoxGeometry(curW + 0.4, 0.15, curD + 0.4), bodyMat);
-        rim.position.set(0, curBottom + tierH, 0);
-        bldGroup.add(rim);
+      for(let t=0;t<numTiers;t++){
+        const tH=fpTier*floorH+(t===numTiers-1?rng()*2:0);
+        const body=new THREE.Mesh(new THREE.BoxGeometry(cW,tH,cD),bodyMat);
+        body.position.set(0,bot+tH/2,0);body.castShadow=true;body.receiveShadow=true;
+        bldGrp.add(body);
 
-        // 3. Windows
-        for (let f = 0; f < floorsPerTier; f++) {
-          const winY = curBottom + f * floorH + 1.1;
-          for (let w = -1; w <= 1; w++) {
-            if (rng() < 0.2) continue; // Dark windows
-            const mat = rng() > 0.5 ? winM : winMB;
-            const wGeo = new THREE.PlaneGeometry(0.4, 0.8);
-            
-            // Side Windows
-            const w1 = new THREE.Mesh(wGeo, mat);
-            w1.position.set(w * (curW/3.5), winY, curD/2 + 0.02);
-            bldGroup.add(w1);
-            
-            const w2 = w1.clone();
-            w2.position.z = -curD/2 - 0.02; w2.rotation.y = Math.PI;
-            bldGroup.add(w2);
+        // Glowing windows — emissive only, no extra lights
+        const winColors=[0xffffcc,0xaaddff,0xffeeaa,0xccffee,0xffccff];
+        for(let f=0;f<fpTier;f++){
+          const wy=bot+f*floorH+1.5;
+          for(let w=-1;w<=1;w++){
+            if(rng()<0.14)continue;
+            const wc=winColors[Math.floor(rng()*winColors.length)];
+            const wMat=new THREE.MeshStandardMaterial({
+              color:wc,emissive:new THREE.Color(wc),
+              emissiveIntensity:rng()>.3?1.6:0.5,roughness:.95
+            });
+            const wG=new THREE.PlaneGeometry(.48,.68);
+            const wf=new THREE.Mesh(wG,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
+            const wb=wf.clone();wb.position.z=-cD/2-.01;wb.rotation.y=Math.PI;bldGrp.add(wb);
+            const ws=new THREE.Mesh(wG,wMat.clone());ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
+            const ws2=ws.clone();ws2.position.x=-cW/2-.01;ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
           }
         }
-
-        // 4. Neon "Blade" Signs (Vertical signs on side)
-        if (rng() > 0.4) {
-          const signCol = neonPal[Math.floor(rng() * neonPal.length)];
-          const sH = tierH * 0.7;
-          const sign = new THREE.Mesh(new THREE.BoxGeometry(0.1, sH, 0.8), neonMat(signCol));
-          const side = rng() > 0.5 ? 1 : -1;
-          sign.position.set(side * (curW/2 + 0.3), curBottom + tierH/2, (rng()-0.5)*curD*0.5);
-          bldGroup.add(sign);
-        }
-
-        curBottom += tierH;
-        curW *= 0.8;
-        curD *= 0.8;
+        bot+=tH;cW*=0.82;cD*=0.82;
       }
 
-      // 5. Ground Floor: Vending Machines
-      for (let i = 0; i < 2; i++) {
-        if (rng() > 0.3) {
-          const vmCol = rng() > 0.5 ? 0xff0000 : 0x0055ff; // Red or Blue machines
-          const vm = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.4), new THREE.MeshStandardMaterial({color: 0xeeeeee}));
-          const vFace = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.8), neonMat(vmCol));
-          vFace.position.set(0, 0.1, 0.21);
-          vm.add(vFace);
-          
-          const angle = rng() * Math.PI * 2;
-          vm.position.set(Math.cos(angle)*(baseWidth/2 + 0.3), 0.6, Math.sin(angle)*(baseDepth/2 + 0.3));
-          vm.rotation.y = angle + Math.PI/2;
-          bldGroup.add(vm);
-        }
+      // ── Neon signs — emissive only, NO PointLight (prevents uniform overflow) ──
+      const nSigns=rng()>.4?1:0; // only 60% of buildings get a sign, max 1
+      if(nSigns){
+        const nCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
+        const kanji=KANJI[Math.floor(rng()*KANJI.length)];
+        const signH=1.4+rng()*1.8;
+        const yPos=floorH*1.2+rng()*(bot*0.5);
+        const side=Math.floor(rng()*4);
+        const tex=makeKanjiTex(kanji,nCol);
+        const signMat=new THREE.MeshStandardMaterial({
+          map:tex,emissiveMap:tex,
+          emissive:new THREE.Color(nCol),emissiveIntensity:2.8,
+          color:0x111111,roughness:.9,transparent:true,depthWrite:false
+        });
+        const sign=new THREE.Mesh(new THREE.PlaneGeometry(.52,signH),signMat);
+        const off=bW/2+.06;
+        if(side===0) sign.position.set((rng()-.5)*bW*.5,yPos,off);
+        else if(side===1){sign.position.set((rng()-.5)*bW*.5,yPos,-off);sign.rotation.y=Math.PI;}
+        else if(side===2){sign.position.set(off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=Math.PI/2;}
+        else{sign.position.set(-off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=-Math.PI/2;}
+        bldGrp.add(sign);
       }
 
-      // 6. Roof Antennas
-      if (rng() > 0.5) {
-        const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 4), bodyMat);
-        ant.position.set((rng()-0.5)*curW, curBottom + 1, (rng()-0.5)*curD);
-        bldGroup.add(ant);
+      // Roof glow stripe — emissive only
+      if(rng()>.5){
+        const rc=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
+        const roofMat=new THREE.MeshStandardMaterial({color:rc,emissive:new THREE.Color(rc),emissiveIntensity:1.8,roughness:.5});
+        const roofLine=new THREE.Mesh(new THREE.BoxGeometry(cW*1.05,.25,cD*1.05),roofMat);
+        roofLine.position.set(0,bot+.12,0);bldGrp.add(roofLine);
       }
     }
   }
 
-// ── Street lights ──
-  const polM=new THREE.MeshStandardMaterial({color:0x88889a,metalness:.7,roughness:.4});
-  const lampM2=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:new THREE.Color(0xffffaa),emissiveIntensity:1.8});
+  // ── Power lines — CatmullRom sagging cables ──
+  const wireMat=new THREE.MeshBasicMaterial({color:0x1a1a2e});
+  for(let r=0;r<=GH;r+=3) for(let c=0;c<=GW;c+=3){
+    if(c+3>GW)continue;
+    const pa=npos(c,r),pb=npos(c+3,r);
+    const pts=[];
+    for(let i=0;i<=8;i++){
+      const t=i/8;
+      pts.push(new THREE.Vector3(
+        pa.x+(pb.x-pa.x)*t,
+        5.5-Math.sin(t*Math.PI)*(0.6+rng()*0.5),
+        pa.z+(pb.z-pa.z)*t+(rng()-.5)*0.3
+      ));
+    }
+    const tube=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),8,.022,4,false);
+    worldGrp.add(new THREE.Mesh(tube,wireMat));
+  }
+
+  // ── Street lights — neon colored, max 1 PointLight per 4 intersections ──
+  const polM=new THREE.MeshStandardMaterial({color:0x2a2a3a,metalness:.6,roughness:.5});
+  const LAMP_COLS=[0xff00cc,0x00ffee,0xaa44ff,0x00aaff];
+  let lampLightCount=0;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    if(rng()>.5){
-      const p=npos(c,r);
-      const lp=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,4,6),polM);lp.position.set(p.x+1.5,2,p.z+1.5);worldGrp.add(lp);
-      const ll=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lampM2);ll.position.set(p.x+1.5,4.2,p.z+1.5);worldGrp.add(ll);
-      if(rng()>.6){const ptL=new THREE.PointLight(0xffffcc,.3,10);ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);}
+    if(rng()>.5)continue;
+    const p=npos(c,r);
+    const lCol=LAMP_COLS[Math.floor(rng()*LAMP_COLS.length)];
+    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,4.5,6),polM);
+    lp.position.set(p.x+1.5,2.25,p.z+1.5);worldGrp.add(lp);
+    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:2.0});
+    const ll=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),lampMat);
+    ll.position.set(p.x+1.5,4.6,p.z+1.5);worldGrp.add(ll);
+    // Only add PointLight occasionally — strict cap to avoid overflow
+    if(lampLightCount<12&&rng()>.7){
+      const ptL=new THREE.PointLight(lCol,1.8,14);
+      ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);
+      lampLightCount++;
     }
   }
 
   // ── Sky + stars ──
-  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),new THREE.MeshBasicMaterial({color:0x0d1020,side:THREE.BackSide})));
-  const sPos=new Float32Array(600*3);
-  for(let i=0;i<600;i++){const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;sPos[i*3]=Math.sin(b)*Math.cos(a)*550;sPos[i*3+1]=Math.abs(Math.cos(b))*550;sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;}
+  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),
+    new THREE.MeshBasicMaterial({color:0x03040e,side:THREE.BackSide})));
+  const sPos=new Float32Array(700*3);
+  for(let i=0;i<700;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
+    sPos[i*3]=Math.sin(b)*Math.cos(a)*550;
+    sPos[i*3+1]=Math.abs(Math.cos(b))*550;
+    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;
+  }
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
-  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xffffff,size:.7,transparent:true,opacity:.6})));
+  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaaccff,size:.5,transparent:true,opacity:.75})));
 
   scene.add(worldGrp);
 
@@ -733,7 +871,7 @@ function buildWorld(){
   ST_POS.forEach(([col,row],idx)=>buildStation(idx,col,row));
 
   // Coins
-  const cMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.9,roughness:.1,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.6});
+  const cMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.9,roughness:.1,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.8});
   const cGeo=new THREE.CylinderGeometry(.2,.2,.07,14);
   for(let i=0;i<50;i++){
     const c=Math.floor(rng()*(GW+1)),r=Math.floor(rng()*(GH+1));
@@ -752,7 +890,8 @@ function buildWorld(){
     const c=1+Math.floor(rng()*(GW-1)),r=1+Math.floor(rng()*(GH-1));
     const p=npos(c,r),t=PU_DEFS[i%PU_DEFS.length];
     const grp=new THREE.Group();
-    const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:.8,metalness:.4,roughness:.2}));
+    const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),
+      new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:1.0,metalness:.4,roughness:.2}));
     grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
@@ -1211,8 +1350,88 @@ function doDeliver(){
 // ═══════════════════════════════════════════
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
-const NPC_COUNT=3;
+// ═══════════════════════════════════════════
+//  SHOP SYSTEM
+// ═══════════════════════════════════════════
+const SHOP={
+  rocketOwned:false,
+  rocketAmmo:0,
+};
+
+function openShop(){
+  if(!gameRunning)return;
+  document.getElementById('shop-coins-val').textContent=GS.coins;
+  // Update rocket item display
+  const rEl=document.getElementById('si-rocket');
+  const rPrice=document.getElementById('si-rocket-price');
+  if(SHOP.rocketOwned){
+    rEl.classList.add('owned');
+    rPrice.textContent='✓ Owned';
+    rPrice.classList.add('owned');
+  } else {
+    rEl.classList.remove('owned');
+    rPrice.textContent='🪙 150';
+    rPrice.classList.remove('owned');
+  }
+  const aEl=document.getElementById('si-ammo');
+  const aPrice=document.getElementById('si-ammo-price');
+  if(!SHOP.rocketOwned){
+    aEl.style.opacity='.4';aEl.style.pointerEvents='none';
+  } else {
+    aEl.style.opacity='1';aEl.style.pointerEvents='all';
+  }
+  document.getElementById('shop-overlay').style.display='flex';
+}
+
+function closeShop(){
+  document.getElementById('shop-overlay').style.display='none';
+}
+
+function buyItem(id){
+  if(id==='rocket'){
+    if(SHOP.rocketOwned){showNotif('Rocket sudah dimiliki!','#ffaa44');return;}
+    if(GS.coins<150){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    GS.coins-=150;
+    SHOP.rocketOwned=true;
+    SHOP.rocketAmmo=3;
+    showNotif('🚀 Rocket Launcher dibeli!','#ff8844');
+    flash('f-vip',300);
+    updateRocketHUD();
+    openShop(); // refresh display
+  } else if(id==='ammo'){
+    if(!SHOP.rocketOwned){showNotif('Beli Rocket Launcher dulu!','#ff4444');return;}
+    if(GS.coins<80){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    GS.coins-=80;
+    SHOP.rocketAmmo+=3;
+    showNotif('💥 +3 Amunisi Roket!','#ff8844');
+    updateRocketHUD();
+    openShop();
+  }
+}
+
+function updateRocketHUD(){
+  const hud=document.getElementById('rocket-hud');
+  if(SHOP.rocketOwned){
+    hud.style.display='flex';
+    document.getElementById('rocket-count').textContent=SHOP.rocketAmmo;
+    const btn=document.getElementById('rocket-fire-btn');
+    btn.disabled=SHOP.rocketAmmo<=0;
+  } else {
+    hud.style.display='none';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  NPC TROLLEYS — "Grandma" obstacle trolleys
+// ═══════════════════════════════════════════
+const NPC_MAX=10;    // hard cap on total grandmas ever alive
+const NPC_START=3;   // starting count
 const npcTrolleys=[];
+let npcTotalSpawned=0; // tracks how many have ever been spawned
+
+// Rocket projectile state
+const rockets=[]; // {mesh, pos, dir, life}
+const rocketMeshPool=[];
 
 function buildNpcTrolley(colorHex){
   const grp=new THREE.Group();
@@ -1220,26 +1439,20 @@ function buildNpcTrolley(colorHex){
   const mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.6,roughness:.4});
   const wM=new THREE.MeshStandardMaterial({color:0x6a4c2a,roughness:.9});
   const wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.5,roughness:.5});
-  // Platform
   const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);grp.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,1.1),mM);b.position.set(x,.8,0);grp.add(b);});
-  // Wheels
   const wGeo=new THREE.TorusGeometry(.24,.06,8,14);
   [[-0.68,-.4],[-0.68,.4],[.68,-.4],[.68,.4]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.24,z);w.rotation.y=Math.PI/2;grp.add(w);
   });
-  // Pump handle
   const ph=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.75,7),mM);ph.position.set(0,.9,0);grp.add(ph);
   const hb=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,7),bM);hb.rotation.z=Math.PI/2;hb.position.set(0,1.28,0);grp.add(hb);
-  // Grandma figure (purple shawl)
   const bodyM=new THREE.MeshStandardMaterial({color:0x884488,roughness:.8});
   const headM=new THREE.MeshStandardMaterial({color:0xf0d0b0});
   const body=new THREE.Mesh(new THREE.BoxGeometry(.34,.48,.24),bodyM);body.position.set(0,.84,0);grp.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),headM);head.position.set(0,1.18,0);grp.add(head);
-  // Hair bun
   const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
   bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
-  // Beacon (purple)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
   grp.position.set(0,.35,0);
@@ -1247,39 +1460,190 @@ function buildNpcTrolley(colorHex){
   return grp;
 }
 
+function spawnNpc(avoidNode){
+  if(npcTrolleys.length>=NPC_MAX)return null;
+  npcTotalSpawned++;
+  // Pick random color — cycle through neon palette
+  const npcCols=[0x9944cc,0x44cc99,0xcc4499,0x44aaff,0xff8844,0xffcc22,0xcc2255,0x22ccaa,0xaa44ff,0xff5522];
+  const colorHex=npcCols[npcTotalSpawned%npcCols.length];
+  const mesh=buildNpcTrolley(colorHex);
+  // Pick a random start node far from player and from avoidNode
+  let startNode;
+  let tries=0;
+  do {
+    const rc=Math.floor(Math.random()*(GW+1));
+    const rr=Math.floor(Math.random()*(GH+1));
+    startNode=nid(rc,rr);
+    tries++;
+  } while(tries<20 && (
+    startNode===avoidNode ||
+    Math.abs((startNode%NX)-(tNode%NX))<3 ||
+    Math.abs((Math.floor(startNode/NX))-(Math.floor(tNode/NX)))<3
+  ));
+  const sc=startNode%NX,sr=Math.floor(startNode/NX);
+  const sp=npos(sc,sr);
+  mesh.position.set(sp.x,.35,sp.z);
+  const nbrs=getNeighbors(sc,sr,-1);
+  const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
+  const npc={
+    mesh,
+    node:startNode,
+    nextNode:nextDir?nextDir.nodeId:nid(Math.min(GW,sc+1),sr),
+    edgeT:0,
+    facing:nextDir?nextDir.dir:0,
+    speed:1.2+Math.random()*0.8,
+    pumpAng:0,
+    jCool:0,
+    wobble:Math.random()*Math.PI*2,
+    alive:true,
+  };
+  npcTrolleys.push(npc);
+  return npc;
+}
+
 function initNpcTrolleys(){
-  // Remove old NPC trolleys
   npcTrolleys.forEach(n=>{if(n.mesh)scene.remove(n.mesh);});
   npcTrolleys.length=0;
-  const colors=[0x9944cc,0x44cc99,0xcc4499];
-  // Spread starting positions across the grid
-  const startNodes=[nid(2,2),nid(10,2),nid(5,10)];
-  for(let i=0;i<NPC_COUNT;i++){
-    const mesh=buildNpcTrolley(colors[i]);
-    const startNode=startNodes[i];
-    const sc=startNode%NX,sr=Math.floor(startNode/NX);
-    const sp=npos(sc,sr);
-    mesh.position.set(sp.x,.35,sp.z);
-    const nbrs=getNeighbors(sc,sr,-1);
-    const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
-    npcTrolleys.push({
-      mesh,
-      node:startNode,
-      nextNode:nextDir?nextDir.nodeId:nid(sc+1,sr),
-      edgeT:0,
-      facing:nextDir?nextDir.dir:0,
-      speed:1.2+Math.random()*0.8, // 1.2–2.0 units/s — grandma speed
-      pumpAng:0,
-      jCool:0,
-      wobble:Math.random()*Math.PI*2, // random wobble phase
-    });
+  rockets.length=0;
+  npcTotalSpawned=0;
+  for(let i=0;i<NPC_START;i++) spawnNpc(-1);
+}
+
+function killNpc(npc){
+  if(!npc.alive)return;
+  npc.alive=false;
+  // Explosion effect at npc position
+  spawnExplosion(npc.mesh.position.clone());
+  scene.remove(npc.mesh);
+  // Remove from array
+  const idx=npcTrolleys.indexOf(npc);
+  if(idx>=0)npcTrolleys.splice(idx,1);
+
+  // Respawn as 2 if under cap
+  const spawnable=NPC_MAX-npcTrolleys.length;
+  const toSpawn=Math.min(2,spawnable);
+  for(let i=0;i<toSpawn;i++){
+    setTimeout(()=>{
+      if(npcTrolleys.length<NPC_MAX){
+        spawnNpc(npc.node);
+        showNotif(`👵 Nenek respawn! (${npcTrolleys.length}/${NPC_MAX})`,'#ff8844');
+      }
+    }, 800+i*400);
   }
+  if(toSpawn===0) showNotif('💥 Max nenek tercapai! 10/10','#ff4422');
+}
+
+// ── Explosion particles ──
+const explosionParts=[];
+function spawnExplosion(pos){
+  for(let i=0;i<18;i++){
+    const geo=new THREE.SphereGeometry(0.12+Math.random()*0.1,5,4);
+    const mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0xff6622:0xffcc22});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.copy(pos);
+    const ang=Math.random()*Math.PI*2;
+    const spd=3+Math.random()*4;
+    const vy=2+Math.random()*4;
+    scene.add(m);
+    explosionParts.push({m,vx:Math.cos(ang)*spd,vy,vz:Math.sin(ang)*spd,life:0.7+Math.random()*0.4});
+  }
+}
+function updateExplosions(dt){
+  for(let i=explosionParts.length-1;i>=0;i--){
+    const p=explosionParts[i];
+    p.life-=dt;
+    if(p.life<=0){scene.remove(p.m);explosionParts.splice(i,1);continue;}
+    p.m.position.x+=p.vx*dt;
+    p.m.position.y+=p.vy*dt;
+    p.m.position.z+=p.vz*dt;
+    p.vy-=12*dt; // gravity
+    p.m.material.opacity=p.life*1.5;
+    p.m.material.transparent=true;
+  }
+}
+
+// ── Rocket firing ──
+function fireRocket(){
+  if(!SHOP.rocketOwned||SHOP.rocketAmmo<=0||!gameRunning)return;
+  SHOP.rocketAmmo--;
+  updateRocketHUD();
+
+  // Build rocket mesh
+  const rGrp=new THREE.Group();
+  const rBody=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,0.7,7),
+    new THREE.MeshBasicMaterial({color:0xff4400}));
+  rBody.rotation.x=Math.PI/2; rGrp.add(rBody);
+  const rTip=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.3,7),
+    new THREE.MeshBasicMaterial({color:0xffaa00}));
+  rTip.rotation.x=Math.PI/2; rTip.position.z=0.5; rGrp.add(rTip);
+  const rFlame=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.4,7),
+    new THREE.MeshBasicMaterial({color:0xffee44,transparent:true,opacity:0.8}));
+  rFlame.rotation.x=-Math.PI/2; rFlame.position.z=-0.5; rGrp.add(rFlame);
+  scene.add(rGrp);
+
+  // Direction: trolley forward direction
+  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr),p1=npos(nnc,nnr);
+  const dx=p1.x-p0.x,dz=p1.z-p0.z;
+  const hl=Math.sqrt(dx*dx+dz*dz)||1;
+  const dir=new THREE.Vector3(dx/hl,0,dz/hl);
+
+  rGrp.position.copy(trolley.position).addScaledVector(dir,1.5);
+  rGrp.position.y=1.0;
+  rGrp.lookAt(rGrp.position.clone().add(dir));
+
+  rockets.push({mesh:rGrp, pos:rGrp.position.clone(), dir:dir.clone(), life:4.0, speed:28});
+  flash('f-rocket',180);
+  GS.shake=0.5;
+  showNotif('🚀 Pfiumm!','#ff8844');
+}
+
+function updateRockets(dt){
+  for(let i=rockets.length-1;i>=0;i--){
+    const r=rockets[i];
+    r.life-=dt;
+    if(r.life<=0){scene.remove(r.mesh);rockets.splice(i,1);continue;}
+    r.pos.addScaledVector(r.dir,r.speed*dt);
+    r.mesh.position.copy(r.pos);
+    // Flame flicker
+    const fl=r.mesh.children[2];
+    if(fl){fl.scale.setScalar(0.8+Math.random()*0.4);}
+
+    // Check hit against NPCs
+    let hit=false;
+    for(let j=npcTrolleys.length-1;j>=0;j--){
+      const npc=npcTrolleys[j];
+      if(!npc.alive)continue;
+      if(r.pos.distanceTo(npc.mesh.position)<3.0){
+        // HIT!
+        spawnExplosion(r.pos.clone());
+        scene.remove(r.mesh);
+        rockets.splice(i,1);
+        GS.coins+=20; // bonus coins for hit
+        GS.score+=500;
+        showHitMarker();
+        killNpc(npc);
+        hit=true;
+        break;
+      }
+    }
+  }
+}
+
+let hitTmr=null;
+function showHitMarker(){
+  const hm=document.getElementById('hit-marker');
+  hm.style.opacity='1';hm.style.color='#ff4422';
+  if(hitTmr)clearTimeout(hitTmr);
+  hitTmr=setTimeout(()=>hm.style.opacity='0',320);
+  flash('f-rocket',200);
 }
 
 function updateNpcTrolleys(dt,gt){
   npcTrolleys.forEach(npc=>{
+    if(!npc.alive)return;
     npc.jCool=Math.max(0,npc.jCool-dt);
-    // Slight random speed wobble — erratic grandma driving
     const wobbleSpeed=npc.speed*(0.85+Math.sin(gt*0.7+npc.wobble)*0.15);
     const advance=(wobbleSpeed*dt)/CELL;
     npc.edgeT=Math.min(npc.edgeT+advance,1.0);
@@ -1291,12 +1655,10 @@ function updateNpcTrolleys(dt,gt){
       const back=(npc.facing+2)%4;
       const nbrs=getNeighbors(nc,nr,back);
       if(nbrs.length>0){
-        // Random direction — grandma doesn't know where she's going
         const chosen=nbrs[Math.floor(Math.random()*nbrs.length)];
         npc.nextNode=chosen.nodeId;
         npc.facing=chosen.dir;
       } else {
-        // Reverse
         npc.facing=(npc.facing+2)%4;
         const fwd=DIR_VEC[npc.facing];
         const nc2=Math.max(0,Math.min(GW,nc+fwd[0]));
@@ -1304,12 +1666,9 @@ function updateNpcTrolleys(dt,gt){
         npc.nextNode=nid(nc2,nr2);
       }
       npc.edgeT=0;
-
-      // Check if NPC is on same node as player — slow player down (collision)
       checkNpcCollision(npc,nc,nr);
     }
 
-    // Render NPC position
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const p0=npos(nc,nr),p1=npos(nnc,nnr);
@@ -1320,30 +1679,23 @@ function updateNpcTrolleys(dt,gt){
     const hl=Math.sqrt(dx*dx+dz*dz);
     if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
 
-    // Animate pump wobble (slow, tired grandma motion)
     npc.pumpAng+=wobbleSpeed*0.8*dt;
-    const pump=npc.mesh.children.find(c=>c.geometry?.type==='CylinderGeometry'&&c.position.y>.85&&c.position.y<.95);
-    // Gentle body sway
     npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
 
-    // Pulse beacon
     const bec=npc.mesh.children[npc.mesh.children.length-1];
     if(bec&&bec.material){
       const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
       bec.material.opacity=p;bec.material.transparent=true;
     }
 
-    // Proximity check with player trolley (continuous, not just at nodes)
     const dist=npc.mesh.position.distanceTo(trolley.position);
     if(dist<3.5&&GS.speed>1){
-      // Block! Slow down player
       GS.speed=Math.max(0,GS.speed*0.85);
-      if(dist<2.0){
-        GS.speed=Math.max(0,GS.speed-3*dt);
-        GS.shake=Math.max(GS.shake,0.8);
-      }
+      if(dist<2.0){GS.speed=Math.max(0,GS.speed-3*dt);GS.shake=Math.max(GS.shake,0.8);}
     }
   });
+  updateRockets(dt);
+  updateExplosions(dt);
 }
 
 function checkNpcCollision(npc,nc,nr){
@@ -1356,18 +1708,29 @@ function checkNpcCollision(npc,nc,nr){
 }
 
 function drawNpcsOnMinimap(){
+  const npcColors=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)',
+    'rgba(68,170,255,0.85)','rgba(255,136,68,0.85)','rgba(255,204,34,0.85)',
+    'rgba(204,34,85,0.85)','rgba(34,204,170,0.85)','rgba(170,68,255,0.85)','rgba(255,85,34,0.85)'];
   npcTrolleys.forEach((npc,i)=>{
+    if(!npc.alive)return;
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const tc=nc+(nnc-nc)*npc.edgeT,tr=nr+(nnr-nr)*npc.edgeT;
     const{x,y}=mmP(tc,tr);
     mmCtx.beginPath();mmCtx.arc(x,y,3.8,0,Math.PI*2);
-    mmCtx.fillStyle=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)'][i];
+    mmCtx.fillStyle=npcColors[i%npcColors.length];
     mmCtx.fill();
-    // Small grandma icon
     mmCtx.font='7px serif';mmCtx.fillStyle='#fff';
     mmCtx.textAlign='center';mmCtx.textBaseline='middle';
     mmCtx.fillText('👵',x,y);
+  });
+  // Draw rockets on minimap
+  rockets.forEach(r=>{
+    const rx=(r.pos.x-OX)/(GW*CELL)*GW;
+    const rz=(r.pos.z-OZ)/(GH*CELL)*GH;
+    const{x,y}=mmP(rx,rz);
+    mmCtx.beginPath();mmCtx.arc(x,y,2,0,Math.PI*2);
+    mmCtx.fillStyle='rgba(255,100,30,0.9)';mmCtx.fill();
   });
 }
 
@@ -1501,9 +1864,33 @@ function moveTrolley(){
   if(vipGlow.visible)vipGlow.rotation.y+=.04;
 }
 
+// ═══════════════════════════════════════════
+//  CAMERA — FIRST / THIRD PERSON
+// ═══════════════════════════════════════════
+let camMode='tp'; // 'tp' = third person, 'fp' = first person
 let camInit=false;
 const camTargetPos=new THREE.Vector3();
 const camLookTarget=new THREE.Vector3();
+
+function toggleCamMode(){
+  camMode=camMode==='tp'?'fp':'tp';
+  const btn=document.getElementById('view-btn');
+  const cross=document.getElementById('crosshair');
+  if(camMode==='fp'){
+    btn.textContent='🎯';btn.classList.add('fp');
+    btn.title='Switch to Third Person [V]';
+    cross.style.display='block';
+    // Hide trolley body in FP (optional — keep visible for shadow)
+    trolley.visible=true;
+  } else {
+    btn.textContent='👁';btn.classList.remove('fp');
+    btn.title='Switch to First Person [V]';
+    cross.style.display='none';
+  }
+  camInit=false;
+}
+
+document.getElementById('view-btn').addEventListener('click',toggleCamMode);
 
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
@@ -1515,24 +1902,37 @@ function moveCam(){
   const dx=p1.x-p0.x,dz=p1.z-p0.z;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
-
-  const camBack=13,camUp=9;
   const sh=GS.shake;
-  const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
-  const ty=camUp+(Math.random()-.5)*sh*.06;
-  const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
-  GS.shake*=.82;
 
-  if(!camInit){
-    camera.position.set(tx,ty,tz);
-    camTargetPos.set(tx,ty,tz);
-    camInit=true;
-  }else{
-    camTargetPos.set(tx,ty,tz);
-    camera.position.lerp(camTargetPos,.12);
+  if(camMode==='fp'){
+    // First person: camera at driver's eye level, looking straight ahead
+    const eyeH=1.9; // eye height above trolley base
+    const tx=px+fdx*0.3+(Math.random()-.5)*sh*.06;
+    const ty=eyeH+(Math.random()-.5)*sh*.04;
+    const tz=pz+fdz*0.3+(Math.random()-.5)*sh*.06;
+    GS.shake*=.82;
+    if(!camInit){camera.position.set(tx,ty,tz);camInit=true;}
+    else camera.position.lerp(new THREE.Vector3(tx,ty,tz),.25);
+    camLookTarget.set(px+fdx*18,eyeH*0.9,pz+fdz*18);
+    camera.lookAt(camLookTarget);
+  } else {
+    // Third person: behind and above
+    const camBack=13,camUp=9;
+    const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
+    const ty=camUp+(Math.random()-.5)*sh*.06;
+    const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
+    GS.shake*=.82;
+    if(!camInit){
+      camera.position.set(tx,ty,tz);
+      camTargetPos.set(tx,ty,tz);
+      camInit=true;
+    }else{
+      camTargetPos.set(tx,ty,tz);
+      camera.position.lerp(camTargetPos,.12);
+    }
+    camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
+    camera.lookAt(camLookTarget);
   }
-  camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
-  camera.lookAt(camLookTarget);
 }
 
 let pumpAngV=0;
@@ -1644,6 +2044,12 @@ function startGame(){
   clearChoiceMarkers();
   Object.assign(GS,{speed:0,score:0,coins:0,energy:60,cd:0,braking:false,shake:0,inv:0,activePU:null});
   document.getElementById('pu-bar').style.display='none';
+  // Reset shop
+  SHOP.rocketOwned=false; SHOP.rocketAmmo=0;
+  updateRocketHUD();
+  document.getElementById('shop-overlay').style.display='none';
+  // Reset camera
+  if(camMode==='fp') toggleCamMode(); // force back to TP on new game
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
   const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);

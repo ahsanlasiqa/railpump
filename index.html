@@ -543,9 +543,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.007);
+scene.fog=new THREE.FogExp2(0x05060f,0.0038);
 // Narrow FOV — cinematic, city feels denser
-const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
+const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
@@ -1199,7 +1199,7 @@ function checkArrival(col,row){
 function checkPickups(col,row){
   coinMeshes.forEach(c=>{
     if(!c.collected&&c.c===col&&c.r===row){
-      c.collected=true;scene.remove(c.m);GS.coins+=30;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
+      c.collected=true;scene.remove(c.m);GS.coins+=20;GS.score+=20;spawnP(c.m.position);showNotif('+20 🪙','#ffd700');
     }
   });
   puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});

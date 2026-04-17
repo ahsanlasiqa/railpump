@@ -442,20 +442,21 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.setClearColor(0x0d1020,1);
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x0d1020,0.004);
+scene.fog=new THREE.FogExp2(0x080e1a, 0.006);
+scene.background = new THREE.Color(0x080e1a);
 const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
-const ambLight=new THREE.AmbientLight(0xfff0e0,1.2);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0xfff8e0,1.6);
+const ambLight=new THREE.AmbientLight(0x2233aa,0.7);scene.add(ambLight);
+const sunLight=new THREE.DirectionalLight(0xaabbdd,0.5);
 sunLight.position.set(60,100,40);sunLight.castShadow=true;
 sunLight.shadow.mapSize.set(1024,1024);
 sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
 sunLight.shadow.camera.left=-160;sunLight.shadow.camera.right=160;
 sunLight.shadow.camera.top=160;sunLight.shadow.camera.bottom=-160;
 scene.add(sunLight);scene.add(sunLight.target);
-const fill1=new THREE.DirectionalLight(0x8899ff,0.45);fill1.position.set(-50,30,-70);scene.add(fill1);
-const fill2=new THREE.DirectionalLight(0xffeedd,0.35);fill2.position.set(50,20,60);scene.add(fill2);
+const fill1=new THREE.DirectionalLight(0x4455cc,0.35);fill1.position.set(-50,30,-70);scene.add(fill1);
+const fill2=new THREE.DirectionalLight(0xcc4422,0.18);fill2.position.set(50,10,60);scene.add(fill2);
 
 // ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
@@ -544,15 +545,29 @@ function buildWorld(){
   worldGrp=new THREE.Group();
   const rng=mkRng(54321);
 
-  // ── Flat ground ──
-  const gndM=new THREE.MeshStandardMaterial({color:0x1a2030,roughness:1});
-  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+60,GH*CELL+60),gndM);
+  // ── Flat ground — rich dark asphalt ──
+  const gndM=new THREE.MeshStandardMaterial({color:0x141820, roughness:1});
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
 
+  // Ground accent — subtle grid lines
+  const gridM = new THREE.MeshBasicMaterial({color:0x1c2230});
+  for(let r=0;r<=GH;r++){
+    const gz = OZ + r*CELL;
+    const gLine = new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+60, 0.15), gridM);
+    gLine.rotation.x=-Math.PI/2; gLine.position.set(0,-0.02,gz); worldGrp.add(gLine);
+  }
+  for(let c=0;c<=GW;c++){
+    const gx = OX + c*CELL;
+    const gLine = new THREE.Mesh(new THREE.PlaneGeometry(0.15, GH*CELL+60), gridM);
+    gLine.rotation.x=-Math.PI/2; gLine.position.set(gx,-0.02,0); worldGrp.add(gLine);
+  }
+
   // ── Roads + rails (flat) ──
-  const roadM=new THREE.MeshStandardMaterial({color:0x252840,roughness:.95});
-  const railM=new THREE.MeshStandardMaterial({color:0x8888a0,metalness:.85,roughness:.25});
-  const tieM=new THREE.MeshStandardMaterial({color:0x4a3828,roughness:.95});
+  const roadM=new THREE.MeshStandardMaterial({color:0x1e2234,roughness:.98});
+  const railM=new THREE.MeshStandardMaterial({color:0x9999b8,metalness:.9,roughness:.2});
+  const tieM=new THREE.MeshStandardMaterial({color:0x3a2c1e,roughness:.95});
+  const centerLineM=new THREE.MeshBasicMaterial({color:0x554400});
   const ROFF=0.52;
 
   // Horizontal edges
@@ -604,106 +619,442 @@ function buildWorld(){
     lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
   }
 
-// ── Buildings (Improved Version) ──
-  const bldPal = [0x2a3050, 0x303060, 0x3a2840, 0x284038, 0x403828, 0x2a3550, 0x383060];
-  const acPal = [0x3a66cc, 0x3acc66, 0xcc663a, 0x663acc, 0xcc3a66];
-  
-  // Materials: Using Emissive for glowing windows at night
-  const winM = new THREE.MeshLambertMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 0.6 });
-  const winMB = new THREE.MeshLambertMaterial({ color: 0xaaccff, emissive: 0xaaccff, emissiveIntensity: 0.4 });
-  const winGeo = new THREE.PlaneGeometry(0.55, 0.75);
+  // ═══════════════════════════════════════════
+  // ── STYLIZED LOW-POLY CITY BUILDINGS ──
+  // ═══════════════════════════════════════════
 
+  // Flat-shaded body palette — deep urban night tones
+  const bldPalettes = [
+    // [body, trim, accent]
+    [0x1e2a3a, 0x2a3f58, 0x3a7fd4],  // steel blue
+    [0x221a2e, 0x3a2850, 0xaa44ff],  // deep purple
+    [0x1a2e22, 0x2a4838, 0x33cc77],  // dark teal
+    [0x2e1e1a, 0x4a2e28, 0xff5533],  // rust red
+    [0x2a2e1a, 0x3e4228, 0xccdd22],  // olive
+    [0x1a2030, 0x283050, 0x4499ff],  // navy
+    [0x2e2020, 0x483030, 0xff4488],  // crimson
+    [0x1e2828, 0x2c3c3c, 0x44ffdd],  // cyan-teal
+    [0x2a1e10, 0x3e2c18, 0xff9933],  // amber
+    [0x101828, 0x182240, 0x6688ff],  // midnight blue
+  ];
+
+  // Neon accent colors for signs/strips
+  const neonCols = [0xff2255, 0x22ffee, 0xff8800, 0xaa22ff, 0x22ff66, 0xff2299, 0x33aaff, 0xffee00];
+
+  // Window materials — emissive glow
+  const winYellow = new THREE.MeshBasicMaterial({color:0xffeeaa});
+  const winBlue   = new THREE.MeshBasicMaterial({color:0xaaccff});
+  const winGreen  = new THREE.MeshBasicMaterial({color:0xaaffcc});
+  const winOff    = new THREE.MeshBasicMaterial({color:0x1a1e2a});
+  const winMats   = [winYellow, winBlue, winGreen, winOff, winOff]; // off is more common
+
+  // Shared geometries for performance
+  const winGeoSm = new THREE.PlaneGeometry(0.5, 0.65);
+  const winGeoLg = new THREE.PlaneGeometry(0.75, 0.9);
+
+  // Helper: add neon emissive strip on a face
+  function addNeonStrip(grp, w, h, x, y, z, ry, col) {
+    const mat = new THREE.MeshBasicMaterial({color: col});
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.06), mat);
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = ry;
+    grp.add(mesh);
+  }
+
+  // Helper: add AC unit cluster on rooftop
+  function addACUnits(grp, topY, bldW, bldD, n, rngFn) {
+    const acMat = new THREE.MeshStandardMaterial({color:0x445566, roughness:.8});
+    const acVentMat = new THREE.MeshStandardMaterial({color:0x334455, roughness:.9});
+    for (let i = 0; i < n; i++) {
+      const aw = 0.6 + rngFn()*0.5, ah = 0.4 + rngFn()*0.4, ad = 0.5 + rngFn()*0.4;
+      const ax = (rngFn()-.5)*(bldW-aw-0.4);
+      const az = (rngFn()-.5)*(bldD-ad-0.4);
+      const ac = new THREE.Mesh(new THREE.BoxGeometry(aw, ah, ad), acMat);
+      ac.position.set(ax, topY + ah/2, az);
+      grp.add(ac);
+      // Vent slats
+      for (let s = 0; s < 3; s++) {
+        const slat = new THREE.Mesh(new THREE.BoxGeometry(aw+0.02, 0.04, 0.08), acVentMat);
+        slat.position.set(ax, topY + ah*0.25 + s*0.1, az + ad/2 + 0.01);
+        grp.add(slat);
+      }
+    }
+  }
+
+  // Helper: add water tower on rooftop
+  function addWaterTower(grp, topY, rngFn) {
+    const stMat = new THREE.MeshStandardMaterial({color:0x8B6914, roughness:.9});
+    const legMat = new THREE.MeshStandardMaterial({color:0x777766, roughness:.8, metalness:.3});
+    // Tank (cylinder approximated as box for low-poly)
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.0, 7), stMat);
+    tank.position.set(0, topY + 1.6, 0);
+    grp.add(tank);
+    // Cone cap
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.5, 7), stMat);
+    cap.position.set(0, topY + 2.2, 0);
+    grp.add(cap);
+    // 6 legs
+    for (let i = 0; i < 6; i++) {
+      const ang = (i/6)*Math.PI*2;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 4), legMat);
+      leg.position.set(Math.cos(ang)*0.45, topY + 1.05, Math.sin(ang)*0.45);
+      leg.rotation.x = Math.cos(ang)*0.2;
+      leg.rotation.z = -Math.sin(ang)*0.2;
+      grp.add(leg);
+    }
+  }
+
+  // Helper: flat billboard/sign on facade
+  function addSign(grp, x, y, z, ry, w, h, col) {
+    const mat = new THREE.MeshBasicMaterial({color: col});
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.1), mat);
+    sign.position.set(x, y, z);
+    sign.rotation.y = ry;
+    grp.add(sign);
+    // Sign frame
+    const fMat = new THREE.MeshBasicMaterial({color: 0x111122});
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.12, h+0.12, 0.06), fMat);
+    frame.position.set(x, y, z - 0.03);
+    frame.rotation.y = ry;
+    grp.add(frame);
+  }
+
+  // Helper: antenna on rooftop
+  function addAntenna(grp, topY, x, z, rngFn) {
+    const aMat = new THREE.MeshStandardMaterial({color:0x8899aa, metalness:.7, roughness:.3});
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5+rngFn()*1.5, 5), aMat);
+    pole.position.set(x, topY + (pole.geometry.parameters.height||1.5)/2, z);
+    grp.add(pole);
+    // Red blink light at top
+    const blink = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 4),
+      new THREE.MeshBasicMaterial({color:0xff2200}));
+    blink.position.set(x, topY + (pole.geometry.parameters.height||1.5) + 0.1, z);
+    grp.add(blink);
+  }
+
+  // Helper: flat-shaded stepped pyramid roof
+  function addSteppedRoof(grp, topY, bldW, bldD, col) {
+    const mat = new THREE.MeshStandardMaterial({color:col, roughness:.8, flatShading:true});
+    for (let s = 0; s < 3; s++) {
+      const sw = bldW * (1 - s*0.22);
+      const sd = bldD * (1 - s*0.22);
+      const sh = 0.35;
+      const step = new THREE.Mesh(new THREE.BoxGeometry(sw, sh, sd), mat);
+      step.position.set(0, topY + s*sh + sh/2, 0);
+      grp.add(step);
+    }
+  }
+
+  // Helper: wedge/chamfered corner piece using CylinderGeometry  
+  function addChamferTower(grp, topY, bldW, bldD, h, col) {
+    const mat = new THREE.MeshStandardMaterial({color:col, roughness:.6, flatShading:true});
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, h, 6), mat);
+    // place at one corner
+    tower.position.set(bldW/2 - 0.5, topY + h/2, bldD/2 - 0.5);
+    grp.add(tower);
+  }
+
+  // ── Main building loop ──
   for (let r = 0; r < GH; r++) {
     for (let c = 0; c < GW; c++) {
       const bx = OX + c * CELL + CELL / 2;
       const bz = OZ + r * CELL + CELL / 2;
-      
-      const bldGroup = new THREE.Group();
-      bldGroup.position.set(bx, 0, bz);
-      worldGrp.add(bldGroup);
 
-      // Building Properties
-      const baseWidth = CELL - 6;
-      const baseDepth = CELL - 6;
-      const totalFloors = 2 + Math.floor(rng() * 6);
-      const floorH = 2.4;
-      const bldColor = bldPal[Math.floor(rng() * bldPal.length)];
-      const bodyMat = new THREE.MeshStandardMaterial({ color: bldColor, roughness: 0.7 });
+      const grp = new THREE.Group();
+      grp.position.set(bx, 0, bz);
+      worldGrp.add(grp);
 
-      // Create 1-3 tiers (setbacks)
-      const numTiers = totalFloors > 4 ? 1 + Math.floor(rng() * 2) : 1;
-      const floorsPerTier = Math.floor(totalFloors / numTiers);
-      
-      let curBottom = 0;
-      let curW = baseWidth;
-      let curD = baseDepth;
+      const pal = bldPalettes[Math.floor(rng() * bldPalettes.length)];
+      const bodyCol = pal[0], trimCol = pal[1], accentCol = pal[2];
+      const neonCol = neonCols[Math.floor(rng() * neonCols.length)];
 
-      for (let t = 0; t < numTiers; t++) {
-        const tierH = floorsPerTier * floorH + (t === numTiers - 1 ? rng() * 1.5 : 0);
-        
-        // Tier Body
-        const body = new THREE.Mesh(new THREE.BoxGeometry(curW, tierH, curD), bodyMat);
-        body.position.set(0, curBottom + tierH / 2, 0);
-        body.castShadow = true; body.receiveShadow = true;
-        bldGroup.add(body);
+      // Base dimensions — varied shapes
+      const bldType = Math.floor(rng() * 5); // 0=box, 1=L, 2=stepped, 3=tower, 4=courtyard
+      const BW = CELL - 5.5, BD = CELL - 5.5;
+      const totalFloors = 2 + Math.floor(rng() * 7);
+      const floorH = 2.3;
+      const totalH = totalFloors * floorH;
 
-        // Windows for this tier
-        for (let f = 0; f < floorsPerTier; f++) {
-          const winY = curBottom + f * floorH + 1.2;
-          // Place 3 windows per side
-          for (let w = -1; w <= 1; w++) {
-            if (rng() < 0.15) continue; // Randomly "dark" windows
-            const mat = rng() > 0.5 ? winM : winMB;
-            
-            // Front & Back
-            const w1 = new THREE.Mesh(winGeo, mat);
-            w1.position.set(w * (curW / 3.5), winY, curD / 2 + 0.01);
-            bldGroup.add(w1);
-            
-            const w2 = w1.clone();
-            w2.position.z = -curD / 2 - 0.01;
-            w2.rotation.y = Math.PI;
-            bldGroup.add(w2);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: bodyCol, roughness: 0.75, flatShading: true
+      });
+      const trimMat = new THREE.MeshStandardMaterial({
+        color: trimCol, roughness: 0.65, flatShading: true
+      });
 
-            // Left & Right
-            const w3 = new THREE.Mesh(winGeo, mat);
-            w3.position.set(curW / 2 + 0.01, winY, w * (curD / 3.5));
-            w3.rotation.y = Math.PI / 2;
-            bldGroup.add(w3);
+      // ── BODY ──
+      if (bldType === 0) {
+        // Simple box
+        const body = new THREE.Mesh(new THREE.BoxGeometry(BW, totalH, BD), bodyMat);
+        body.position.set(0, totalH/2, 0);
+        body.castShadow = true; grp.add(body);
 
-            const w4 = w3.clone();
-            w4.position.x = -curW / 2 - 0.01;
-            w4.rotation.y = -Math.PI / 2;
-            bldGroup.add(w4);
-          }
+        // Trim band at 1/3 height
+        const band = new THREE.Mesh(new THREE.BoxGeometry(BW+0.1, 0.28, BD+0.1), trimMat);
+        band.position.set(0, totalH*0.38, 0);
+        grp.add(band);
+        const band2 = new THREE.Mesh(new THREE.BoxGeometry(BW+0.1, 0.18, BD+0.1), trimMat);
+        band2.position.set(0, totalH*0.7, 0);
+        grp.add(band2);
+
+      } else if (bldType === 1) {
+        // L-shaped building
+        const aw = BW, ad = BD*0.55;
+        const bw = BW*0.55, bd2 = BD;
+        const h1 = totalH, h2 = totalH * (0.6 + rng()*0.3);
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(aw, h1, ad), bodyMat);
+        b1.position.set(0, h1/2, (BD-ad)/2);
+        b1.castShadow=true; grp.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(bw, h2, bd2), bodyMat);
+        b2.position.set(-(BW-bw)/2, h2/2, 0);
+        b2.castShadow=true; grp.add(b2);
+        // Trim
+        const band = new THREE.Mesh(new THREE.BoxGeometry(aw+0.1, 0.25, ad+0.1), trimMat);
+        band.position.set(0, h1*0.5, (BD-ad)/2); grp.add(band);
+
+      } else if (bldType === 2) {
+        // Setback tower — 2 tiers
+        const h1 = totalH * 0.55, h2 = totalH * 0.45;
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(BW, h1, BD), bodyMat);
+        b1.position.set(0, h1/2, 0); b1.castShadow=true; grp.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(BW*0.65, h2, BD*0.65),
+          new THREE.MeshStandardMaterial({color:trimCol, roughness:.7, flatShading:true}));
+        b2.position.set(0, h1+h2/2, 0); b2.castShadow=true; grp.add(b2);
+        // Setback ledge
+        const ledge = new THREE.Mesh(new THREE.BoxGeometry(BW+0.2, 0.4, BD+0.2), trimMat);
+        ledge.position.set(0, h1+0.2, 0); grp.add(ledge);
+
+      } else if (bldType === 3) {
+        // Slim tower with chamfered base
+        const tW = BW*0.5, tD = BD*0.5;
+        // Wide base
+        const base = new THREE.Mesh(new THREE.BoxGeometry(BW, totalH*0.3, BD), bodyMat);
+        base.position.set(0, totalH*0.15, 0); base.castShadow=true; grp.add(base);
+        // Slim tower
+        const towerH = totalH*0.75;
+        const tower = new THREE.Mesh(new THREE.BoxGeometry(tW, towerH,tD),
+          new THREE.MeshStandardMaterial({color:trimCol,roughness:.65,flatShading:true}));
+        tower.position.set(0, totalH*0.3+towerH/2, 0); tower.castShadow=true; grp.add(tower);
+        // Spire
+        const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, tW*0.4, totalH*0.2, 5),
+          new THREE.MeshStandardMaterial({color:accentCol,roughness:.5,flatShading:true}));
+        spire.position.set(0, totalH*0.3+towerH+totalH*0.1, 0); grp.add(spire);
+
+      } else {
+        // Flat/squat commercial block
+        const h = totalFloors * floorH * 0.6;
+        const body = new THREE.Mesh(new THREE.BoxGeometry(BW, h, BD), bodyMat);
+        body.position.set(0, h/2, 0); body.castShadow=true; grp.add(body);
+        // Big parapet
+        const parapet = new THREE.Mesh(new THREE.BoxGeometry(BW+0.15, 0.55, BD+0.15), trimMat);
+        parapet.position.set(0, h+0.28, 0); grp.add(parapet);
+        // Rooftop billboard
+        if (rng() > 0.4) {
+          const bh = 1.5 + rng()*1.5;
+          addSign(grp, 0, h + bh/2 + 0.6, BD/2 + 0.08, 0, BW*0.55, bh,
+            neonCols[Math.floor(rng()*neonCols.length)]);
         }
+      }
 
-        // Roof details for the top tier
-        if (t === numTiers - 1) {
-          if (rng() > 0.4) {
-            const acCol = acPal[Math.floor(rng() * acPal.length)];
-            const acMat = new THREE.MeshStandardMaterial({ color: acCol, emissive: acCol, emissiveIntensity: 0.2 });
-            const acBox = new THREE.Mesh(new THREE.BoxGeometry(curW * 0.5, 0.6, curD * 0.5), acMat);
-            acBox.position.set(0, curBottom + tierH + 0.3, 0);
-            bldGroup.add(acBox);
-          }
+      // ── WINDOWS — all 4 sides ──
+      const winRowCount = Math.min(totalFloors, 8);
+      const winCols = Math.max(2, Math.floor(BW / 1.6));
+      const wGeo = rng() > 0.5 ? winGeoSm : winGeoLg;
+
+      for (let f = 0; f < winRowCount; f++) {
+        const wy = f * floorH + 1.1;
+        for (let w = 0; w < winCols; w++) {
+          const wx = (w - (winCols-1)/2) * (BW / winCols);
+          if (rng() < 0.12) continue; // dark window
+          const wMat = winMats[Math.floor(rng() * winMats.length)];
+
+          // Front
+          const wf = new THREE.Mesh(wGeo, wMat);
+          wf.position.set(wx, wy, BD/2 + 0.02);
+          grp.add(wf);
+          // Back
+          const wb = wf.clone(); wb.position.z = -BD/2 - 0.02; wb.rotation.y = Math.PI;
+          grp.add(wb);
         }
+        const winRowsZ = Math.max(2, Math.floor(BD / 1.6));
+        for (let w = 0; w < winRowsZ; w++) {
+          const wz = (w - (winRowsZ-1)/2) * (BD / winRowsZ);
+          if (rng() < 0.12) continue;
+          const wMat = winMats[Math.floor(rng() * winMats.length)];
+          // Left
+          const wl = new THREE.Mesh(wGeo, wMat);
+          wl.position.set(BW/2 + 0.02, f*floorH+1.1, wz);
+          wl.rotation.y = Math.PI/2; grp.add(wl);
+          // Right
+          const wr = wl.clone(); wr.position.x = -BW/2 - 0.02; wr.rotation.y = -Math.PI/2;
+          grp.add(wr);
+        }
+      }
 
-        curBottom += tierH;
-        curW *= 0.85; // Narrower
-        curD *= 0.85;
+      // ── ROOFTOP DETAILS ──
+      const topY = (bldType === 2) ? totalH * 0.55 + totalH * 0.45
+                 : (bldType === 3) ? totalH * 0.3 + totalH * 0.75
+                 : (bldType === 4) ? totalFloors * floorH * 0.6
+                 : totalH;
+
+      const roofType = Math.floor(rng() * 6);
+
+      if (roofType === 0) {
+        // Stepped pyramid
+        addSteppedRoof(grp, topY, BW, BD, trimCol);
+      } else if (roofType === 1) {
+        // Flat roof parapet
+        const parapet = new THREE.Mesh(new THREE.BoxGeometry(BW+0.15, 0.45, BD+0.15), trimMat);
+        parapet.position.set(0, topY + 0.23, 0); grp.add(parapet);
+      } else if (roofType === 2) {
+        // Raised roof box with accent color
+        const rh = 0.8 + rng()*0.8;
+        const roofBox = new THREE.Mesh(new THREE.BoxGeometry(BW*0.7, rh, BD*0.7),
+          new THREE.MeshStandardMaterial({color:accentCol, roughness:.6, flatShading:true}));
+        roofBox.position.set(0, topY + rh/2, 0); grp.add(roofBox);
+      } else if (roofType === 3) {
+        // Hip roof
+        const hipH = 1.2 + rng()*1.0;
+        const hip = new THREE.Mesh(new THREE.ConeGeometry(BW*0.62, hipH, 4),
+          new THREE.MeshStandardMaterial({color:trimCol, roughness:.8, flatShading:true}));
+        hip.position.set(0, topY + hipH/2, 0);
+        hip.rotation.y = Math.PI/4; grp.add(hip);
+      } else {
+        // Flat with HVAC box
+        const hvac = new THREE.Mesh(new THREE.BoxGeometry(BW*0.4, 0.7, BD*0.4),
+          new THREE.MeshStandardMaterial({color:0x4a5566, roughness:.8}));
+        hvac.position.set(0, topY + 0.35, 0); grp.add(hvac);
+      }
+
+      // ── AC UNITS (always add some) ──
+      const acCount = 1 + Math.floor(rng() * 4);
+      addACUnits(grp, topY, BW, BD, acCount, rng);
+
+      // ── WATER TOWER (30% chance on taller buildings) ──
+      if (rng() > 0.7 && totalFloors > 4) {
+        addWaterTower(grp, topY, rng);
+      }
+
+      // ── ANTENNAS (40% chance) ──
+      if (rng() > 0.6) {
+        const na = 1 + Math.floor(rng() * 3);
+        for (let i = 0; i < na; i++) {
+          addAntenna(grp, topY,
+            (rng()-.5)*(BW*0.6), (rng()-.5)*(BD*0.6), rng);
+        }
+      }
+
+      // ── NEON STRIPS (50% chance) ──
+      if (rng() > 0.5) {
+        const stripH = 0.12 + rng()*0.08;
+        const stripY = rng() * totalH * 0.6 + 0.8;
+        // Horizontal neon band on one or two sides
+        addNeonStrip(grp, BW+0.08, stripH, 0, stripY, BD/2+0.06, 0, neonCol);
+        if (rng() > 0.5)
+          addNeonStrip(grp, 0.08, stripH, -BW/2-0.06, stripY, BD/2+0.06, Math.PI/2, neonCol);
+      }
+
+      // ── VERTICAL NEON PILLAR (25% chance) ──
+      if (rng() > 0.75) {
+        const pilH = totalH * (0.4 + rng()*0.5);
+        const pilCol = neonCols[Math.floor(rng()*neonCols.length)];
+        const pil = new THREE.Mesh(new THREE.BoxGeometry(0.12, pilH, 0.12),
+          new THREE.MeshBasicMaterial({color: pilCol}));
+        pil.position.set(BW/2 + 0.1, pilH/2, (rng()-.5)*BD*0.5);
+        grp.add(pil);
+      }
+
+      // ── FACADE SIGN / SHOP AWNING on ground floor ──
+      if (rng() > 0.45) {
+        const signCol = neonCols[Math.floor(rng()*neonCols.length)];
+        const sw = BW * (0.4 + rng()*0.35), sh = 0.8 + rng()*0.5;
+        // Shop sign box flush with facade
+        const signMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sh, 0.2),
+          new THREE.MeshBasicMaterial({color: signCol}));
+        signMesh.position.set((rng()-.5)*(BW-sw), 1.5 + sh/2, BD/2 + 0.12);
+        grp.add(signMesh);
+        // Awning
+        const awnMat = new THREE.MeshStandardMaterial({color: trimCol, roughness:.9, flatShading:true});
+        const awn = new THREE.Mesh(new THREE.BoxGeometry(sw+0.3, 0.12, 0.9), awnMat);
+        awn.position.set((rng()-.5)*(BW-sw), 2.6, BD/2 + 0.5);
+        grp.add(awn);
+      }
+
+      // ── BALCONIES on mid-to-upper floors ──
+      if (rng() > 0.6 && totalFloors > 3) {
+        const balcFloor = 1 + Math.floor(rng() * (totalFloors - 2));
+        const balcY = balcFloor * floorH + 0.05;
+        const balcMat = new THREE.MeshStandardMaterial({color:trimCol, roughness:.7, flatShading:true});
+        const balc = new THREE.Mesh(new THREE.BoxGeometry(BW*0.5, 0.12, 0.8), balcMat);
+        balc.position.set(0, balcY, BD/2 + 0.4); grp.add(balc);
+        // Railing
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(BW*0.5+0.08, 0.5, 0.06), balcMat);
+        rail.position.set(0, balcY + 0.31, BD/2 + 0.8); grp.add(rail);
+      }
+
+      // ── CHAMFER CORNER TOWER on some tall buildings ──
+      if (rng() > 0.82 && totalFloors >= 5) {
+        addChamferTower(grp, totalH, BW, BD, 1.8 + rng()*2, accentCol);
+      }
+
+      // ── ROOFTOP POINT LIGHT (neon glow bounce) ──
+      if (rng() > 0.55) {
+        const ptLight = new THREE.PointLight(neonCol, 0.6, 12);
+        ptLight.position.set((rng()-.5)*BW*0.5, topY + 1.2, (rng()-.5)*BD*0.5);
+        grp.add(ptLight);
       }
     }
   }
-  // ── Street lights ──
-  const polM=new THREE.MeshStandardMaterial({color:0x88889a,metalness:.7,roughness:.4});
-  const lampM2=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:new THREE.Color(0xffffaa),emissiveIntensity:1.8});
+  // ── STYLIZED STREET LIGHTS ──
+  const polM = new THREE.MeshStandardMaterial({color:0x556677, metalness:.8, roughness:.3});
+  const lampGlowMat = new THREE.MeshBasicMaterial({color:0xfff0cc});
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    if(rng()>.5){
+    if(rng()>.42){
       const p=npos(c,r);
-      const lp=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,4,6),polM);lp.position.set(p.x+1.5,2,p.z+1.5);worldGrp.add(lp);
-      const ll=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),lampM2);ll.position.set(p.x+1.5,4.2,p.z+1.5);worldGrp.add(ll);
-      if(rng()>.6){const ptL=new THREE.PointLight(0xffffcc,.3,10);ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);}
+      const side = rng()>0.5 ? 1.6 : -1.6;
+      const sideZ = rng()>0.5 ? 1.6 : -1.6;
+      // Pole
+      const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,4.5,6),polM);
+      lp.position.set(p.x+side, 2.25, p.z+sideZ); worldGrp.add(lp);
+      // Arm
+      const arm=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.9,5),polM);
+      arm.rotation.z=Math.PI/2; arm.position.set(p.x+side+0.42, 4.4, p.z+sideZ);
+      worldGrp.add(arm);
+      // Lamp head
+      const lampHead=new THREE.Mesh(new THREE.BoxGeometry(.35,.18,.22),polM);
+      lampHead.position.set(p.x+side+0.9, 4.3, p.z+sideZ); worldGrp.add(lampHead);
+      // Bulb glow
+      const ll=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5), lampGlowMat);
+      ll.position.set(p.x+side+0.9, 4.18, p.z+sideZ); worldGrp.add(ll);
+      // Point light
+      if(rng()>.35){
+        const ptL=new THREE.PointLight(0xfff0cc, 0.5, 14);
+        ptL.position.set(p.x+side+0.9, 4.1, p.z+sideZ);
+        worldGrp.add(ptL);
+      }
+    }
+  }
+
+  // ── SIDEWALK STRIPS along roads ──
+  const sidewalkM = new THREE.MeshStandardMaterial({color:0x1e2535, roughness:.95});
+  for(let r=0;r<=GH;r++){
+    for(let c=0;c<GW;c++){
+      const p0=npos(c,r),p1=npos(c+1,r);
+      const cx=(p0.x+p1.x)/2, cz=(p0.z+p1.z)/2;
+      [-2.3, 2.3].forEach(off=>{
+        const sw=new THREE.Mesh(new THREE.BoxGeometry(CELL,.04,1.1),sidewalkM);
+        sw.position.set(cx,.02,cz+off); worldGrp.add(sw);
+      });
+    }
+  }
+  for(let c=0;c<=GW;c++){
+    for(let r=0;r<GH;r++){
+      const p0=npos(c,r),p1=npos(c,r+1);
+      const cx=(p0.x+p1.x)/2, cz=(p0.z+p1.z)/2;
+      [-2.3, 2.3].forEach(off=>{
+        const sw=new THREE.Mesh(new THREE.BoxGeometry(1.1,.04,CELL),sidewalkM);
+        sw.position.set(cx+off,.02,cz); worldGrp.add(sw);
+      });
     }
   }
 

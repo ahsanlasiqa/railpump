@@ -445,9 +445,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.0038);
+scene.fog=new THREE.FogExp2(0x05060f,0.007);
 // Narrow FOV — cinematic, city feels denser
-const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,800);
+const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
@@ -754,209 +754,18 @@ function buildWorld(){
     }
   }
 
-  // ══════════════════════════════════════════════
-  // ── SKY & CITY BACKDROP ──
-  // ══════════════════════════════════════════════
-
-  // Sky dome — use vertex colors to simulate gradient (deep indigo at top → dark teal at horizon)
-  // We build it as a series of stacked rings tinted from dark blue → warm orange near horizon
-  const SKY_R = 560;
-  const skyGeo = new THREE.SphereGeometry(SKY_R, 32, 16);
-  // Paint vertex colors for gradient
-  const skyColors = [];
-  const skyPos = skyGeo.attributes.position;
-  for(let i = 0; i < skyPos.count; i++){
-    const y = skyPos.getY(i);
-    const t = Math.max(0, Math.min(1, (y + SKY_R) / (SKY_R * 2)));
-    // top: deep navy #060818  mid: indigo-purple #0d0a28  horizon: dark warm #1a0a10
-    let r,g,b;
-    if(t > 0.55){
-      // Upper sky — very dark navy/indigo
-      const u = (t - 0.55)/0.45;
-      r = 0.02 + u*0.01; g = 0.02 + u*0.02; b = 0.06 + u*0.04;
-    } else if(t > 0.25){
-      // Mid sky — deep purple-blue
-      const u = (t - 0.25)/0.30;
-      r = 0.06 + u*0.00; g = 0.02 + u*0.02; b = 0.10 + u*0.04;
-    } else {
-      // Near horizon — dark warm with neon glow tint
-      const u = t/0.25;
-      r = 0.18 - u*0.12; g = 0.04 + u*0.02; b = 0.14 + u*0.04;
-    }
-    skyColors.push(r, g, b);
-  }
-  skyGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(skyColors), 3));
-  const skyMat = new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide});
-  worldGrp.add(new THREE.Mesh(skyGeo, skyMat));
-
-  // ── HORIZON GLOW BANDS (city light pollution) ──
-  // Multiple large flat planes at horizon with additive neon colors
-  const horizonGlows = [
-    {col:0x330a22, w:1600, h:80,  y:8,   fog:0.55},  // magenta-red wide
-    {col:0x1a0828, w:1200, h:50,  y:14,  fog:0.35},  // deep purple
-    {col:0x0a1830, w:1000, h:35,  y:20,  fog:0.25},  // blue upper
-    {col:0x280a08, w: 900, h:45,  y:5,   fog:0.40},  // warm orange-red
-  ];
-  const horizonDirs = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
-  horizonGlows.forEach(hg => {
-    horizonDirs.forEach(angle => {
-      const hMat = new THREE.MeshBasicMaterial({color:hg.col, transparent:true, opacity:hg.fog, depthWrite:false});
-      const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(hg.w, hg.h), hMat);
-      hMesh.rotation.y = angle;
-      hMesh.position.set(Math.sin(angle)*480, hg.y, Math.cos(angle)*480);
-      worldGrp.add(hMesh);
-    });
-  });
-
-  // ── SILHOUETTE CITY SKYLINE around the edges ──
-  // Randomly generated low-poly buildings placed in rings outside the grid
-  const silRng = mkRng(99887);
-  const SIL_MAT = new THREE.MeshBasicMaterial({color:0x07080f});
-  const SIL_ACCENT_COLS = [0x1a0828, 0x080a20, 0x0a1018, 0x140818];
-  const gridHalf = (GW * CELL) / 2;
-
-  // Place silhouette buildings in a ring 60–220 units outside the grid
-  const silCount = 180;
-  for(let i = 0; i < silCount; i++){
-    const angle = silRng() * Math.PI * 2;
-    const dist = gridHalf + 55 + silRng() * 170;
-    const bx = Math.cos(angle) * dist;
-    const bz = Math.sin(angle) * dist;
-    const bw = 4 + silRng() * 14;
-    const bd = 4 + silRng() * 14;
-    const bh = 5 + silRng() * 45;
-
-    const silGrp = new THREE.Group();
-    silGrp.position.set(bx, 0, bz);
-
-    // Main body — near-black
-    const accentIdx = Math.floor(silRng()*SIL_ACCENT_COLS.length);
-    const bodyCol = silRng() > 0.75 ? SIL_ACCENT_COLS[accentIdx] : 0x07080f;
-    const silBody = new THREE.Mesh(
-      new THREE.BoxGeometry(bw, bh, bd),
-      new THREE.MeshBasicMaterial({color: bodyCol})
-    );
-    silBody.position.y = bh/2;
-    silGrp.add(silBody);
-
-    // Setback top on taller buildings
-    if(bh > 20 && silRng() > 0.45){
-      const t2h = bh * (0.3 + silRng()*0.3);
-      const t2 = new THREE.Mesh(
-        new THREE.BoxGeometry(bw*0.55, t2h, bd*0.55),
-        new THREE.MeshBasicMaterial({color:0x060710})
-      );
-      t2.position.y = bh + t2h/2;
-      silGrp.add(t2);
-    }
-
-    // Lit windows — sparse, tiny warm dots on silhouette buildings
-    if(silRng() > 0.3){
-      const winCount = 2 + Math.floor(silRng() * 8);
-      for(let w = 0; w < winCount; w++){
-        const wx = (silRng()-0.5)*bw*0.7;
-        const wy = silRng()*bh*0.85 + 0.5;
-        const wz = bd/2 + 0.05;
-        const litCol = silRng()>0.6 ? 0xffe8aa : silRng()>0.5 ? 0xaaccff : 0xffcc88;
-        const litW = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.4+silRng()*0.4, 0.5+silRng()*0.4),
-          new THREE.MeshBasicMaterial({color: litCol})
-        );
-        litW.position.set(wx, wy, wz);
-        silGrp.add(litW);
-      }
-    }
-
-    // Antenna on some tall buildings
-    if(bh > 25 && silRng() > 0.6){
-      const ant = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.06, 6+silRng()*8, 4),
-        new THREE.MeshBasicMaterial({color:0x334455})
-      );
-      ant.position.y = bh + (ant.geometry.parameters?.height || 8)/2;
-      silGrp.add(ant);
-      // Red blink light
-      const blink = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 4, 3),
-        new THREE.MeshBasicMaterial({color:0xff2200})
-      );
-      blink.position.y = bh + (ant.geometry.parameters?.height || 8) + 0.2;
-      silGrp.add(blink);
-    }
-
-    // Neon accent on some silhouette buildings (faint)
-    if(silRng() > 0.78){
-      const nCol = [0x1a0010, 0x000a18, 0x100a00][Math.floor(silRng()*3)];
-      const nStrip = new THREE.Mesh(
-        new THREE.BoxGeometry(bw+0.1, 0.3, 0.1),
-        new THREE.MeshBasicMaterial({color: nCol})
-      );
-      nStrip.position.set(0, bh*0.6, bd/2+0.1);
-      silGrp.add(nStrip);
-    }
-
-    worldGrp.add(silGrp);
-  }
-
-  // ── GROUND PLANE EXTENDED (covers black void under silhouette buildings) ──
-  const extGnd = new THREE.Mesh(
-    new THREE.PlaneGeometry(1400, 1400),
-    new THREE.MeshBasicMaterial({color:0x060810})
-  );
-  extGnd.rotation.x = -Math.PI/2;
-  extGnd.position.y = -0.08;
-  worldGrp.add(extGnd);
-
-  // ── STARS (more, bigger variation, blue-white tones) ──
-  // Large bright stars
-  const sBrightPos = new Float32Array(120*3);
-  for(let i=0;i<120;i++){
-    const a=Math.random()*Math.PI*2, b=Math.random()*Math.PI*0.55+0.05;
-    sBrightPos[i*3]  = Math.sin(b)*Math.cos(a)*530;
-    sBrightPos[i*3+1]= Math.cos(b)*530;
-    sBrightPos[i*3+2]= Math.sin(b)*Math.sin(a)*530;
-  }
-  const sGeo2=new THREE.BufferGeometry();sGeo2.setAttribute('position',new THREE.BufferAttribute(sBrightPos,3));
-  worldGrp.add(new THREE.Points(sGeo2,new THREE.PointsMaterial({color:0xffffff,size:1.4,transparent:true,opacity:.95})));
-
-  // Medium stars
-  const sPos=new Float32Array(800*3);
-  for(let i=0;i<800;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;
-    sPos[i*3]=Math.sin(b)*Math.cos(a)*540;
-    sPos[i*3+1]=Math.cos(b)*540;
-    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;
+  // ── Sky + stars ──
+  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),
+    new THREE.MeshBasicMaterial({color:0x03040e,side:THREE.BackSide})));
+  const sPos=new Float32Array(700*3);
+  for(let i=0;i<700;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
+    sPos[i*3]=Math.sin(b)*Math.cos(a)*550;
+    sPos[i*3+1]=Math.abs(Math.cos(b))*550;
+    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;
   }
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
-  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaabbdd,size:.65,transparent:true,opacity:.8})));
-
-  // Faint blue-tinted small stars
-  const sDimPos = new Float32Array(400*3);
-  for(let i=0;i<400;i++){
-    const a=Math.random()*Math.PI*2, b=Math.random()*Math.PI*0.5+0.1;
-    sDimPos[i*3]  = Math.sin(b)*Math.cos(a)*545;
-    sDimPos[i*3+1]= Math.cos(b)*545;
-    sDimPos[i*3+2]= Math.sin(b)*Math.sin(a)*545;
-  }
-  const sGeo3=new THREE.BufferGeometry();sGeo3.setAttribute('position',new THREE.BufferAttribute(sDimPos,3));
-  worldGrp.add(new THREE.Points(sGeo3,new THREE.PointsMaterial({color:0x6688cc,size:.35,transparent:true,opacity:.6})));
-
-  // ── MOON ──
-  const moonMat = new THREE.MeshBasicMaterial({color:0xeef4ff});
-  const moon = new THREE.Mesh(new THREE.SphereGeometry(12, 12, 10), moonMat);
-  moon.position.set(-220, 280, -400);
-  worldGrp.add(moon);
-  // Moon glow halo
-  const moonHalo = new THREE.Mesh(
-    new THREE.SphereGeometry(18, 10, 8),
-    new THREE.MeshBasicMaterial({color:0x99aacc, transparent:true, opacity:0.12})
-  );
-  moonHalo.position.copy(moon.position);
-  worldGrp.add(moonHalo);
-  // Moon light contribution
-  const moonLight = new THREE.PointLight(0x8899cc, 0.4, 800);
-  moonLight.position.set(-220, 280, -400);
-  scene.add(moonLight);
+  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaaccff,size:.5,transparent:true,opacity:.75})));
 
   scene.add(worldGrp);
 
@@ -1748,7 +1557,7 @@ function moveCam(){
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
 
-  const camBack=22, camUp=15;
+  const camBack=13,camUp=9;
   const sh=GS.shake;
   const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
   const ty=camUp+(Math.random()-.5)*sh*.06;
@@ -1763,7 +1572,7 @@ function moveCam(){
     camTargetPos.set(tx,ty,tz);
     camera.position.lerp(camTargetPos,.12);
   }
-  camLookTarget.set(px+fdx*6, 1.2, pz+fdz*6);
+  camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
   camera.lookAt(camLookTarget);
 }
 

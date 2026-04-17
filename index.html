@@ -1526,11 +1526,11 @@ function killNpc(npc){
     setTimeout(()=>{
       if(npcTrolleys.length<NPC_MAX){
         spawnNpc(npc.node);
-        showNotif(`👵 Nenek respawn! (${npcTrolleys.length}/${NPC_MAX})`,'#ff8844');
+        showNotif(`👵 Granny respawn! (${npcTrolleys.length}/${NPC_MAX})`,'#ff8844');
       }
     }, 800+i*400);
   }
-  if(toSpawn===0) showNotif('💥 Max nenek tercapai! 10/10','#ff4422');
+  if(toSpawn===0) showNotif('💥 Granny Max! 10/10','#ff4422');
 }
 
 // ── Explosion particles ──
@@ -1701,7 +1701,7 @@ function updateNpcTrolleys(dt,gt){
 function checkNpcCollision(npc,nc,nr){
   const pc=tNode%NX,pr=Math.floor(tNode/NX);
   if(nc===pc&&nr===pr){
-    showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
+    showNotif('👵 Granny alert! 🐢','#ffaa44');
     GS.speed=Math.max(0,GS.speed*0.4);
     GS.shake=1.5;
   }

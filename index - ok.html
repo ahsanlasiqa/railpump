@@ -146,47 +146,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 /* ── NPC Trolley label ── */
 .npc-label{position:absolute;pointer-events:none;}
-
-/* ── View toggle button ── */
-#view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,180,255,0.4);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;pointer-events:all;}
-#view-btn:hover{background:rgba(100,180,255,0.15);border-color:rgba(100,180,255,0.8);}
-#view-lbl{position:fixed;top:156px;right:9px;font-size:7px;letter-spacing:1px;color:rgba(100,180,255,0.5);text-transform:uppercase;z-index:15;pointer-events:none;text-align:center;width:58px;}
-
-/* ── First-person crosshair ── */
-#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:14;display:none;width:32px;height:32px;}
-#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,80,80,0.85);border-radius:2px;}
-#crosshair::before{width:2px;height:16px;left:15px;top:8px;}
-#crosshair::after{width:16px;height:2px;left:8px;top:15px;}
-#crosshair-dot{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:#ff5050;border-radius:50%;pointer-events:none;z-index:14;display:none;box-shadow:0 0 6px rgba(255,80,80,0.8);}
-
-/* ── Rocket Launcher Shop ── */
-#shop-btn{position:fixed;top:161px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,50,0.45);color:#ff8866;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;pointer-events:all;}
-#shop-btn:hover{background:rgba(255,100,50,0.15);}
-
-#shop-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
-#shop-box{background:rgba(8,12,28,0.97);border:2px solid rgba(255,100,50,0.6);border-radius:18px;padding:22px 28px;width:min(360px,88vw);text-align:center;box-shadow:0 0 40px rgba(255,80,30,0.2);}
-#shop-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,150,80,0.7);margin-bottom:4px;}
-#shop-heading{font-size:22px;font-weight:bold;color:#ffe680;margin-bottom:4px;}
-#shop-desc{font-size:11px;color:rgba(255,220,150,0.55);margin-bottom:16px;line-height:1.5;}
-#shop-coins-show{font-size:13px;color:#ffd700;margin-bottom:14px;}
-.shop-item{background:rgba(255,100,50,0.07);border:1.5px solid rgba(255,100,50,0.3);border-radius:11px;padding:12px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background .15s,border-color .15s;}
-.shop-item:hover{background:rgba(255,100,50,0.18);border-color:rgba(255,100,50,0.8);}
-.shop-item.disabled{opacity:.4;cursor:not-allowed;}
-.shop-item-left{text-align:left;}
-.shop-item-name{font-size:14px;font-weight:bold;color:#ffe680;}
-.shop-item-desc{font-size:10px;color:rgba(255,220,150,0.55);margin-top:2px;}
-.shop-item-price{font-size:15px;font-weight:bold;color:#ffd700;}
-#shop-close{margin-top:10px;background:rgba(255,255,255,0.06);color:rgba(255,220,150,0.65);border:1px solid rgba(255,200,80,0.22);padding:7px 24px;border-radius:20px;cursor:pointer;font-family:'Georgia',serif;font-size:12px;}
-
-/* ── Rocket ammo HUD ── */
-#rocket-hud{position:fixed;bottom:172px;right:18px;z-index:15;background:rgba(6,10,22,0.88);border:1px solid rgba(255,100,50,0.4);border-radius:10px;padding:6px 12px;backdrop-filter:blur(8px);display:none;align-items:center;gap:8px;pointer-events:none;}
-#rocket-icon{font-size:18px;}
-#rocket-count{font-size:14px;font-weight:bold;color:#ff8866;}
-#rocket-lbl{font-size:8px;letter-spacing:1px;color:rgba(255,150,80,0.6);text-transform:uppercase;}
-
-/* ── Rocket fire button (mobile) ── */
-#mob-fire{position:fixed;bottom:270px;right:22px;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#cc2200,#ff6633);border:none;font-size:24px;cursor:pointer;z-index:20;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(255,80,30,0.6);}
-@media(max-width:768px){#mob-fire{display:flex;}}
 </style>
 </head>
 <body>
@@ -202,50 +161,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
-<button id="view-btn" title="Toggle First/Third Person [V]" onclick="toggleView()">👁️</button>
-<div id="view-lbl">3rd Person</div>
-<button id="shop-btn" title="Rocket Shop [R]" onclick="openShop()">🚀</button>
-
-<!-- Crosshair (first person) -->
-<div id="crosshair"></div>
-<div id="crosshair-dot"></div>
-
-<!-- Rocket ammo HUD -->
-<div id="rocket-hud">
-  <div id="rocket-icon">🚀</div>
-  <div>
-    <div id="rocket-count">0</div>
-    <div id="rocket-lbl">Rockets</div>
-  </div>
-</div>
-
-<!-- Rocket Shop -->
-<div id="shop-overlay">
-  <div id="shop-box">
-    <div id="shop-title">🛒 Armament Shop</div>
-    <div id="shop-heading">🚀 Rocket Launcher</div>
-    <div id="shop-desc">Fire at grandma trolleys to clear the track!<br>Press <strong style="color:#ffe680">F</strong> to launch. Trolley respawns after 8s.</div>
-    <div id="shop-coins-show">Your coins: <span id="shop-coins-val" style="color:#ffd700">0 🪙</span></div>
-    <div class="shop-item" id="shop-buy-3" onclick="buyRockets(3,50)">
-      <div class="shop-item-left">
-        <div class="shop-item-name">🚀 3 Rockets</div>
-        <div class="shop-item-desc">Enough for one nenek obstacle</div>
-      </div>
-      <div class="shop-item-price">50 🪙</div>
-    </div>
-    <div class="shop-item" id="shop-buy-10" onclick="buyRockets(10,140)">
-      <div class="shop-item-left">
-        <div class="shop-item-name">🚀🚀 10 Rockets</div>
-        <div class="shop-item-desc">Nenek clearance pack!</div>
-      </div>
-      <div class="shop-item-price">140 🪙</div>
-    </div>
-    <button id="shop-close" onclick="closeShop()">✕ Close</button>
-  </div>
-</div>
-
-<!-- Mobile fire button -->
-<button id="mob-fire" onclick="fireRocket()">🚀</button>
 
 <!-- Streak -->
 <div id="streak-hud"><div id="streak-box"><div id="streak-val">x2</div><div id="streak-lbl">Streak</div></div></div>
@@ -341,9 +256,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
     <li><span class="key">← →</span> Switch at junctions</li>
-    <li><span class="key">V</span> Toggle 1st/3rd person</li>
-    <li><span class="key">F</span> Fire rocket 🚀</li>
-    <li><span class="key">R</span> Open rocket shop</li>
   </ul>
   <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">12×12 grid · Flat city · Gold dots = VIP · Head to glowing dots to pick up packages · Trolley never stops!</p>
   <button class="btn" onclick="startGame()">START GAME</button>
@@ -488,9 +400,6 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.brake.code||e.code===KB.brake2.code){e.preventDefault();keys.brake=true;}
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
-  if(e.code==='KeyV'){e.preventDefault();toggleView();}
-  if(e.code==='KeyF'){e.preventDefault();fireRocket();}
-  if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
 },true);
 window.addEventListener('keyup',e=>{if(e.code===KB.pump.code||e.code===KB.pump2.code)pumpHeld=false;if(e.code===KB.brake.code||e.code===KB.brake2.code)keys.brake=false;},true);
 
@@ -536,9 +445,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.007);
+scene.fog=new THREE.FogExp2(0x05060f,0.0038);
 // Narrow FOV — cinematic, city feels denser
-const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
+const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,800);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
@@ -845,18 +754,209 @@ function buildWorld(){
     }
   }
 
-  // ── Sky + stars ──
-  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),
-    new THREE.MeshBasicMaterial({color:0x03040e,side:THREE.BackSide})));
-  const sPos=new Float32Array(700*3);
-  for(let i=0;i<700;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
-    sPos[i*3]=Math.sin(b)*Math.cos(a)*550;
-    sPos[i*3+1]=Math.abs(Math.cos(b))*550;
-    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;
+  // ══════════════════════════════════════════════
+  // ── SKY & CITY BACKDROP ──
+  // ══════════════════════════════════════════════
+
+  // Sky dome — use vertex colors to simulate gradient (deep indigo at top → dark teal at horizon)
+  // We build it as a series of stacked rings tinted from dark blue → warm orange near horizon
+  const SKY_R = 560;
+  const skyGeo = new THREE.SphereGeometry(SKY_R, 32, 16);
+  // Paint vertex colors for gradient
+  const skyColors = [];
+  const skyPos = skyGeo.attributes.position;
+  for(let i = 0; i < skyPos.count; i++){
+    const y = skyPos.getY(i);
+    const t = Math.max(0, Math.min(1, (y + SKY_R) / (SKY_R * 2)));
+    // top: deep navy #060818  mid: indigo-purple #0d0a28  horizon: dark warm #1a0a10
+    let r,g,b;
+    if(t > 0.55){
+      // Upper sky — very dark navy/indigo
+      const u = (t - 0.55)/0.45;
+      r = 0.02 + u*0.01; g = 0.02 + u*0.02; b = 0.06 + u*0.04;
+    } else if(t > 0.25){
+      // Mid sky — deep purple-blue
+      const u = (t - 0.25)/0.30;
+      r = 0.06 + u*0.00; g = 0.02 + u*0.02; b = 0.10 + u*0.04;
+    } else {
+      // Near horizon — dark warm with neon glow tint
+      const u = t/0.25;
+      r = 0.18 - u*0.12; g = 0.04 + u*0.02; b = 0.14 + u*0.04;
+    }
+    skyColors.push(r, g, b);
+  }
+  skyGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(skyColors), 3));
+  const skyMat = new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide});
+  worldGrp.add(new THREE.Mesh(skyGeo, skyMat));
+
+  // ── HORIZON GLOW BANDS (city light pollution) ──
+  // Multiple large flat planes at horizon with additive neon colors
+  const horizonGlows = [
+    {col:0x330a22, w:1600, h:80,  y:8,   fog:0.55},  // magenta-red wide
+    {col:0x1a0828, w:1200, h:50,  y:14,  fog:0.35},  // deep purple
+    {col:0x0a1830, w:1000, h:35,  y:20,  fog:0.25},  // blue upper
+    {col:0x280a08, w: 900, h:45,  y:5,   fog:0.40},  // warm orange-red
+  ];
+  const horizonDirs = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
+  horizonGlows.forEach(hg => {
+    horizonDirs.forEach(angle => {
+      const hMat = new THREE.MeshBasicMaterial({color:hg.col, transparent:true, opacity:hg.fog, depthWrite:false});
+      const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(hg.w, hg.h), hMat);
+      hMesh.rotation.y = angle;
+      hMesh.position.set(Math.sin(angle)*480, hg.y, Math.cos(angle)*480);
+      worldGrp.add(hMesh);
+    });
+  });
+
+  // ── SILHOUETTE CITY SKYLINE around the edges ──
+  // Randomly generated low-poly buildings placed in rings outside the grid
+  const silRng = mkRng(99887);
+  const SIL_MAT = new THREE.MeshBasicMaterial({color:0x07080f});
+  const SIL_ACCENT_COLS = [0x1a0828, 0x080a20, 0x0a1018, 0x140818];
+  const gridHalf = (GW * CELL) / 2;
+
+  // Place silhouette buildings in a ring 60–220 units outside the grid
+  const silCount = 180;
+  for(let i = 0; i < silCount; i++){
+    const angle = silRng() * Math.PI * 2;
+    const dist = gridHalf + 55 + silRng() * 170;
+    const bx = Math.cos(angle) * dist;
+    const bz = Math.sin(angle) * dist;
+    const bw = 4 + silRng() * 14;
+    const bd = 4 + silRng() * 14;
+    const bh = 5 + silRng() * 45;
+
+    const silGrp = new THREE.Group();
+    silGrp.position.set(bx, 0, bz);
+
+    // Main body — near-black
+    const accentIdx = Math.floor(silRng()*SIL_ACCENT_COLS.length);
+    const bodyCol = silRng() > 0.75 ? SIL_ACCENT_COLS[accentIdx] : 0x07080f;
+    const silBody = new THREE.Mesh(
+      new THREE.BoxGeometry(bw, bh, bd),
+      new THREE.MeshBasicMaterial({color: bodyCol})
+    );
+    silBody.position.y = bh/2;
+    silGrp.add(silBody);
+
+    // Setback top on taller buildings
+    if(bh > 20 && silRng() > 0.45){
+      const t2h = bh * (0.3 + silRng()*0.3);
+      const t2 = new THREE.Mesh(
+        new THREE.BoxGeometry(bw*0.55, t2h, bd*0.55),
+        new THREE.MeshBasicMaterial({color:0x060710})
+      );
+      t2.position.y = bh + t2h/2;
+      silGrp.add(t2);
+    }
+
+    // Lit windows — sparse, tiny warm dots on silhouette buildings
+    if(silRng() > 0.3){
+      const winCount = 2 + Math.floor(silRng() * 8);
+      for(let w = 0; w < winCount; w++){
+        const wx = (silRng()-0.5)*bw*0.7;
+        const wy = silRng()*bh*0.85 + 0.5;
+        const wz = bd/2 + 0.05;
+        const litCol = silRng()>0.6 ? 0xffe8aa : silRng()>0.5 ? 0xaaccff : 0xffcc88;
+        const litW = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.4+silRng()*0.4, 0.5+silRng()*0.4),
+          new THREE.MeshBasicMaterial({color: litCol})
+        );
+        litW.position.set(wx, wy, wz);
+        silGrp.add(litW);
+      }
+    }
+
+    // Antenna on some tall buildings
+    if(bh > 25 && silRng() > 0.6){
+      const ant = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 6+silRng()*8, 4),
+        new THREE.MeshBasicMaterial({color:0x334455})
+      );
+      ant.position.y = bh + (ant.geometry.parameters?.height || 8)/2;
+      silGrp.add(ant);
+      // Red blink light
+      const blink = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 4, 3),
+        new THREE.MeshBasicMaterial({color:0xff2200})
+      );
+      blink.position.y = bh + (ant.geometry.parameters?.height || 8) + 0.2;
+      silGrp.add(blink);
+    }
+
+    // Neon accent on some silhouette buildings (faint)
+    if(silRng() > 0.78){
+      const nCol = [0x1a0010, 0x000a18, 0x100a00][Math.floor(silRng()*3)];
+      const nStrip = new THREE.Mesh(
+        new THREE.BoxGeometry(bw+0.1, 0.3, 0.1),
+        new THREE.MeshBasicMaterial({color: nCol})
+      );
+      nStrip.position.set(0, bh*0.6, bd/2+0.1);
+      silGrp.add(nStrip);
+    }
+
+    worldGrp.add(silGrp);
+  }
+
+  // ── GROUND PLANE EXTENDED (covers black void under silhouette buildings) ──
+  const extGnd = new THREE.Mesh(
+    new THREE.PlaneGeometry(1400, 1400),
+    new THREE.MeshBasicMaterial({color:0x060810})
+  );
+  extGnd.rotation.x = -Math.PI/2;
+  extGnd.position.y = -0.08;
+  worldGrp.add(extGnd);
+
+  // ── STARS (more, bigger variation, blue-white tones) ──
+  // Large bright stars
+  const sBrightPos = new Float32Array(120*3);
+  for(let i=0;i<120;i++){
+    const a=Math.random()*Math.PI*2, b=Math.random()*Math.PI*0.55+0.05;
+    sBrightPos[i*3]  = Math.sin(b)*Math.cos(a)*530;
+    sBrightPos[i*3+1]= Math.cos(b)*530;
+    sBrightPos[i*3+2]= Math.sin(b)*Math.sin(a)*530;
+  }
+  const sGeo2=new THREE.BufferGeometry();sGeo2.setAttribute('position',new THREE.BufferAttribute(sBrightPos,3));
+  worldGrp.add(new THREE.Points(sGeo2,new THREE.PointsMaterial({color:0xffffff,size:1.4,transparent:true,opacity:.95})));
+
+  // Medium stars
+  const sPos=new Float32Array(800*3);
+  for(let i=0;i<800;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;
+    sPos[i*3]=Math.sin(b)*Math.cos(a)*540;
+    sPos[i*3+1]=Math.cos(b)*540;
+    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;
   }
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
-  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaaccff,size:.5,transparent:true,opacity:.75})));
+  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaabbdd,size:.65,transparent:true,opacity:.8})));
+
+  // Faint blue-tinted small stars
+  const sDimPos = new Float32Array(400*3);
+  for(let i=0;i<400;i++){
+    const a=Math.random()*Math.PI*2, b=Math.random()*Math.PI*0.5+0.1;
+    sDimPos[i*3]  = Math.sin(b)*Math.cos(a)*545;
+    sDimPos[i*3+1]= Math.cos(b)*545;
+    sDimPos[i*3+2]= Math.sin(b)*Math.sin(a)*545;
+  }
+  const sGeo3=new THREE.BufferGeometry();sGeo3.setAttribute('position',new THREE.BufferAttribute(sDimPos,3));
+  worldGrp.add(new THREE.Points(sGeo3,new THREE.PointsMaterial({color:0x6688cc,size:.35,transparent:true,opacity:.6})));
+
+  // ── MOON ──
+  const moonMat = new THREE.MeshBasicMaterial({color:0xeef4ff});
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(12, 12, 10), moonMat);
+  moon.position.set(-220, 280, -400);
+  worldGrp.add(moon);
+  // Moon glow halo
+  const moonHalo = new THREE.Mesh(
+    new THREE.SphereGeometry(18, 10, 8),
+    new THREE.MeshBasicMaterial({color:0x99aacc, transparent:true, opacity:0.12})
+  );
+  moonHalo.position.copy(moon.position);
+  worldGrp.add(moonHalo);
+  // Moon light contribution
+  const moonLight = new THREE.PointLight(0x8899cc, 0.4, 800);
+  moonLight.position.set(-220, 280, -400);
+  scene.add(moonLight);
 
   scene.add(worldGrp);
 
@@ -1467,7 +1567,7 @@ function updateNpcTrolleys(dt,gt){
 
     // Proximity check with player trolley (continuous, not just at nodes)
     const dist=npc.mesh.position.distanceTo(trolley.position);
-    if(!npc.respawning&&dist<3.5&&GS.speed>1){
+    if(dist<3.5&&GS.speed>1){
       // Block! Slow down player
       GS.speed=Math.max(0,GS.speed*0.85);
       if(dist<2.0){
@@ -1637,61 +1737,34 @@ let camInit=false;
 const camTargetPos=new THREE.Vector3();
 const camLookTarget=new THREE.Vector3();
 
-// ── View mode: 'third' | 'first' ──
-let camMode='third';
-
-function toggleView(){
-  camMode=camMode==='third'?'first':'third';
-  const isFirst=camMode==='first';
-  document.getElementById('view-lbl').textContent=isFirst?'1st Person':'3rd Person';
-  document.getElementById('view-btn').textContent=isFirst?'🎥':'👁️';
-  document.getElementById('crosshair').style.display=isFirst?'block':'none';
-  document.getElementById('crosshair-dot').style.display=isFirst?'block':'none';
-  // Hide trolley body in first person
-  trolley.traverse(o=>{if(o.isMesh&&o!==pkgBox&&o!==vipGlow)o.visible=!isFirst;});
-  beacon.visible=!isFirst;
-  if(!isFirst)camInit=false; // snap back to 3rd person instantly
-  showNotif(isFirst?'👁️ First Person':'🎥 Third Person','#88ccff');
-}
-
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
   const p0=npos(nc,nr),p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
+
   const dx=p1.x-p0.x,dz=p1.z-p0.z;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
-  const sh=GS.shake;
 
-  if(camMode==='first'){
-    // ── FIRST PERSON: eyes at driver's height, looking ahead ──
-    const eyeH=1.6;
-    const eyeX=px+(Math.random()-.5)*sh*.04;
-    const eyeY=eyeH+(Math.random()-.5)*sh*.03;
-    const eyeZ=pz+(Math.random()-.5)*sh*.04;
-    camera.position.set(eyeX,eyeY,eyeZ);
-    camLookTarget.set(px+fdx*8,eyeH,pz+fdz*8);
-    camera.lookAt(camLookTarget);
-  }else{
-    // ── THIRD PERSON: behind and above trolley ──
-    const camBack=13,camUp=9;
-    const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
-    const ty=camUp+(Math.random()-.5)*sh*.06;
-    const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
-    if(!camInit){
-      camera.position.set(tx,ty,tz);
-      camTargetPos.set(tx,ty,tz);
-      camInit=true;
-    }else{
-      camTargetPos.set(tx,ty,tz);
-      camera.position.lerp(camTargetPos,.12);
-    }
-    camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
-    camera.lookAt(camLookTarget);
-  }
+  const camBack=22, camUp=15;
+  const sh=GS.shake;
+  const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
+  const ty=camUp+(Math.random()-.5)*sh*.06;
+  const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
   GS.shake*=.82;
+
+  if(!camInit){
+    camera.position.set(tx,ty,tz);
+    camTargetPos.set(tx,ty,tz);
+    camInit=true;
+  }else{
+    camTargetPos.set(tx,ty,tz);
+    camera.position.lerp(camTargetPos,.12);
+  }
+  camLookTarget.set(px+fdx*6, 1.2, pz+fdz*6);
+  camera.lookAt(camLookTarget);
 }
 
 let pumpAngV=0;
@@ -1710,159 +1783,7 @@ function animTrolley(dt){
   stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*(i%2===0?1.1:-1.1);});
 }
 
-// ═══════════════════════════════════════════
-//  ROCKET LAUNCHER SYSTEM
-// ═══════════════════════════════════════════
-let rocketAmmo=0;
-const rockets=[];  // active projectiles
-const ROCKET_COST={3:50,10:140};
-const ROCKET_SPEED=28; // units/sec
-const ROCKET_RADIUS=3.5; // hit radius
-
-function openShop(){
-  if(!gameRunning)return;
-  gameRunning=false;
-  document.getElementById('shop-coins-val').textContent=GS.coins+' 🪙';
-  const canBuy3=GS.coins>=50,canBuy10=GS.coins>=140;
-  document.getElementById('shop-buy-3').classList.toggle('disabled',!canBuy3);
-  document.getElementById('shop-buy-10').classList.toggle('disabled',!canBuy10);
-  document.getElementById('shop-overlay').style.display='flex';
-}
-function closeShop(){
-  document.getElementById('shop-overlay').style.display='none';
-  gameRunning=true;
-}
-function buyRockets(qty,cost){
-  if(GS.coins<cost){showNotif('🪙 Not enough coins!','#ff6644');return;}
-  GS.coins-=cost;
-  rocketAmmo+=qty;
-  updRocketHUD();
-  document.getElementById('shop-coins-val').textContent=GS.coins+' 🪙';
-  document.getElementById('shop-buy-3').classList.toggle('disabled',GS.coins<50);
-  document.getElementById('shop-buy-10').classList.toggle('disabled',GS.coins<140);
-  showNotif(`🚀 +${qty} rockets acquired!`,'#ff8866');
-  closeShop();
-}
-function updRocketHUD(){
-  const hud=document.getElementById('rocket-hud');
-  hud.style.display=rocketAmmo>0?'flex':'none';
-  document.getElementById('rocket-count').textContent=rocketAmmo;
-}
-
-// Build a rocket mesh (small elongated cylinder with glow)
-function makeRocketMesh(){
-  const grp=new THREE.Group();
-  const body=new THREE.Mesh(
-    new THREE.CylinderGeometry(.1,.1,.8,8),
-    new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3})
-  );
-  body.rotation.x=Math.PI/2;grp.add(body);
-  // Exhaust flame
-  const flame=new THREE.Mesh(
-    new THREE.ConeGeometry(.12,.5,8),
-    new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:.85})
-  );
-  flame.rotation.x=Math.PI/2;flame.position.z=.6;grp.add(flame);
-  // Trail light
-  const pLight=new THREE.PointLight(0xff4400,3,6);grp.add(pLight);
-  return grp;
-}
-
-// Spawn rocket from trolley position heading forward
-function fireRocket(){
-  if(!gameRunning)return;
-  if(rocketAmmo<=0){showNotif('🚀 No rockets! Buy at shop [R]','#ff6644');return;}
-  rocketAmmo--;updRocketHUD();
-
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const dx=p1.x-p0.x,dz=p1.z-p0.z,hl=Math.sqrt(dx*dx+dz*dz)||1;
-  const fdx=dx/hl,fdz=dz/hl;
-
-  const mesh=makeRocketMesh();
-  mesh.position.set(trolley.position.x+fdx*.5,trolley.position.y+.8,trolley.position.z+fdz*.5);
-  mesh.rotation.y=Math.atan2(fdx,fdz);
-  scene.add(mesh);
-  rockets.push({mesh,vx:fdx*ROCKET_SPEED,vz:fdz*ROCKET_SPEED,life:4,age:0});
-  GS.shake=1.0;
-  flash('f-pump',120);
-  showNotif('🚀 FIRE!','#ff8866');
-}
-
-// Explosion visual
-function spawnExplosion(pos){
-  const grp=new THREE.Group();
-  // Fireball
-  const fb=new THREE.Mesh(
-    new THREE.SphereGeometry(.8,10,8),
-    new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:.9})
-  );
-  grp.add(fb);
-  // Shockring
-  const ring=new THREE.Mesh(
-    new THREE.TorusGeometry(1.2,.12,8,24),
-    new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:.8})
-  );
-  ring.rotation.x=Math.PI/2;grp.add(ring);
-  const pL=new THREE.PointLight(0xff6600,6,12);grp.add(pL);
-  grp.position.copy(pos);scene.add(grp);
-  // Animate out
-  let t=0;
-  const explTick=()=>{
-    t+=0.05;
-    grp.scale.setScalar(1+t*3);
-    fb.material.opacity=Math.max(0,.9-t*2);
-    ring.material.opacity=Math.max(0,.8-t*1.5);
-    pL.intensity=Math.max(0,6-t*12);
-    if(t<0.5)requestAnimationFrame(explTick);
-    else scene.remove(grp);
-  };
-  requestAnimationFrame(explTick);
-  GS.shake=2.5;
-}
-
-function updateRockets(dt){
-  for(let i=rockets.length-1;i>=0;i--){
-    const r=rockets[i];
-    r.age+=dt;
-    if(r.age>r.life){scene.remove(r.mesh);rockets.splice(i,1);continue;}
-    r.mesh.position.x+=r.vx*dt;
-    r.mesh.position.z+=r.vz*dt;
-    // Wobble flame flicker
-    const flame=r.mesh.children[1];
-    if(flame)flame.material.opacity=.7+Math.sin(r.age*40)*.2;
-
-    // Check hit on NPC trolleys
-    let hit=false;
-    for(let j=npcTrolleys.length-1;j>=0;j--){
-      const npc=npcTrolleys[j];
-      if(!npc.mesh||npc.respawning)continue;
-      const dist=r.mesh.position.distanceTo(npc.mesh.position);
-      if(dist<ROCKET_RADIUS){
-        // Hit!
-        spawnExplosion(npc.mesh.position.clone());
-        showNotif('💥 Got her! Nenek down!','#ffaa44');
-        flash('f-drop',300);
-        // Respawn NPC after 8 seconds
-        npc.respawning=true;
-        npc.mesh.visible=false;
-        setTimeout(()=>{
-          if(npc.mesh){npc.mesh.visible=true;npc.respawning=false;}
-        },8000);
-        scene.remove(r.mesh);rockets.splice(i,1);
-        hit=true;break;
-      }
-    }
-    if(hit)continue;
-
-    // Hit building/wall (simple: if age > 2.5s it hit something)
-    if(r.age>2.5){
-      spawnExplosion(r.mesh.position.clone());
-      scene.remove(r.mesh);rockets.splice(i,1);
-    }
-  }
-}
+function updHUD(){
   document.getElementById('h-score').textContent=GS.score;
   document.getElementById('h-del').textContent=MS.delivsDone;
   document.getElementById('h-coins').textContent=GS.coins;
@@ -1952,14 +1873,8 @@ function startGame(){
   ['scr-start','scr-fail','scr-win','scr-keys'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('map-hint').style.display='none';
   document.getElementById('streak-hud').style.display='none';
-  document.getElementById('shop-overlay').style.display='none';
   clearChoiceMarkers();
-  // Clear active rockets
-  rockets.forEach(r=>scene.remove(r.mesh));rockets.length=0;
-  // Reset to third person
-  if(camMode==='first')toggleView();
   Object.assign(GS,{speed:0,score:0,coins:0,energy:60,cd:0,braking:false,shake:0,inv:0,activePU:null});
-  rocketAmmo=0;updRocketHUD();
   document.getElementById('pu-bar').style.display='none';
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
@@ -1989,7 +1904,7 @@ const clock=new THREE.Clock();let gt=0;
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
-    updateNpcTrolleys(dt,gt);updateRockets(dt);
+    updateNpcTrolleys(dt,gt);
     drawMM();
   }
   moveCam();updP(dt);

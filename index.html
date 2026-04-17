@@ -1199,7 +1199,7 @@ function checkArrival(col,row){
 function checkPickups(col,row){
   coinMeshes.forEach(c=>{
     if(!c.collected&&c.c===col&&c.r===row){
-      c.collected=true;scene.remove(c.m);GS.coins++;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
+      c.collected=true;scene.remove(c.m);GS.coins+=30;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
     }
   });
   puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});

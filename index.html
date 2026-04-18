@@ -591,9 +591,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.007);
+scene.fog=new THREE.FogExp2(0x05060f,0.0038);
 // Narrow FOV — cinematic, city feels denser
-const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
+const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
@@ -1915,7 +1915,7 @@ function moveCam(){
 
   if(camMode==='first'){
     // ── FIRST PERSON: eyes at driver's height, looking ahead ──
-    const eyeH=1.6;
+    const eyeH=2.5;
     const eyeX=px+(Math.random()-.5)*sh*.04;
     const eyeY=eyeH+(Math.random()-.5)*sh*.03;
     const eyeZ=pz+(Math.random()-.5)*sh*.04;
@@ -1924,7 +1924,7 @@ function moveCam(){
     camera.lookAt(camLookTarget);
   }else{
     // ── THIRD PERSON: behind and above trolley ──
-    const camBack=13,camUp=9;
+    const camBack=22,camUp=15;
     const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
     const ty=camUp+(Math.random()-.5)*sh*.06;
     const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;

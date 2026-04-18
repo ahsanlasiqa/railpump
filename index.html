@@ -221,7 +221,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
       <div class="shop-item-icon">🚀</div>
       <div class="shop-item-info">
         <div class="shop-item-name">Rocket Launcher</div>
-        <div class="shop-item-desc">Tembak nenek penghalang! Kena 1 nenek → respawn jadi 2.<br>Max total nenek: 10. Tekan <b>F</b> untuk tembak.</div>
+        <div class="shop-item-desc">Shoot Granny! But beware for double respawn.<br>But don't worry Max : 10. Press <b>F</b> untuk tembak.</div>
       </div>
       <div class="shop-item-price" id="si-rocket-price">🪙 150</div>
     </div>
@@ -229,7 +229,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
       <div class="shop-item-icon">💥</div>
       <div class="shop-item-info">
         <div class="shop-item-name">Rocket Ammo ×3</div>
-        <div class="shop-item-desc">Tambah 3 amunisi roket. Perlu Rocket Launcher dulu.</div>
+        <div class="shop-item-desc">Buy 3 Ammo. Purchase Rocket Launcher first.</div>
       </div>
       <div class="shop-item-price" id="si-ammo-price">🪙 80</div>
     </div>
@@ -1403,7 +1403,7 @@ function buyItem(id){
     if(GS.coins<80){showNotif('Low coins! 🪙','#ff4444');return;}
     GS.coins-=80;
     SHOP.rocketAmmo+=3;
-    showNotif('💥 +3 Amunisi Roket!','#ff8844');
+    showNotif('💥 +3 Ammo!','#ff8844');
     updateRocketHUD();
     openShop();
   }

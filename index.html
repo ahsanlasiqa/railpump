@@ -1390,7 +1390,7 @@ function closeShop(){
 function buyItem(id){
   if(id==='rocket'){
     if(SHOP.rocketOwned){showNotif('Rocket sudah dimiliki!','#ffaa44');return;}
-    if(GS.coins<150){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    if(GS.coins<150){showNotif('Low coins! 🪙','#ff4444');return;}
     GS.coins-=150;
     SHOP.rocketOwned=true;
     SHOP.rocketAmmo=3;
@@ -1400,7 +1400,7 @@ function buyItem(id){
     openShop(); // refresh display
   } else if(id==='ammo'){
     if(!SHOP.rocketOwned){showNotif('Beli Rocket Launcher dulu!','#ff4444');return;}
-    if(GS.coins<80){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    if(GS.coins<80){showNotif('Low coins! 🪙','#ff4444');return;}
     GS.coins-=80;
     SHOP.rocketAmmo+=3;
     showNotif('💥 +3 Amunisi Roket!','#ff8844');

@@ -86,6 +86,28 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #pu-fill-bg{width:60px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:2px;}
 #pu-fill{height:100%;background:linear-gradient(90deg,#44ff88,#88ffcc);border-radius:2px;width:100%;transition:width .1s;}
 
+/* ── Manual Energy Boost HUD ── */
+#boost-hud{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:16;display:flex;align-items:center;gap:10px;pointer-events:all;}
+#boost-stock{display:flex;gap:5px;align-items:center;}
+.boost-pip{width:14px;height:14px;border-radius:3px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(80,220,255,0.2);transition:background .2s,border-color .2s,box-shadow .2s;}
+.boost-pip.full{background:rgba(80,220,255,0.7);border-color:rgba(80,220,255,0.9);box-shadow:0 0 8px rgba(80,220,255,0.7);}
+#boost-btn{background:rgba(6,10,28,0.9);border:2px solid rgba(80,220,255,0.45);border-radius:10px;color:#88eeff;font-size:11px;font-weight:bold;padding:5px 14px;cursor:pointer;letter-spacing:1.5px;font-family:'Georgia',serif;transition:background .12s,border-color .12s,box-shadow .12s;white-space:nowrap;}
+#boost-btn:hover:not(:disabled){background:rgba(80,220,255,0.1);border-color:rgba(80,220,255,0.8);box-shadow:0 0 14px rgba(80,220,255,0.4);}
+#boost-btn:disabled{opacity:.32;cursor:not-allowed;}
+#boost-btn.firing{background:rgba(80,220,255,0.22);border-color:#88ffff;box-shadow:0 0 24px rgba(80,255,255,0.8),0 0 48px rgba(80,220,255,0.3);color:#ffffff;}
+#boost-lbl{font-size:8px;letter-spacing:2px;color:rgba(80,220,255,0.5);text-transform:uppercase;text-align:center;margin-top:3px;}
+
+/* ── Lightning bolt SVG overlay ── */
+#lightning-overlay{position:fixed;inset:0;pointer-events:none;z-index:50;display:none;}
+#lightning-overlay svg{width:100%;height:100%;}
+
+/* ── Lightning screen flash ── */
+#f-lightning{background:radial-gradient(ellipse at 50% 40%,rgba(160,240,255,0.55),rgba(80,200,255,0.18) 45%,transparent 75%);z-index:7;}
+
+/* ── Boost active bar overlay (brief) ── */
+#boost-active-bar{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(80,220,255,0.9),rgba(160,255,255,1),rgba(80,220,255,0.9),transparent);z-index:55;opacity:0;pointer-events:none;transition:opacity .05s;}
+#boost-active-bar.lit{opacity:1;}
+
 /* ── Overlays ── */
 .overlay{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(3,5,14,0.94);z-index:100;backdrop-filter:blur(8px);}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
@@ -118,54 +140,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
-
-/* ── View Toggle Button ── */
-#view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,200,255,0.35);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;}
-#view-btn:hover{background:rgba(100,200,255,0.12);border-color:rgba(100,200,255,0.7);}
-#view-btn.fp{border-color:rgba(100,255,150,0.6);color:#88ffaa;}
-
-/* ── Shop Button ── */
-#shop-btn{position:fixed;top:162px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,160,40,0.45);color:#ffaa44;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
-#shop-btn:hover{background:rgba(255,160,40,0.14);}
-
-/* ── Shop Overlay ── */
-#shop-overlay{position:fixed;inset:0;background:rgba(2,4,14,0.88);z-index:85;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-#shop-box{background:rgba(8,12,28,0.98);border:2px solid rgba(255,160,40,0.6);border-radius:20px;padding:24px 28px;width:min(420px,92vw);box-shadow:0 0 50px rgba(255,140,20,0.2);}
-#shop-title{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,200,80,0.8);margin-bottom:4px;text-align:center;}
-#shop-coins-disp{font-size:22px;font-weight:bold;color:#ffd700;text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(255,200,0,0.5);}
-.shop-item{display:flex;align-items:center;gap:14px;background:rgba(255,160,40,0.05);border:1.5px solid rgba(255,160,40,0.2);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s,border-color .15s;}
-.shop-item:hover{background:rgba(255,160,40,0.12);border-color:rgba(255,160,40,0.55);}
-.shop-item.owned{border-color:rgba(100,255,150,0.4);background:rgba(100,255,150,0.05);}
-.shop-item-icon{font-size:28px;min-width:36px;text-align:center;}
-.shop-item-info{flex:1;}
-.shop-item-name{font-size:13px;font-weight:bold;color:#ffe680;margin-bottom:2px;}
-.shop-item-desc{font-size:10px;color:rgba(255,220,150,0.55);line-height:1.4;}
-.shop-item-price{font-size:13px;font-weight:bold;color:#ffd700;white-space:nowrap;}
-.shop-item-price.owned{color:#88ffaa;}
-#shop-close{margin-top:6px;width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;color:rgba(255,220,150,0.7);font-family:'Georgia',serif;font-size:12px;cursor:pointer;transition:background .15s;}
-#shop-close:hover{background:rgba(255,255,255,0.1);}
-
-/* ── Rocket Ammo HUD ── */
-#rocket-hud{position:fixed;bottom:60px;right:18px;z-index:15;background:rgba(6,10,22,0.9);border:1.5px solid rgba(255,80,40,0.5);border-radius:10px;padding:5px 12px;display:none;align-items:center;gap:8px;backdrop-filter:blur(8px);}
-#rocket-icon{font-size:18px;}
-#rocket-count{font-size:16px;font-weight:bold;color:#ff8844;}
-#rocket-lbl{font-size:8px;color:rgba(255,180,100,0.6);text-transform:uppercase;letter-spacing:1px;}
-#rocket-fire-btn{background:linear-gradient(135deg,#cc2200,#ff6622);border:none;border-radius:7px;color:#fff;font-size:10px;font-weight:bold;padding:4px 10px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:1px;transition:transform .1s;}
-#rocket-fire-btn:hover{transform:scale(1.07);}
-#rocket-fire-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
-
-/* ── FPS Crosshair ── */
-#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:30;display:none;}
-#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.85);}
-#crosshair::before{width:18px;height:2px;top:50%;left:50%;transform:translate(-50%,-50%);}
-#crosshair::after{width:2px;height:18px;top:50%;left:50%;transform:translate(-50%,-50%);}
-.ch-dot{position:absolute;width:4px;height:4px;background:rgba(255,80,80,0.9);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);}
-
-/* ── Rocket explosion flash ── */
-#f-rocket{background:radial-gradient(ellipse at center,rgba(255,120,20,0.55),transparent 65%);}
-
-/* ── NPC hit marker (brief) ── */
-#hit-marker{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:31;opacity:0;transition:opacity .12s;font-size:28px;color:#ff4422;text-shadow:0 0 12px rgba(255,80,20,1);}
 
 /* ── Bidding Dialog ── */
 #bid-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
@@ -209,49 +183,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
-<button id="view-btn" title="Toggle First/Third Person [V]">👁</button>
-<button id="shop-btn" title="Shop [B]" onclick="openShop()">🛒</button>
-
-<!-- Shop Overlay -->
-<div id="shop-overlay">
-  <div id="shop-box">
-    <div id="shop-title">🛒 Rail Shop</div>
-    <div id="shop-coins-disp">🪙 <span id="shop-coins-val">0</span></div>
-    <div class="shop-item" id="si-rocket" onclick="buyItem('rocket')">
-      <div class="shop-item-icon">🚀</div>
-      <div class="shop-item-info">
-        <div class="shop-item-name">Rocket Launcher</div>
-        <div class="shop-item-desc">Shoot Granny! But beware for double respawn.<br>But don't worry Max : 10. Press <b>F</b> untuk tembak.</div>
-      </div>
-      <div class="shop-item-price" id="si-rocket-price">🪙 150</div>
-    </div>
-    <div class="shop-item" id="si-ammo" onclick="buyItem('ammo')">
-      <div class="shop-item-icon">💥</div>
-      <div class="shop-item-info">
-        <div class="shop-item-name">Rocket Ammo ×3</div>
-        <div class="shop-item-desc">Buy 3 Ammo. Purchase Rocket Launcher first.</div>
-      </div>
-      <div class="shop-item-price" id="si-ammo-price">🪙 80</div>
-    </div>
-    <button id="shop-close" onclick="closeShop()">✕ Tutup</button>
-  </div>
-</div>
-
-<!-- Rocket Ammo HUD -->
-<div id="rocket-hud">
-  <div id="rocket-icon">🚀</div>
-  <div>
-    <div id="rocket-count">3</div>
-    <div id="rocket-lbl">Rockets</div>
-  </div>
-  <button id="rocket-fire-btn" onclick="fireRocket()">🔥 FIRE [F]</button>
-</div>
-
-<!-- FPS Crosshair -->
-<div id="crosshair"><div class="ch-dot"></div></div>
-
-<!-- Hit Marker -->
-<div id="hit-marker">✕</div>
 
 <!-- Streak -->
 <div id="streak-hud"><div id="streak-box"><div id="streak-val">x2</div><div id="streak-lbl">Streak</div></div></div>
@@ -322,8 +253,29 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="pump-wrap">
   <div id="pump-lbl">⚡ Pump Energy</div>
   <div id="pump-bg"><div id="pump-fill"></div></div>
-  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ ← → ] Switch</div>
+  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ ← → ] Switch &nbsp;·&nbsp; [ <b style="color:#88eeff">E</b> ] Boost</div>
 </div>
+
+<!-- Manual Energy Boost HUD -->
+<div id="boost-hud">
+  <div>
+    <div id="boost-stock">
+      <div class="boost-pip" id="bp0"></div>
+      <div class="boost-pip" id="bp1"></div>
+      <div class="boost-pip" id="bp2"></div>
+    </div>
+    <div id="boost-lbl">⚡ BOOST [E]</div>
+  </div>
+  <button id="boost-btn" onclick="activateBoost()" title="Aktifkan Energy Boost [E]">⚡ BOOST</button>
+</div>
+
+<!-- Lightning bolt overlay (canvas-drawn) -->
+<div id="lightning-overlay">
+  <svg id="lightning-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none"></svg>
+</div>
+
+<!-- Boost active top-bar -->
+<div id="boost-active-bar"></div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
 <div id="minimap"><canvas id="mm-cv" width="148" height="148"></canvas><div id="mm-lbl">City Map</div></div>
@@ -332,7 +284,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="flash" id="f-pick"></div>
 <div class="flash" id="f-drop"></div>
 <div class="flash" id="f-vip"></div>
-<div class="flash" id="f-rocket"></div>
+<div class="flash" id="f-lightning"></div>
 <div id="notif"></div>
 <div id="pu-bar"><div id="pu-icon">⚡</div><div><div id="pu-name">BOOST</div><div id="pu-fill-bg"><div id="pu-fill"></div></div></div></div>
 <button id="mob-pump">⬆</button>
@@ -365,6 +317,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <tr><td class="act">🛑 Brake alt</td><td><button class="kbtn" id="kb-brake2" onclick="listenFor('brake2')">↓ Arrow</button></td></tr>
     <tr><td class="act">↩ Switch Left</td><td><button class="kbtn" id="kb-left" onclick="listenFor('left')">← Arrow</button></td></tr>
     <tr><td class="act">↪ Switch Right</td><td><button class="kbtn" id="kb-right" onclick="listenFor('right')">→ Arrow</button></td></tr>
+    <tr><td class="act">⚡ Energy Boost</td><td><button class="kbtn" style="border-color:rgba(80,220,255,0.5);color:#88eeff">E</button></td></tr>
   </table>
   <p class="kb-tip">Saved automatically.</p>
   <button class="btn" onclick="closeKB()">✓ Done</button>
@@ -492,12 +445,7 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.brake.code||e.code===KB.brake2.code){e.preventDefault();keys.brake=true;}
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
-  if(e.code==='KeyV'){e.preventDefault();toggleCamMode();}
-  if(e.code==='KeyF'){e.preventDefault();fireRocket();}
-  if(e.code==='KeyB'){e.preventDefault();
-    if(document.getElementById('shop-overlay').style.display==='flex') closeShop();
-    else openShop();
-  }
+  if(e.code==='KeyE'){e.preventDefault();activateBoost();}
 },true);
 window.addEventListener('keyup',e=>{if(e.code===KB.pump.code||e.code===KB.pump2.code)pumpHeld=false;if(e.code===KB.brake.code||e.code===KB.brake2.code)keys.brake=false;},true);
 
@@ -543,9 +491,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.0038);
+scene.fog=new THREE.FogExp2(0x05060f,0.007);
 // Narrow FOV — cinematic, city feels denser
-const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
+const camera=new THREE.PerspectiveCamera(46,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
@@ -933,10 +881,218 @@ function setRing(idx,mode){
 // ═══════════════════════════════════════════
 const PU_DEFS=[
   {id:'speed',icon:'🚀',label:'SPEED BOOST',col:0xff6600,dur:8,onA(){GS.speed=Math.min(GS.speed+6,18);},onT(dt){GS.speed=Math.min(GS.speed+2*dt,18);},onE(){}},
-  {id:'energy',icon:'⚡',label:'ENERGY FILL',col:0x44ff88,dur:0,onA(){GS.energy=GS.maxE;},onT(){},onE(){}},
+  // Energy pickup now stores a manual boost charge (max 3 charges)
+  {id:'energy',icon:'⚡',label:'ENERGY BOOST +1',col:0x44ffee,dur:0,
+    onA(){
+      BOOST.stock=Math.min(BOOST.maxStock, BOOST.stock+1);
+      updBoostHUD();
+    },
+    onT(){},onE(){}
+  },
   {id:'shield',icon:'🛡️',label:'SHIELD',col:0x4488ff,dur:8,onA(){GS.inv=8;},onT(){},onE(){GS.inv=0;}},
   {id:'time',icon:'⏱️',label:'+20 SECONDS',col:0xff88ff,dur:0,onA(){if(MS.carrying)MS.carrying.timer=Math.min(MS.carrying.timer+20,MS.carrying.maxT);},onT(){},onE(){}},
 ];
+
+// ═══════════════════════════════════════════
+//  MANUAL ENERGY BOOST SYSTEM
+// ═══════════════════════════════════════════
+const BOOST={
+  stock:0,        // current charges held
+  maxStock:3,     // max storable charges
+  active:false,   // is a boost currently running?
+  timer:0,        // remaining boost time
+  duration:5.0,   // seconds per boost charge
+};
+
+// Lightning bolt path generator — jagged polyline
+function makeLightningPath(x1,y1,x2,y2,segs,jaggedness){
+  const pts=[[x1,y1]];
+  for(let i=1;i<segs;i++){
+    const t=i/segs;
+    const mx=x1+(x2-x1)*t;
+    const my=y1+(y2-y1)*t;
+    const perp=[-( y2-y1),x2-x1];
+    const plen=Math.sqrt(perp[0]*perp[0]+perp[1]*perp[1])||1;
+    const offset=(Math.random()-0.5)*jaggedness;
+    pts.push([mx+perp[0]/plen*offset, my+perp[1]/plen*offset]);
+  }
+  pts.push([x2,y2]);
+  return pts;
+}
+
+function drawLightningBolt(svg, x1,y1,x2,y2,color,width,branches){
+  const pts=makeLightningPath(x1,y1,x2,y2,12,140);
+  const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+  // Glow layer
+  const glow=document.createElementNS('http://www.w3.org/2000/svg','path');
+  glow.setAttribute('d',d);
+  glow.setAttribute('stroke',color);
+  glow.setAttribute('stroke-width',String(width*3));
+  glow.setAttribute('fill','none');
+  glow.setAttribute('stroke-linecap','round');
+  glow.setAttribute('opacity','0.25');
+  svg.appendChild(glow);
+  // Core
+  const core=document.createElementNS('http://www.w3.org/2000/svg','path');
+  core.setAttribute('d',d);
+  core.setAttribute('stroke','#ffffff');
+  core.setAttribute('stroke-width',String(width));
+  core.setAttribute('fill','none');
+  core.setAttribute('stroke-linecap','round');
+  core.setAttribute('opacity','0.95');
+  svg.appendChild(core);
+  // Sub-branches
+  if(branches>0){
+    for(let b=0;b<branches;b++){
+      const startIdx=2+Math.floor(Math.random()*(pts.length-4));
+      const sp=pts[startIdx];
+      const ang=(Math.random()-0.5)*1.2;
+      const len=50+Math.random()*80;
+      const bx2=sp[0]+Math.cos(ang)*len;
+      const by2=sp[1]+Math.sin(ang)*len*2;
+      drawLightningBolt(svg,sp[0],sp[1],bx2,by2,color,width*0.45,0);
+    }
+  }
+}
+
+function triggerLightningEffect(){
+  const overlay=document.getElementById('lightning-overlay');
+  const svg=document.getElementById('lightning-svg');
+  const W=window.innerWidth, H=window.innerHeight;
+  overlay.style.display='block';
+
+  // Clear previous bolts
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+
+  // 3–5 bolts from top to trolley area
+  const bolts=3+Math.floor(Math.random()*3);
+  const colors=['#88ffff','#aaffee','#66eeff','#ffffff'];
+  for(let i=0;i<bolts;i++){
+    const x1=W*0.1+Math.random()*W*0.8;
+    const y1=0;
+    const x2=W*0.25+Math.random()*W*0.5;
+    const y2=H*0.45+Math.random()*H*0.2;
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    const w=1.5+Math.random()*2;
+    drawLightningBolt(svg,x1,y1,x2,y2,col,w,2);
+  }
+
+  // Side bolts
+  drawLightningBolt(svg, 0, H*0.2+Math.random()*H*0.3,
+    W*0.3, H*0.4+Math.random()*H*0.2, '#aaffdd', 1.2, 1);
+  drawLightningBolt(svg, W, H*0.2+Math.random()*H*0.3,
+    W*0.7, H*0.4+Math.random()*H*0.2, '#aaffdd', 1.2, 1);
+
+  // Screen flash
+  flash('f-lightning', 120);
+
+  // Top bar flash
+  const bar=document.getElementById('boost-active-bar');
+  bar.classList.add('lit');
+
+  // Auto-hide after short time
+  setTimeout(()=>{
+    overlay.style.display='none';
+    while(svg.firstChild)svg.removeChild(svg.firstChild);
+    bar.classList.remove('lit');
+  }, 220);
+
+  // Second bolt burst slightly delayed
+  setTimeout(()=>{
+    while(svg.firstChild)svg.removeChild(svg.firstChild);
+    overlay.style.display='block';
+    for(let i=0;i<2;i++){
+      const x1=W*0.2+Math.random()*W*0.6;
+      drawLightningBolt(svg,x1,0,x1+(Math.random()-0.5)*200,H*0.55,
+        '#ccffff',1.8+Math.random(),1);
+    }
+    bar.classList.add('lit');
+    flash('f-lightning',80);
+    setTimeout(()=>{
+      overlay.style.display='none';
+      while(svg.firstChild)svg.removeChild(svg.firstChild);
+      bar.classList.remove('lit');
+    },140);
+  },180);
+}
+
+// 3D world lightning — brief bright point lights near trolley
+function triggerWorldLightning(){
+  const colors3d=[0x88ffff,0xaaffee,0xffffff];
+  for(let i=0;i<4;i++){
+    setTimeout(()=>{
+      const lc=colors3d[Math.floor(Math.random()*colors3d.length)];
+      const ptL=new THREE.PointLight(lc, 8+Math.random()*4, 35);
+      ptL.position.set(
+        trolley.position.x+(Math.random()-0.5)*8,
+        trolley.position.y+3+Math.random()*6,
+        trolley.position.z+(Math.random()-0.5)*8
+      );
+      scene.add(ptL);
+      setTimeout(()=>scene.remove(ptL), 60+Math.random()*80);
+    }, i*55);
+  }
+}
+
+function activateBoost(){
+  if(!gameRunning)return;
+  if(BOOST.stock<=0){showNotif('⚡ Tidak ada boost tersimpan!','#88aacc');return;}
+  BOOST.stock--;
+  BOOST.active=true;
+  BOOST.timer=BOOST.duration;
+
+  // Instant big speed burst + sustained
+  GS.energy=Math.min(GS.maxE, GS.energy+55);
+  GS.speed=Math.min(GS.speed+4, 18);
+  GS.shake=1.8;
+
+  // Visual effects
+  triggerLightningEffect();
+  triggerWorldLightning();
+
+  // Button glow feedback
+  const btn=document.getElementById('boost-btn');
+  btn.classList.add('firing');
+  setTimeout(()=>btn.classList.remove('firing'), 400);
+
+  updBoostHUD();
+  showNotif('⚡ ENERGY BOOST!','#88ffff');
+}
+
+function updBoostHUD(){
+  // Update pip indicators
+  for(let i=0;i<BOOST.maxStock;i++){
+    const pip=document.getElementById('bp'+i);
+    if(pip) pip.classList.toggle('full', i<BOOST.stock);
+  }
+  // Disable button when empty
+  const btn=document.getElementById('boost-btn');
+  if(btn) btn.disabled=(BOOST.stock<=0);
+
+  // Active boost — pulse the button during boost
+  if(BOOST.active){
+    btn.style.borderColor='rgba(80,220,255,0.9)';
+    btn.style.boxShadow='0 0 16px rgba(80,220,255,0.6)';
+    btn.textContent=`⚡ ${Math.ceil(BOOST.timer)}s`;
+  } else {
+    btn.style.borderColor='';btn.style.boxShadow='';
+    btn.textContent='⚡ BOOST';
+  }
+}
+
+function updateBoost(dt){
+  if(!BOOST.active)return;
+  BOOST.timer=Math.max(0,BOOST.timer-dt);
+  // Sustained energy replenishment during boost
+  GS.energy=Math.min(GS.maxE, GS.energy+22*dt);
+  updBoostHUD();
+  if(BOOST.timer<=0){
+    BOOST.active=false;
+    updBoostHUD();
+    showNotif('⚡ Boost habis','#668899');
+  }
+}
+
 function updPUs(dt,gt){
   puMeshes.forEach(pu=>{
     if(pu.collected)return;
@@ -950,6 +1106,7 @@ function updPUs(dt,gt){
     document.getElementById('pu-fill').style.width=(GS.activePU.tl/GS.activePU.type.dur*100)+'%';
     if(GS.activePU.tl<=0){GS.activePU.type.onE();GS.activePU=null;document.getElementById('pu-bar').style.display='none';}
   }
+  updateBoost(dt);
 }
 function collectPU(pu){
   pu.collected=true;scene.remove(pu.m);
@@ -1199,7 +1356,7 @@ function checkArrival(col,row){
 function checkPickups(col,row){
   coinMeshes.forEach(c=>{
     if(!c.collected&&c.c===col&&c.r===row){
-      c.collected=true;scene.remove(c.m);GS.coins+=20;GS.score+=20;spawnP(c.m.position);showNotif('+20 🪙','#ffd700');
+      c.collected=true;scene.remove(c.m);GS.coins++;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
     }
   });
   puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});
@@ -1350,88 +1507,8 @@ function doDeliver(){
 // ═══════════════════════════════════════════
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
-// ═══════════════════════════════════════════
-//  SHOP SYSTEM
-// ═══════════════════════════════════════════
-const SHOP={
-  rocketOwned:false,
-  rocketAmmo:0,
-};
-
-function openShop(){
-  if(!gameRunning)return;
-  document.getElementById('shop-coins-val').textContent=GS.coins;
-  // Update rocket item display
-  const rEl=document.getElementById('si-rocket');
-  const rPrice=document.getElementById('si-rocket-price');
-  if(SHOP.rocketOwned){
-    rEl.classList.add('owned');
-    rPrice.textContent='✓ Owned';
-    rPrice.classList.add('owned');
-  } else {
-    rEl.classList.remove('owned');
-    rPrice.textContent='🪙 150';
-    rPrice.classList.remove('owned');
-  }
-  const aEl=document.getElementById('si-ammo');
-  const aPrice=document.getElementById('si-ammo-price');
-  if(!SHOP.rocketOwned){
-    aEl.style.opacity='.4';aEl.style.pointerEvents='none';
-  } else {
-    aEl.style.opacity='1';aEl.style.pointerEvents='all';
-  }
-  document.getElementById('shop-overlay').style.display='flex';
-}
-
-function closeShop(){
-  document.getElementById('shop-overlay').style.display='none';
-}
-
-function buyItem(id){
-  if(id==='rocket'){
-    if(SHOP.rocketOwned){showNotif('Rocket sudah dimiliki!','#ffaa44');return;}
-    if(GS.coins<150){showNotif('Low coins! 🪙','#ff4444');return;}
-    GS.coins-=150;
-    SHOP.rocketOwned=true;
-    SHOP.rocketAmmo=3;
-    showNotif('🚀 Rocket Launcher dibeli!','#ff8844');
-    flash('f-vip',300);
-    updateRocketHUD();
-    openShop(); // refresh display
-  } else if(id==='ammo'){
-    if(!SHOP.rocketOwned){showNotif('Beli Rocket Launcher dulu!','#ff4444');return;}
-    if(GS.coins<80){showNotif('Low coins! 🪙','#ff4444');return;}
-    GS.coins-=80;
-    SHOP.rocketAmmo+=3;
-    showNotif('💥 +3 Ammo!','#ff8844');
-    updateRocketHUD();
-    openShop();
-  }
-}
-
-function updateRocketHUD(){
-  const hud=document.getElementById('rocket-hud');
-  if(SHOP.rocketOwned){
-    hud.style.display='flex';
-    document.getElementById('rocket-count').textContent=SHOP.rocketAmmo;
-    const btn=document.getElementById('rocket-fire-btn');
-    btn.disabled=SHOP.rocketAmmo<=0;
-  } else {
-    hud.style.display='none';
-  }
-}
-
-// ═══════════════════════════════════════════
-//  NPC TROLLEYS — "Grandma" obstacle trolleys
-// ═══════════════════════════════════════════
-const NPC_MAX=10;    // hard cap on total grandmas ever alive
-const NPC_START=3;   // starting count
+const NPC_COUNT=3;
 const npcTrolleys=[];
-let npcTotalSpawned=0; // tracks how many have ever been spawned
-
-// Rocket projectile state
-const rockets=[]; // {mesh, pos, dir, life}
-const rocketMeshPool=[];
 
 function buildNpcTrolley(colorHex){
   const grp=new THREE.Group();
@@ -1439,20 +1516,26 @@ function buildNpcTrolley(colorHex){
   const mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.6,roughness:.4});
   const wM=new THREE.MeshStandardMaterial({color:0x6a4c2a,roughness:.9});
   const wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.5,roughness:.5});
+  // Platform
   const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);grp.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,1.1),mM);b.position.set(x,.8,0);grp.add(b);});
+  // Wheels
   const wGeo=new THREE.TorusGeometry(.24,.06,8,14);
   [[-0.68,-.4],[-0.68,.4],[.68,-.4],[.68,.4]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.24,z);w.rotation.y=Math.PI/2;grp.add(w);
   });
+  // Pump handle
   const ph=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.75,7),mM);ph.position.set(0,.9,0);grp.add(ph);
   const hb=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,7),bM);hb.rotation.z=Math.PI/2;hb.position.set(0,1.28,0);grp.add(hb);
+  // Grandma figure (purple shawl)
   const bodyM=new THREE.MeshStandardMaterial({color:0x884488,roughness:.8});
   const headM=new THREE.MeshStandardMaterial({color:0xf0d0b0});
   const body=new THREE.Mesh(new THREE.BoxGeometry(.34,.48,.24),bodyM);body.position.set(0,.84,0);grp.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),headM);head.position.set(0,1.18,0);grp.add(head);
+  // Hair bun
   const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
   bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
+  // Beacon (purple)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
   grp.position.set(0,.35,0);
@@ -1460,190 +1543,39 @@ function buildNpcTrolley(colorHex){
   return grp;
 }
 
-function spawnNpc(avoidNode){
-  if(npcTrolleys.length>=NPC_MAX)return null;
-  npcTotalSpawned++;
-  // Pick random color — cycle through neon palette
-  const npcCols=[0x9944cc,0x44cc99,0xcc4499,0x44aaff,0xff8844,0xffcc22,0xcc2255,0x22ccaa,0xaa44ff,0xff5522];
-  const colorHex=npcCols[npcTotalSpawned%npcCols.length];
-  const mesh=buildNpcTrolley(colorHex);
-  // Pick a random start node far from player and from avoidNode
-  let startNode;
-  let tries=0;
-  do {
-    const rc=Math.floor(Math.random()*(GW+1));
-    const rr=Math.floor(Math.random()*(GH+1));
-    startNode=nid(rc,rr);
-    tries++;
-  } while(tries<20 && (
-    startNode===avoidNode ||
-    Math.abs((startNode%NX)-(tNode%NX))<3 ||
-    Math.abs((Math.floor(startNode/NX))-(Math.floor(tNode/NX)))<3
-  ));
-  const sc=startNode%NX,sr=Math.floor(startNode/NX);
-  const sp=npos(sc,sr);
-  mesh.position.set(sp.x,.35,sp.z);
-  const nbrs=getNeighbors(sc,sr,-1);
-  const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
-  const npc={
-    mesh,
-    node:startNode,
-    nextNode:nextDir?nextDir.nodeId:nid(Math.min(GW,sc+1),sr),
-    edgeT:0,
-    facing:nextDir?nextDir.dir:0,
-    speed:1.2+Math.random()*0.8,
-    pumpAng:0,
-    jCool:0,
-    wobble:Math.random()*Math.PI*2,
-    alive:true,
-  };
-  npcTrolleys.push(npc);
-  return npc;
-}
-
 function initNpcTrolleys(){
+  // Remove old NPC trolleys
   npcTrolleys.forEach(n=>{if(n.mesh)scene.remove(n.mesh);});
   npcTrolleys.length=0;
-  rockets.length=0;
-  npcTotalSpawned=0;
-  for(let i=0;i<NPC_START;i++) spawnNpc(-1);
-}
-
-function killNpc(npc){
-  if(!npc.alive)return;
-  npc.alive=false;
-  // Explosion effect at npc position
-  spawnExplosion(npc.mesh.position.clone());
-  scene.remove(npc.mesh);
-  // Remove from array
-  const idx=npcTrolleys.indexOf(npc);
-  if(idx>=0)npcTrolleys.splice(idx,1);
-
-  // Respawn as 2 if under cap
-  const spawnable=NPC_MAX-npcTrolleys.length;
-  const toSpawn=Math.min(2,spawnable);
-  for(let i=0;i<toSpawn;i++){
-    setTimeout(()=>{
-      if(npcTrolleys.length<NPC_MAX){
-        spawnNpc(npc.node);
-        showNotif(`👵 Granny respawn! (${npcTrolleys.length}/${NPC_MAX})`,'#ff8844');
-      }
-    }, 800+i*400);
+  const colors=[0x9944cc,0x44cc99,0xcc4499];
+  // Spread starting positions across the grid
+  const startNodes=[nid(2,2),nid(10,2),nid(5,10)];
+  for(let i=0;i<NPC_COUNT;i++){
+    const mesh=buildNpcTrolley(colors[i]);
+    const startNode=startNodes[i];
+    const sc=startNode%NX,sr=Math.floor(startNode/NX);
+    const sp=npos(sc,sr);
+    mesh.position.set(sp.x,.35,sp.z);
+    const nbrs=getNeighbors(sc,sr,-1);
+    const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
+    npcTrolleys.push({
+      mesh,
+      node:startNode,
+      nextNode:nextDir?nextDir.nodeId:nid(sc+1,sr),
+      edgeT:0,
+      facing:nextDir?nextDir.dir:0,
+      speed:1.2+Math.random()*0.8, // 1.2–2.0 units/s — grandma speed
+      pumpAng:0,
+      jCool:0,
+      wobble:Math.random()*Math.PI*2, // random wobble phase
+    });
   }
-  if(toSpawn===0) showNotif('💥 Granny Max! 10/10','#ff4422');
-}
-
-// ── Explosion particles ──
-const explosionParts=[];
-function spawnExplosion(pos){
-  for(let i=0;i<18;i++){
-    const geo=new THREE.SphereGeometry(0.12+Math.random()*0.1,5,4);
-    const mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0xff6622:0xffcc22});
-    const m=new THREE.Mesh(geo,mat);
-    m.position.copy(pos);
-    const ang=Math.random()*Math.PI*2;
-    const spd=3+Math.random()*4;
-    const vy=2+Math.random()*4;
-    scene.add(m);
-    explosionParts.push({m,vx:Math.cos(ang)*spd,vy,vz:Math.sin(ang)*spd,life:0.7+Math.random()*0.4});
-  }
-}
-function updateExplosions(dt){
-  for(let i=explosionParts.length-1;i>=0;i--){
-    const p=explosionParts[i];
-    p.life-=dt;
-    if(p.life<=0){scene.remove(p.m);explosionParts.splice(i,1);continue;}
-    p.m.position.x+=p.vx*dt;
-    p.m.position.y+=p.vy*dt;
-    p.m.position.z+=p.vz*dt;
-    p.vy-=12*dt; // gravity
-    p.m.material.opacity=p.life*1.5;
-    p.m.material.transparent=true;
-  }
-}
-
-// ── Rocket firing ──
-function fireRocket(){
-  if(!SHOP.rocketOwned||SHOP.rocketAmmo<=0||!gameRunning)return;
-  SHOP.rocketAmmo--;
-  updateRocketHUD();
-
-  // Build rocket mesh
-  const rGrp=new THREE.Group();
-  const rBody=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,0.7,7),
-    new THREE.MeshBasicMaterial({color:0xff4400}));
-  rBody.rotation.x=Math.PI/2; rGrp.add(rBody);
-  const rTip=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.3,7),
-    new THREE.MeshBasicMaterial({color:0xffaa00}));
-  rTip.rotation.x=Math.PI/2; rTip.position.z=0.5; rGrp.add(rTip);
-  const rFlame=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.4,7),
-    new THREE.MeshBasicMaterial({color:0xffee44,transparent:true,opacity:0.8}));
-  rFlame.rotation.x=-Math.PI/2; rFlame.position.z=-0.5; rGrp.add(rFlame);
-  scene.add(rGrp);
-
-  // Direction: trolley forward direction
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const dx=p1.x-p0.x,dz=p1.z-p0.z;
-  const hl=Math.sqrt(dx*dx+dz*dz)||1;
-  const dir=new THREE.Vector3(dx/hl,0,dz/hl);
-
-  rGrp.position.copy(trolley.position).addScaledVector(dir,1.5);
-  rGrp.position.y=1.0;
-  rGrp.lookAt(rGrp.position.clone().add(dir));
-
-  rockets.push({mesh:rGrp, pos:rGrp.position.clone(), dir:dir.clone(), life:4.0, speed:28});
-  flash('f-rocket',180);
-  GS.shake=0.5;
-  showNotif('🚀 Pfiumm!','#ff8844');
-}
-
-function updateRockets(dt){
-  for(let i=rockets.length-1;i>=0;i--){
-    const r=rockets[i];
-    r.life-=dt;
-    if(r.life<=0){scene.remove(r.mesh);rockets.splice(i,1);continue;}
-    r.pos.addScaledVector(r.dir,r.speed*dt);
-    r.mesh.position.copy(r.pos);
-    // Flame flicker
-    const fl=r.mesh.children[2];
-    if(fl){fl.scale.setScalar(0.8+Math.random()*0.4);}
-
-    // Check hit against NPCs
-    let hit=false;
-    for(let j=npcTrolleys.length-1;j>=0;j--){
-      const npc=npcTrolleys[j];
-      if(!npc.alive)continue;
-      if(r.pos.distanceTo(npc.mesh.position)<3.0){
-        // HIT!
-        spawnExplosion(r.pos.clone());
-        scene.remove(r.mesh);
-        rockets.splice(i,1);
-        GS.coins+=20; // bonus coins for hit
-        GS.score+=500;
-        showHitMarker();
-        killNpc(npc);
-        hit=true;
-        break;
-      }
-    }
-  }
-}
-
-let hitTmr=null;
-function showHitMarker(){
-  const hm=document.getElementById('hit-marker');
-  hm.style.opacity='1';hm.style.color='#ff4422';
-  if(hitTmr)clearTimeout(hitTmr);
-  hitTmr=setTimeout(()=>hm.style.opacity='0',320);
-  flash('f-rocket',200);
 }
 
 function updateNpcTrolleys(dt,gt){
   npcTrolleys.forEach(npc=>{
-    if(!npc.alive)return;
     npc.jCool=Math.max(0,npc.jCool-dt);
+    // Slight random speed wobble — erratic grandma driving
     const wobbleSpeed=npc.speed*(0.85+Math.sin(gt*0.7+npc.wobble)*0.15);
     const advance=(wobbleSpeed*dt)/CELL;
     npc.edgeT=Math.min(npc.edgeT+advance,1.0);
@@ -1655,10 +1587,12 @@ function updateNpcTrolleys(dt,gt){
       const back=(npc.facing+2)%4;
       const nbrs=getNeighbors(nc,nr,back);
       if(nbrs.length>0){
+        // Random direction — grandma doesn't know where she's going
         const chosen=nbrs[Math.floor(Math.random()*nbrs.length)];
         npc.nextNode=chosen.nodeId;
         npc.facing=chosen.dir;
       } else {
+        // Reverse
         npc.facing=(npc.facing+2)%4;
         const fwd=DIR_VEC[npc.facing];
         const nc2=Math.max(0,Math.min(GW,nc+fwd[0]));
@@ -1666,9 +1600,12 @@ function updateNpcTrolleys(dt,gt){
         npc.nextNode=nid(nc2,nr2);
       }
       npc.edgeT=0;
+
+      // Check if NPC is on same node as player — slow player down (collision)
       checkNpcCollision(npc,nc,nr);
     }
 
+    // Render NPC position
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const p0=npos(nc,nr),p1=npos(nnc,nnr);
@@ -1679,58 +1616,54 @@ function updateNpcTrolleys(dt,gt){
     const hl=Math.sqrt(dx*dx+dz*dz);
     if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
 
+    // Animate pump wobble (slow, tired grandma motion)
     npc.pumpAng+=wobbleSpeed*0.8*dt;
+    const pump=npc.mesh.children.find(c=>c.geometry?.type==='CylinderGeometry'&&c.position.y>.85&&c.position.y<.95);
+    // Gentle body sway
     npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
 
+    // Pulse beacon
     const bec=npc.mesh.children[npc.mesh.children.length-1];
     if(bec&&bec.material){
       const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
       bec.material.opacity=p;bec.material.transparent=true;
     }
 
+    // Proximity check with player trolley (continuous, not just at nodes)
     const dist=npc.mesh.position.distanceTo(trolley.position);
     if(dist<3.5&&GS.speed>1){
+      // Block! Slow down player
       GS.speed=Math.max(0,GS.speed*0.85);
-      if(dist<2.0){GS.speed=Math.max(0,GS.speed-3*dt);GS.shake=Math.max(GS.shake,0.8);}
+      if(dist<2.0){
+        GS.speed=Math.max(0,GS.speed-3*dt);
+        GS.shake=Math.max(GS.shake,0.8);
+      }
     }
   });
-  updateRockets(dt);
-  updateExplosions(dt);
 }
 
 function checkNpcCollision(npc,nc,nr){
   const pc=tNode%NX,pr=Math.floor(tNode/NX);
   if(nc===pc&&nr===pr){
-    showNotif('👵 Granny alert! 🐢','#ffaa44');
+    showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
     GS.speed=Math.max(0,GS.speed*0.4);
     GS.shake=1.5;
   }
 }
 
 function drawNpcsOnMinimap(){
-  const npcColors=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)',
-    'rgba(68,170,255,0.85)','rgba(255,136,68,0.85)','rgba(255,204,34,0.85)',
-    'rgba(204,34,85,0.85)','rgba(34,204,170,0.85)','rgba(170,68,255,0.85)','rgba(255,85,34,0.85)'];
   npcTrolleys.forEach((npc,i)=>{
-    if(!npc.alive)return;
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const tc=nc+(nnc-nc)*npc.edgeT,tr=nr+(nnr-nr)*npc.edgeT;
     const{x,y}=mmP(tc,tr);
     mmCtx.beginPath();mmCtx.arc(x,y,3.8,0,Math.PI*2);
-    mmCtx.fillStyle=npcColors[i%npcColors.length];
+    mmCtx.fillStyle=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)'][i];
     mmCtx.fill();
+    // Small grandma icon
     mmCtx.font='7px serif';mmCtx.fillStyle='#fff';
     mmCtx.textAlign='center';mmCtx.textBaseline='middle';
     mmCtx.fillText('👵',x,y);
-  });
-  // Draw rockets on minimap
-  rockets.forEach(r=>{
-    const rx=(r.pos.x-OX)/(GW*CELL)*GW;
-    const rz=(r.pos.z-OZ)/(GH*CELL)*GH;
-    const{x,y}=mmP(rx,rz);
-    mmCtx.beginPath();mmCtx.arc(x,y,2,0,Math.PI*2);
-    mmCtx.fillStyle='rgba(255,100,30,0.9)';mmCtx.fill();
   });
 }
 
@@ -1864,33 +1797,9 @@ function moveTrolley(){
   if(vipGlow.visible)vipGlow.rotation.y+=.04;
 }
 
-// ═══════════════════════════════════════════
-//  CAMERA — FIRST / THIRD PERSON
-// ═══════════════════════════════════════════
-let camMode='tp'; // 'tp' = third person, 'fp' = first person
 let camInit=false;
 const camTargetPos=new THREE.Vector3();
 const camLookTarget=new THREE.Vector3();
-
-function toggleCamMode(){
-  camMode=camMode==='tp'?'fp':'tp';
-  const btn=document.getElementById('view-btn');
-  const cross=document.getElementById('crosshair');
-  if(camMode==='fp'){
-    btn.textContent='🎯';btn.classList.add('fp');
-    btn.title='Switch to Third Person [V]';
-    cross.style.display='block';
-    // Hide trolley body in FP (optional — keep visible for shadow)
-    trolley.visible=true;
-  } else {
-    btn.textContent='👁';btn.classList.remove('fp');
-    btn.title='Switch to First Person [V]';
-    cross.style.display='none';
-  }
-  camInit=false;
-}
-
-document.getElementById('view-btn').addEventListener('click',toggleCamMode);
 
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
@@ -1902,37 +1811,24 @@ function moveCam(){
   const dx=p1.x-p0.x,dz=p1.z-p0.z;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
-  const sh=GS.shake;
 
-  if(camMode==='fp'){
-    // First person: camera at driver's eye level, looking straight ahead
-    const eyeH=2.4; // eye height above trolley base
-    const tx=px+fdx*0.3+(Math.random()-.5)*sh*.06;
-    const ty=eyeH+(Math.random()-.5)*sh*.04;
-    const tz=pz+fdz*0.3+(Math.random()-.5)*sh*.06;
-    GS.shake*=.82;
-    if(!camInit){camera.position.set(tx,ty,tz);camInit=true;}
-    else camera.position.lerp(new THREE.Vector3(tx,ty,tz),.25);
-    camLookTarget.set(px+fdx*18,eyeH*0.9,pz+fdz*18);
-    camera.lookAt(camLookTarget);
-  } else {
-    // Third person: behind and above
-    const camBack=22,camUp=15;
-    const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
-    const ty=camUp+(Math.random()-.5)*sh*.06;
-    const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
-    GS.shake*=.82;
-    if(!camInit){
-      camera.position.set(tx,ty,tz);
-      camTargetPos.set(tx,ty,tz);
-      camInit=true;
-    }else{
-      camTargetPos.set(tx,ty,tz);
-      camera.position.lerp(camTargetPos,.12);
-    }
-    camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
-    camera.lookAt(camLookTarget);
+  const camBack=13,camUp=9;
+  const sh=GS.shake;
+  const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
+  const ty=camUp+(Math.random()-.5)*sh*.06;
+  const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
+  GS.shake*=.82;
+
+  if(!camInit){
+    camera.position.set(tx,ty,tz);
+    camTargetPos.set(tx,ty,tz);
+    camInit=true;
+  }else{
+    camTargetPos.set(tx,ty,tz);
+    camera.position.lerp(camTargetPos,.12);
   }
+  camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
+  camera.lookAt(camLookTarget);
 }
 
 let pumpAngV=0;
@@ -2044,12 +1940,8 @@ function startGame(){
   clearChoiceMarkers();
   Object.assign(GS,{speed:0,score:0,coins:0,energy:60,cd:0,braking:false,shake:0,inv:0,activePU:null});
   document.getElementById('pu-bar').style.display='none';
-  // Reset shop
-  SHOP.rocketOwned=false; SHOP.rocketAmmo=0;
-  updateRocketHUD();
-  document.getElementById('shop-overlay').style.display='none';
-  // Reset camera
-  if(camMode==='fp') toggleCamMode(); // force back to TP on new game
+  BOOST.stock=0;BOOST.active=false;BOOST.timer=0;
+  updBoostHUD();
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
   const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);

@@ -572,6 +572,13 @@ const GLUE={
   maxTime:5,
 };
 let glueWarningShown=false;
+
+// ── Rocket system ──
+const rockets=[];
+const gluePuddles=[];
+let rocketAmmo=0;
+const ROCKET_SPEED=28;
+const ROCKET_RADIUS=3.5;
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -1615,7 +1622,6 @@ function updateNpcTrolleys(dt,gt){
 // ═══════════════════════════════════════════
 //  GLUE SYSTEM
 // ═══════════════════════════════════════════
-const gluePuddles=[]; // {mesh, col, row, life}
 
 // Build a glue puddle mesh (flat yellowish disc)
 function makeGluePuddle(pos){
@@ -1714,13 +1720,15 @@ function clearGlueNearPos(pos){
   // Also free player if stuck
   if(GLUE.stuck)releaseGlue();
 }
+
+function checkNpcCollision(npc,nc,nr){
   const pc=tNode%NX,pr=Math.floor(tNode/NX);
   if(nc===pc&&nr===pr){
     showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
     GS.speed=Math.max(0,GS.speed*0.4);
     GS.shake=1.5;
   }
-
+}
 
 function drawNpcsOnMinimap(){
   npcTrolleys.forEach((npc,i)=>{
@@ -1954,10 +1962,6 @@ function animTrolley(dt){
 //  ROCKET LAUNCHER SYSTEM
 // ═══════════════════════════════════════════
 let rocketAmmo=0;
-const rockets=[];  // active projectiles
-const ROCKET_COST={3:50,10:140};
-const ROCKET_SPEED=28; // units/sec
-const ROCKET_RADIUS=3.5; // hit radius
 
 function openShop(){
   if(!gameRunning)return;
@@ -2104,6 +2108,8 @@ function updateRockets(dt){
     }
   }
 }
+
+function updHUD(){
   document.getElementById('h-score').textContent=GS.score;
   document.getElementById('h-del').textContent=MS.delivsDone;
   document.getElementById('h-coins').textContent=GS.coins;
@@ -2113,7 +2119,7 @@ function updateRockets(dt){
   fill.style.width=pct+'%';
   fill.style.background=pct<20?'linear-gradient(90deg,#cc2200,#ff4400)':'linear-gradient(90deg,#ff6b35,#ffe680)';
   GS.braking=keys.brake;
-
+}
 
 // ═══════════════════════════════════════════
 //  MINIMAP

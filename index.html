@@ -220,6 +220,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div style="display:flex;gap:7px;margin-right:48px">
     <div class="hp"><div class="hl">Deliveries</div><div class="hv" id="h-del">0</div></div>
     <div class="hp"><div class="hl">Coins</div><div class="hv" style="color:#ffd700" id="h-coins">0</div></div>
+    <div class="hp"><div class="hl">👵 Nenek</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
   </div>
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
@@ -1478,6 +1479,8 @@ function doDeliver(){
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
 const NPC_COUNT=3;
+const NPC_MAX=10;
+const NPC_COLORS=[0x9944cc,0x44cc99,0xcc4499,0xff6633,0x33aaff,0xffcc00,0x55dd55,0xff44aa,0x00cccc,0xffaa33];
 const npcTrolleys=[];
 
 function buildNpcTrolley(colorHex){
@@ -1505,7 +1508,7 @@ function buildNpcTrolley(colorHex){
   // Hair bun
   const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
   bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
-  // Beacon (purple)
+  // Beacon (colored)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
   grp.position.set(0,.35,0);
@@ -1513,34 +1516,60 @@ function buildNpcTrolley(colorHex){
   return grp;
 }
 
+// Spawn one new grandma at a random node, avoiding player position
+function spawnNpcAt(avoidNode){
+  if(npcTrolleys.length>=NPC_MAX) return null;
+  const colorHex=NPC_COLORS[npcTrolleys.length % NPC_COLORS.length];
+  const mesh=buildNpcTrolley(colorHex);
+
+  // Pick a random start node — avoid player and the given avoid node
+  let startNode, tries=0;
+  do {
+    const rc=Math.floor(Math.random()*(GW+1));
+    const rr=Math.floor(Math.random()*(GH+1));
+    startNode=nid(rc,rr);
+    tries++;
+    const pc=tNode%NX, pr=Math.floor(tNode/NX);
+    const sc2=startNode%NX, sr2=Math.floor(startNode/NX);
+    if(Math.abs(sc2-pc)<3 && Math.abs(sr2-pr)<3) startNode=-1; // too close to player
+  } while((startNode<0 || startNode===avoidNode) && tries<30);
+
+  if(startNode<0) startNode=nid(Math.floor(Math.random()*(GW+1)), Math.floor(Math.random()*(GH+1)));
+
+  const sc=startNode%NX, sr=Math.floor(startNode/NX);
+  const sp=npos(sc,sr);
+  mesh.position.set(sp.x,.35,sp.z);
+  const nbrs=getNeighbors(sc,sr,-1);
+  const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
+  const npcObj={
+    mesh,
+    node:startNode,
+    nextNode:nextDir?nextDir.nodeId:nid(Math.min(GW,sc+1),sr),
+    edgeT:0,
+    facing:nextDir?nextDir.dir:0,
+    speed:1.2+Math.random()*0.8,
+    pumpAng:0,
+    jCool:0,
+    wobble:Math.random()*Math.PI*2,
+    glueCooldown:4+Math.random()*6,
+    respawning:false,
+  };
+  npcTrolleys.push(npcObj);
+  updNpcCountHUD();
+  return npcObj;
+}
+
 function initNpcTrolleys(){
-  // Remove old NPC trolleys
   npcTrolleys.forEach(n=>{if(n.mesh)scene.remove(n.mesh);});
   npcTrolleys.length=0;
-  const colors=[0x9944cc,0x44cc99,0xcc4499];
-  // Spread starting positions across the grid
-  const startNodes=[nid(2,2),nid(10,2),nid(5,10)];
   for(let i=0;i<NPC_COUNT;i++){
-    const mesh=buildNpcTrolley(colors[i]);
-    const startNode=startNodes[i];
-    const sc=startNode%NX,sr=Math.floor(startNode/NX);
-    const sp=npos(sc,sr);
-    mesh.position.set(sp.x,.35,sp.z);
-    const nbrs=getNeighbors(sc,sr,-1);
-    const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
-    npcTrolleys.push({
-      mesh,
-      node:startNode,
-      nextNode:nextDir?nextDir.nodeId:nid(sc+1,sr),
-      edgeT:0,
-      facing:nextDir?nextDir.dir:0,
-      speed:1.2+Math.random()*0.8, // 1.2–2.0 units/s — grandma speed
-      pumpAng:0,
-      jCool:0,
-      wobble:Math.random()*Math.PI*2, // random wobble phase
-      glueCooldown:4+Math.random()*6, // first glue drop after 4-10s
-    });
+    spawnNpcAt(-1);
   }
+}
+
+function updNpcCountHUD(){
+  const el=document.getElementById('npc-count-val');
+  if(el) el.textContent=npcTrolleys.length+'/'+NPC_MAX;
 }
 
 function updateNpcTrolleys(dt,gt){
@@ -1732,14 +1761,17 @@ function checkNpcCollision(npc,nc,nr){
 
 function drawNpcsOnMinimap(){
   npcTrolleys.forEach((npc,i)=>{
+    if(npc.respawning) return; // skip invisible respawning ones
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const tc=nc+(nnc-nc)*npc.edgeT,tr=nr+(nnr-nr)*npc.edgeT;
     const{x,y}=mmP(tc,tr);
+    // Convert hex color to rgba string
+    const col=NPC_COLORS[i%NPC_COLORS.length];
+    const r2=(col>>16)&0xff, g2=(col>>8)&0xff, b2=col&0xff;
     mmCtx.beginPath();mmCtx.arc(x,y,3.8,0,Math.PI*2);
-    mmCtx.fillStyle=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)'][i];
+    mmCtx.fillStyle=`rgba(${r2},${g2},${b2},0.88)`;
     mmCtx.fill();
-    // Small grandma icon
     mmCtx.font='7px serif';mmCtx.fillStyle='#fff';
     mmCtx.textAlign='center';mmCtx.textBaseline='middle';
     mmCtx.fillText('👵',x,y);
@@ -2084,17 +2116,44 @@ function updateRockets(dt){
       if(!npc.mesh||npc.respawning)continue;
       const dist=r.mesh.position.distanceTo(npc.mesh.position);
       if(dist<ROCKET_RADIUS){
-        // Hit!
-        spawnExplosion(npc.mesh.position.clone());
-        clearGlueNearPos(npc.mesh.position); // clears puddles + frees player if glued
-        showNotif('💥 Got her! Nenek down!','#ffaa44');
+        // Hit! Record position before removal
+        const hitPos=npc.mesh.position.clone();
+        const hitNode=npc.node;
+        spawnExplosion(hitPos);
+        clearGlueNearPos(hitPos);
+
+        // Remove this grandma from scene + array immediately
+        scene.remove(npc.mesh);
+        npcTrolleys.splice(j,1);
+        updNpcCountHUD();
+
+        const remaining=npcTrolleys.length;
+        const canSpawn=NPC_MAX-remaining;
+        const toSpawn=Math.min(2,canSpawn);
+
+        if(toSpawn>0){
+          const msg=toSpawn===2
+            ?`💥 Nenek kena! Respawn jadi 2! (${remaining+toSpawn}/${NPC_MAX})`
+            :`💥 Nenek kena! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
+          showNotif(msg,'#ffaa44');
+          // Spawn with short staggered delay so they appear at different positions
+          for(let s=0;s<toSpawn;s++){
+            setTimeout(()=>{
+              if(npcTrolleys.length<NPC_MAX){
+                const n=spawnNpcAt(hitNode);
+                if(n){
+                  // Brief spawn flash on new grandma
+                  spawnExplosion(n.mesh.position.clone());
+                }
+              }
+            }, 600 + s*500);
+          }
+        } else {
+          showNotif(`💥 Nenek kena! Max tercapai (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
+        }
+
         flash('f-drop',300);
-        // Respawn NPC after 8 seconds
-        npc.respawning=true;
-        npc.mesh.visible=false;
-        setTimeout(()=>{
-          if(npc.mesh){npc.mesh.visible=true;npc.respawning=false;}
-        },8000);
+        GS.score+=200;
         scene.remove(r.mesh);rockets.splice(i,1);
         hit=true;break;
       }
@@ -2220,6 +2279,7 @@ function startGame(){
   buildWorld();
   gameRunning=true;
   initNpcTrolleys();
+  updNpcCountHUD();
   startMissions();
 }
 

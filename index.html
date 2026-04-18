@@ -1326,7 +1326,7 @@ function checkArrival(col,row){
 function checkPickups(col,row){
   coinMeshes.forEach(c=>{
     if(!c.collected&&c.c===col&&c.r===row){
-      c.collected=true;scene.remove(c.m);GS.coins++;GS.score+=30;spawnP(c.m.position);showNotif('+30 🪙','#ffd700');
+      c.collected=true;scene.remove(c.m);GS.coins+=20;GS.score+=20;spawnP(c.m.position);showNotif('+20 🪙','#ffd700');
     }
   });
   puMeshes.forEach(pu=>{if(!pu.collected&&pu.c===col&&pu.r===row)collectPU(pu);});
@@ -1915,7 +1915,7 @@ function moveCam(){
 
   if(camMode==='first'){
     // ── FIRST PERSON: eyes at driver's height, looking ahead ──
-    const eyeH=2.2;
+    const eyeH=2.5;
     const eyeX=px+(Math.random()-.5)*sh*.04;
     const eyeY=eyeH+(Math.random()-.5)*sh*.03;
     const eyeZ=pz+(Math.random()-.5)*sh*.04;

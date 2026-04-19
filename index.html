@@ -987,69 +987,80 @@ function buildWorld(){
     }
   }
 
-  // ══════════════════════════════════════════════════════
-  // ── RICH NIGHT SKY & CITY BACKDROP ──
-  // ══════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════
+  // ── SKY & CITY BACKDROP ──
+  // ══════════════════════════════════════════════
 
-  // Sky dome with vertex-color gradient (deep navy at top → warm purple at horizon)
-  const SKY_R=0;
-  const skyGeo=new THREE.SphereGeometry(SKY_R,32,20);
-  const skyPosArr=skyGeo.attributes.position;
-  const skyColorArr=[];
-  for(let i=0;i<skyPosArr.count;i++){
-    const yN=Math.max(0,Math.min(1,(skyPosArr.getY(i)+SKY_R)/(SKY_R*2)));
-    // top: very dark navy  mid: indigo  horizon: warm dark purple/red
+  // Sky dome — use vertex colors to simulate gradient (deep indigo at top → dark teal at horizon)
+  // We build it as a series of stacked rings tinted from dark blue → warm orange near horizon
+  const SKY_R = 560;
+  const skyGeo = new THREE.SphereGeometry(SKY_R, 32, 16);
+  // Paint vertex colors for gradient
+  const skyColors = [];
+  const skyPos = skyGeo.attributes.position;
+  for(let i = 0; i < skyPos.count; i++){
+    const y = skyPos.getY(i);
+    const t = Math.max(0, Math.min(1, (y + SKY_R) / (SKY_R * 2)));
+    // top: deep navy #060818  mid: indigo-purple #0d0a28  horizon: dark warm #1a0a10
     let r,g,b;
-    if(yN>0.55){const u=(yN-0.55)/0.45; r=0.01+u*0.01; g=0.01+u*0.02; b=0.04+u*0.05;}
-    else if(yN>0.22){const u=(yN-0.22)/0.33; r=0.05+u*0.00; g=0.01+u*0.01; b=0.08+u*0.04;}
-    else{const u=yN/0.22; r=0.16-u*0.11; g=0.03+u*0.02; b=0.12+u*0.04;}
-    skyColorArr.push(r,g,b);
-  }
-  skyGeo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(skyColorArr),3));
-  worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
-
-  // ── Horizon glow planes (city light pollution) ──
-  const hGlows=[
-    {col:0x2a0818,h:90, y:6,  op:0.55, cnt:8},  // magenta/red ring
-    {col:0x100620,h:55, y:14, op:0.38, cnt:8},  // deep purple
-    {col:0x060e20,h:38, y:22, op:0.28, cnt:6},  // blue-indigo upper
-    {col:0x200804,h:50, y:4,  op:0.42, cnt:6},  // warm orange-red lower
-  ];
-  hGlows.forEach(hg=>{
-    for(let i=0;i<hg.cnt;i++){
-      const ang=i/hg.cnt*Math.PI*2;
-      const m=new THREE.Mesh(
-        new THREE.PlaneGeometry(800,hg.h),
-        new THREE.MeshBasicMaterial({color:hg.col,transparent:true,opacity:hg.op,depthWrite:false})
-      );
-      m.rotation.y=ang; m.position.set(Math.sin(ang)*480,hg.y,Math.cos(ang)*480);
-      worldGrp.add(m);
+    if(t > 0.55){
+      // Upper sky — very dark navy/indigo
+      const u = (t - 0.55)/0.45;
+      r = 0.02 + u*0.01; g = 0.02 + u*0.02; b = 0.06 + u*0.04;
+    } else if(t > 0.25){
+      // Mid sky — deep purple-blue
+      const u = (t - 0.25)/0.30;
+      r = 0.06 + u*0.00; g = 0.02 + u*0.02; b = 0.10 + u*0.04;
+    } else {
+      // Near horizon — dark warm with neon glow tint
+      const u = t/0.25;
+      r = 0.18 - u*0.12; g = 0.04 + u*0.02; b = 0.14 + u*0.04;
     }
+    skyColors.push(r, g, b);
+  }
+  skyGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(skyColors), 3));
+  const skyMat = new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide});
+  worldGrp.add(new THREE.Mesh(skyGeo, skyMat));
+
+  // ── HORIZON GLOW BANDS (city light pollution) ──
+  // Multiple large flat planes at horizon with additive neon colors
+  const horizonGlows = [
+    {col:0x330a22, w:1600, h:80,  y:8,   fog:0.55},  // magenta-red wide
+    {col:0x1a0828, w:1200, h:50,  y:14,  fog:0.35},  // deep purple
+    {col:0x0a1830, w:1000, h:35,  y:20,  fog:0.25},  // blue upper
+    {col:0x280a08, w: 900, h:45,  y:5,   fog:0.40},  // warm orange-red
+  ];
+  const horizonDirs = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
+  horizonGlows.forEach(hg => {
+    horizonDirs.forEach(angle => {
+      const hMat = new THREE.MeshBasicMaterial({color:hg.col, transparent:true, opacity:hg.fog, depthWrite:false});
+      const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(hg.w, hg.h), hMat);
+      hMesh.rotation.y = angle;
+      hMesh.position.set(Math.sin(angle)*480, hg.y, Math.cos(angle)*480);
+      worldGrp.add(hMesh);
+    });
   });
 
-  // ── Extended ground plane (covers void under silhouette buildings) ──
-  worldGrp.add(new THREE.Mesh(
-    new THREE.PlaneGeometry(1600,1600),
-    new THREE.MeshBasicMaterial({color:0x060810})
-  )).rotation.x=-Math.PI/2;
-  // Fix: create it properly
-  const extGnd=new THREE.Mesh(new THREE.PlaneGeometry(1600,1600),new THREE.MeshBasicMaterial({color:0x060810}));
-  extGnd.rotation.x=-Math.PI/2; extGnd.position.y=-0.1;
-  worldGrp.add(extGnd);
+  // ── SILHOUETTE CITY SKYLINE around the edges ──
+  // Randomly generated low-poly buildings placed in rings outside the grid
+  const silRng = mkRng(99887);
+  const SIL_MAT = new THREE.MeshBasicMaterial({color:0x07080f});
+  const SIL_ACCENT_COLS = [0x1a0828, 0x080a20, 0x0a1018, 0x140818];
+  const gridHalf = (GW * CELL) / 2;
 
-  // ── Silhouette city skyline (buildings outside the grid) ──
-  const silRng=mkRng(77331);
-  const gridHalfW=(GW*CELL)/2, gridHalfH=(GH*CELL)/2;
-  const silCount=200;
-  for(let i=0;i<silCount;i++){
-    const angle=silRng()*Math.PI*2;
-    const dist=Math.max(gridHalfW,gridHalfH)+50+silRng()*200;
-    const bx=Math.cos(angle)*dist, bz=Math.sin(angle)*dist;
-    const bw=5+silRng()*18, bd=5+silRng()*16;
-    const bh=6+silRng()*50;
+  // Place silhouette buildings in a ring 60–220 units outside the grid
+  const silCount = 180;
+  for(let i = 0; i < silCount; i++){
+    const angle = silRng() * Math.PI * 2;
+    const dist = gridHalf + 55 + silRng() * 170;
+    const bx = Math.cos(angle) * dist;
+    const bz = Math.sin(angle) * dist;
+    const bw = 4 + silRng() * 14;
+    const bd = 4 + silRng() * 14;
+    const bh = 5 + silRng() * 45;
 
-    const silGrp=new THREE.Group();
-    silGrp.position.set(bx,0,bz);
+    const silGrp = new THREE.Group();
+    silGrp.position.set(bx, 0, bz);
 
     // Main body — near-black with slight color tint
     const tintCols=[0x080810,0x08080e,0x060c10,0x0a0806,0x07070e];

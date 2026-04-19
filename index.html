@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
-#c{width:100vw;height:100vh;display:block;touch-action:none;}
+#c{width:100vw;height:100vh;display:block;}
 
 /* ── HUD ── */
 #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;pointer-events:none;z-index:10;}
@@ -56,28 +56,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #pump-bg{width:100%;height:18px;background:rgba(6,10,22,0.88);border:1px solid rgba(255,200,80,0.3);border-radius:9px;overflow:hidden;}
 #pump-fill{height:100%;width:60%;border-radius:9px;background:linear-gradient(90deg,#ff6b35,#ffe680);transition:width .08s,background .3s;}
 #pump-hint{font-size:9px;color:rgba(255,255,255,0.35);margin-top:4px;}
-
-/* ── Boost button ── */
-#boost-btn{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);z-index:20;background:linear-gradient(135deg,#ffaa00,#ff6600);border:none;border-radius:30px;padding:7px 22px;font-size:11px;letter-spacing:2px;font-weight:bold;color:#080810;cursor:pointer;font-family:'Georgia',serif;display:none;align-items:center;gap:8px;box-shadow:0 0 14px rgba(255,140,0,0.5);transition:transform .1s,box-shadow .1s;}
-#boost-btn:hover{transform:scale(1.05) translateX(-50%);transform-origin:left center;box-shadow:0 0 24px rgba(255,180,0,0.8);}
-#boost-btn.ready{display:flex;}
-#boost-btn.active{background:linear-gradient(135deg,#ffee00,#ffaa00);box-shadow:0 0 30px rgba(255,220,0,0.9);}
-#boost-cd{font-size:9px;opacity:.6;}
-
-/* ── Lightning flash ── */
-#f-boost{position:fixed;inset:0;pointer-events:none;z-index:7;opacity:0;background:radial-gradient(ellipse at center,rgba(255,255,100,0.55) 0%,rgba(255,200,0,0.2) 40%,transparent 75%);transition:opacity .05s;}
-
-/* ── Glue trapped overlay ── */
-#glue-overlay{position:fixed;inset:0;pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;background:repeating-linear-gradient(45deg,rgba(180,120,0,0.08) 0px,rgba(180,120,0,0.08) 2px,transparent 2px,transparent 12px),repeating-linear-gradient(-45deg,rgba(200,140,0,0.06) 0px,rgba(200,140,0,0.06) 2px,transparent 2px,transparent 12px);border:0px solid rgba(200,140,0,0);}
-#glue-overlay.active{opacity:1;border:4px solid rgba(200,140,0,0.6);box-shadow:inset 0 0 40px rgba(180,120,0,0.25);}
-
-/* ── Glue countdown HUD ── */
-#glue-hud{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;display:none;text-align:center;}
-#glue-msg{font-size:22px;font-weight:bold;color:#ffcc44;text-shadow:0 0 16px rgba(255,180,0,0.9);letter-spacing:2px;}
-#glue-timer{font-size:40px;font-weight:bold;color:#ff8800;text-shadow:0 0 20px rgba(255,120,0,1);line-height:1.1;}
-#glue-sub{font-size:11px;color:rgba(255,200,80,0.55);margin-top:4px;letter-spacing:1px;}
-
-/* ── Glue puddle on NPC (visual indicator on minimap) ── */
 
 /* ── Speed ── */
 #spd-panel{position:fixed;bottom:20px;right:18px;z-index:10;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.28);border-radius:10px;padding:6px 12px;text-align:center;backdrop-filter:blur(8px);}
@@ -131,23 +109,63 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 .kbtn.listening{background:rgba(255,90,20,0.22);border-color:#ff6b35;color:#ffaa77;animation:blink .7s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.38}}
 .kb-tip{font-size:9px;color:rgba(255,220,150,0.35);margin-top:2px;}
-/* ── Mobile buttons — layout ──
-   Right side (bottom-right): Pump, Brake, Fire stacked vertically
-   Left side: Switch ← higher up (clear of minimap at bottom-left)
-   Switch → on right, above pump cluster
-*/
-#mob-pump{position:fixed;bottom:22px;right:22px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ff6b35,#ffe680);border:none;font-size:28px;cursor:pointer;z-index:20;box-shadow:0 0 16px rgba(255,150,50,0.55);display:none;align-items:center;justify-content:center;}
-#mob-brake{position:fixed;bottom:106px;right:22px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#e74c3c,#c0392b);border:none;font-size:24px;cursor:pointer;z-index:20;box-shadow:0 0 16px rgba(200,50,50,0.55);color:#fff;display:none;align-items:center;justify-content:center;}
-#mob-left{position:fixed;bottom:196px;left:22px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
-#mob-right{position:fixed;bottom:196px;right:106px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
-/* Show mobile controls on:
-   1. Screens ≤1024px wide (covers phones + tablets in portrait & landscape)
-   2. ANY device that uses a coarse pointer (touch screen — phones, tablets, iPads) */
-@media(max-width:1024px),(pointer:coarse){#mob-pump,#mob-brake,#mob-left,#mob-right{display:flex;}}
+#mob-pump{position:fixed;bottom:100px;right:22px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ff6b35,#ffe680);border:none;font-size:28px;cursor:pointer;z-index:20;box-shadow:0 0 16px rgba(255,150,50,0.55);display:none;align-items:center;justify-content:center;}
+#mob-brake{position:fixed;bottom:100px;left:22px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#e74c3c,#c0392b);border:none;font-size:24px;cursor:pointer;z-index:20;box-shadow:0 0 16px rgba(200,50,50,0.55);color:#fff;display:none;align-items:center;justify-content:center;}
+#mob-left{position:fixed;bottom:185px;left:22px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
+#mob-right{position:fixed;bottom:185px;right:22px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
+@media(max-width:768px){#mob-pump,#mob-brake,#mob-left,#mob-right{display:flex;}}
 #settings-btn{position:fixed;top:12px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,transform .2s;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
+
+/* ── View Toggle Button ── */
+#view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,200,255,0.35);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;}
+#view-btn:hover{background:rgba(100,200,255,0.12);border-color:rgba(100,200,255,0.7);}
+#view-btn.fp{border-color:rgba(100,255,150,0.6);color:#88ffaa;}
+
+/* ── Shop Button ── */
+#shop-btn{position:fixed;top:162px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,160,40,0.45);color:#ffaa44;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
+#shop-btn:hover{background:rgba(255,160,40,0.14);}
+
+/* ── Shop Overlay ── */
+#shop-overlay{position:fixed;inset:0;background:rgba(2,4,14,0.88);z-index:85;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#shop-box{background:rgba(8,12,28,0.98);border:2px solid rgba(255,160,40,0.6);border-radius:20px;padding:24px 28px;width:min(420px,92vw);box-shadow:0 0 50px rgba(255,140,20,0.2);}
+#shop-title{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,200,80,0.8);margin-bottom:4px;text-align:center;}
+#shop-coins-disp{font-size:22px;font-weight:bold;color:#ffd700;text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(255,200,0,0.5);}
+.shop-item{display:flex;align-items:center;gap:14px;background:rgba(255,160,40,0.05);border:1.5px solid rgba(255,160,40,0.2);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s,border-color .15s;}
+.shop-item:hover{background:rgba(255,160,40,0.12);border-color:rgba(255,160,40,0.55);}
+.shop-item.owned{border-color:rgba(100,255,150,0.4);background:rgba(100,255,150,0.05);}
+.shop-item-icon{font-size:28px;min-width:36px;text-align:center;}
+.shop-item-info{flex:1;}
+.shop-item-name{font-size:13px;font-weight:bold;color:#ffe680;margin-bottom:2px;}
+.shop-item-desc{font-size:10px;color:rgba(255,220,150,0.55);line-height:1.4;}
+.shop-item-price{font-size:13px;font-weight:bold;color:#ffd700;white-space:nowrap;}
+.shop-item-price.owned{color:#88ffaa;}
+#shop-close{margin-top:6px;width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;color:rgba(255,220,150,0.7);font-family:'Georgia',serif;font-size:12px;cursor:pointer;transition:background .15s;}
+#shop-close:hover{background:rgba(255,255,255,0.1);}
+
+/* ── Rocket Ammo HUD ── */
+#rocket-hud{position:fixed;bottom:60px;right:18px;z-index:15;background:rgba(6,10,22,0.9);border:1.5px solid rgba(255,80,40,0.5);border-radius:10px;padding:5px 12px;display:none;align-items:center;gap:8px;backdrop-filter:blur(8px);}
+#rocket-icon{font-size:18px;}
+#rocket-count{font-size:16px;font-weight:bold;color:#ff8844;}
+#rocket-lbl{font-size:8px;color:rgba(255,180,100,0.6);text-transform:uppercase;letter-spacing:1px;}
+#rocket-fire-btn{background:linear-gradient(135deg,#cc2200,#ff6622);border:none;border-radius:7px;color:#fff;font-size:10px;font-weight:bold;padding:4px 10px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:1px;transition:transform .1s;}
+#rocket-fire-btn:hover{transform:scale(1.07);}
+#rocket-fire-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+/* ── FPS Crosshair ── */
+#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:30;display:none;}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.85);}
+#crosshair::before{width:18px;height:2px;top:50%;left:50%;transform:translate(-50%,-50%);}
+#crosshair::after{width:2px;height:18px;top:50%;left:50%;transform:translate(-50%,-50%);}
+.ch-dot{position:absolute;width:4px;height:4px;background:rgba(255,80,80,0.9);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);}
+
+/* ── Rocket explosion flash ── */
+#f-rocket{background:radial-gradient(ellipse at center,rgba(255,120,20,0.55),transparent 65%);}
+
+/* ── NPC hit marker (brief) ── */
+#hit-marker{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:31;opacity:0;transition:opacity .12s;font-size:28px;color:#ff4422;text-shadow:0 0 12px rgba(255,80,20,1);}
 
 /* ── Bidding Dialog ── */
 #bid-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
@@ -176,47 +194,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 /* ── NPC Trolley label ── */
 .npc-label{position:absolute;pointer-events:none;}
-
-/* ── View toggle button ── */
-#view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,180,255,0.4);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;pointer-events:all;}
-#view-btn:hover{background:rgba(100,180,255,0.15);border-color:rgba(100,180,255,0.8);}
-#view-lbl{position:fixed;top:156px;right:9px;font-size:7px;letter-spacing:1px;color:rgba(100,180,255,0.5);text-transform:uppercase;z-index:15;pointer-events:none;text-align:center;width:58px;}
-
-/* ── First-person crosshair ── */
-#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:14;display:none;width:32px;height:32px;}
-#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,80,80,0.85);border-radius:2px;}
-#crosshair::before{width:2px;height:16px;left:15px;top:8px;}
-#crosshair::after{width:16px;height:2px;left:8px;top:15px;}
-#crosshair-dot{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:#ff5050;border-radius:50%;pointer-events:none;z-index:14;display:none;box-shadow:0 0 6px rgba(255,80,80,0.8);}
-
-/* ── Rocket Launcher Shop ── */
-#shop-btn{position:fixed;top:161px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,50,0.45);color:#ff8866;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;pointer-events:all;}
-#shop-btn:hover{background:rgba(255,100,50,0.15);}
-
-#shop-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
-#shop-box{background:rgba(8,12,28,0.97);border:2px solid rgba(255,100,50,0.6);border-radius:18px;padding:22px 28px;width:min(360px,88vw);text-align:center;box-shadow:0 0 40px rgba(255,80,30,0.2);}
-#shop-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,150,80,0.7);margin-bottom:4px;}
-#shop-heading{font-size:22px;font-weight:bold;color:#ffe680;margin-bottom:4px;}
-#shop-desc{font-size:11px;color:rgba(255,220,150,0.55);margin-bottom:16px;line-height:1.5;}
-#shop-coins-show{font-size:13px;color:#ffd700;margin-bottom:14px;}
-.shop-item{background:rgba(255,100,50,0.07);border:1.5px solid rgba(255,100,50,0.3);border-radius:11px;padding:12px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background .15s,border-color .15s;}
-.shop-item:hover{background:rgba(255,100,50,0.18);border-color:rgba(255,100,50,0.8);}
-.shop-item.disabled{opacity:.4;cursor:not-allowed;}
-.shop-item-left{text-align:left;}
-.shop-item-name{font-size:14px;font-weight:bold;color:#ffe680;}
-.shop-item-desc{font-size:10px;color:rgba(255,220,150,0.55);margin-top:2px;}
-.shop-item-price{font-size:15px;font-weight:bold;color:#ffd700;}
-#shop-close{margin-top:10px;background:rgba(255,255,255,0.06);color:rgba(255,220,150,0.65);border:1px solid rgba(255,200,80,0.22);padding:7px 24px;border-radius:20px;cursor:pointer;font-family:'Georgia',serif;font-size:12px;}
-
-/* ── Rocket ammo HUD ── */
-#rocket-hud{position:fixed;bottom:172px;right:18px;z-index:15;background:rgba(6,10,22,0.88);border:1px solid rgba(255,100,50,0.4);border-radius:10px;padding:6px 12px;backdrop-filter:blur(8px);display:none;align-items:center;gap:8px;}
-#rocket-icon{font-size:18px;}
-#rocket-count{font-size:14px;font-weight:bold;color:#ff8866;}
-#rocket-lbl{font-size:8px;letter-spacing:1px;color:rgba(255,150,80,0.6);text-transform:uppercase;}
-
-/* ── Rocket fire button (mobile) ── */
-#mob-fire{position:fixed;bottom:286px;right:22px;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#cc2200,#ff6633);border:none;font-size:24px;cursor:pointer;z-index:20;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(255,80,30,0.6);}
-@media(max-width:1024px),(pointer:coarse){#mob-fire{display:flex;}}
 </style>
 </head>
 <body>
@@ -228,55 +205,53 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div style="display:flex;gap:7px;margin-right:48px">
     <div class="hp"><div class="hl">Deliveries</div><div class="hv" id="h-del">0</div></div>
     <div class="hp"><div class="hl">Coins</div><div class="hv" style="color:#ffd700" id="h-coins">0</div></div>
-    <div class="hp"><div class="hl">👵 Nenek</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
   </div>
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
-<button id="view-btn" title="Toggle First/Third Person [V]" onclick="toggleView()">👁️</button>
-<div id="view-lbl">3rd Person</div>
-<button id="shop-btn" title="Rocket Shop [R]" onclick="openShop()">🚀</button>
+<button id="view-btn" title="Toggle First/Third Person [V]">👁</button>
+<button id="shop-btn" title="Shop [B]" onclick="openShop()">🛒</button>
 
-<!-- Crosshair (first person) -->
-<div id="crosshair"></div>
-<div id="crosshair-dot"></div>
+<!-- Shop Overlay -->
+<div id="shop-overlay">
+  <div id="shop-box">
+    <div id="shop-title">🛒 Rail Shop</div>
+    <div id="shop-coins-disp">🪙 <span id="shop-coins-val">0</span></div>
+    <div class="shop-item" id="si-rocket" onclick="buyItem('rocket')">
+      <div class="shop-item-icon">🚀</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">Rocket Launcher</div>
+        <div class="shop-item-desc">Tembak nenek penghalang! Kena 1 nenek → respawn jadi 2.<br>Max total nenek: 10. Tekan <b>F</b> untuk tembak.</div>
+      </div>
+      <div class="shop-item-price" id="si-rocket-price">🪙 150</div>
+    </div>
+    <div class="shop-item" id="si-ammo" onclick="buyItem('ammo')">
+      <div class="shop-item-icon">💥</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">Rocket Ammo ×3</div>
+        <div class="shop-item-desc">Tambah 3 amunisi roket. Perlu Rocket Launcher dulu.</div>
+      </div>
+      <div class="shop-item-price" id="si-ammo-price">🪙 80</div>
+    </div>
+    <button id="shop-close" onclick="closeShop()">✕ Tutup</button>
+  </div>
+</div>
 
-<!-- Rocket ammo HUD -->
+<!-- Rocket Ammo HUD -->
 <div id="rocket-hud">
   <div id="rocket-icon">🚀</div>
   <div>
-    <div id="rocket-count">0</div>
+    <div id="rocket-count">3</div>
     <div id="rocket-lbl">Rockets</div>
   </div>
+  <button id="rocket-fire-btn" onclick="fireRocket()">🔥 FIRE [F]</button>
 </div>
 
-<!-- Rocket Shop -->
-<div id="shop-overlay">
-  <div id="shop-box">
-    <div id="shop-title">🛒 Armament Shop</div>
-    <div id="shop-heading">🚀 Rocket Launcher</div>
-    <div id="shop-desc">Fire at grandma trolleys to clear the track!<br>Press <strong style="color:#ffe680">F</strong> to launch. Trolley respawns after 8s.</div>
-    <div id="shop-coins-show">Your coins: <span id="shop-coins-val" style="color:#ffd700">0 🪙</span></div>
-    <div class="shop-item" id="shop-buy-3" onclick="buyRockets(3,50)">
-      <div class="shop-item-left">
-        <div class="shop-item-name">🚀 3 Rockets</div>
-        <div class="shop-item-desc">Enough for one nenek obstacle</div>
-      </div>
-      <div class="shop-item-price">50 🪙</div>
-    </div>
-    <div class="shop-item" id="shop-buy-10" onclick="buyRockets(10,140)">
-      <div class="shop-item-left">
-        <div class="shop-item-name">🚀🚀 10 Rockets</div>
-        <div class="shop-item-desc">Nenek clearance pack!</div>
-      </div>
-      <div class="shop-item-price">140 🪙</div>
-    </div>
-    <button id="shop-close" onclick="closeShop()">✕ Close</button>
-  </div>
-</div>
+<!-- FPS Crosshair -->
+<div id="crosshair"><div class="ch-dot"></div></div>
 
-<!-- Mobile fire button -->
-<button id="mob-fire" onclick="fireRocket()">🚀</button>
+<!-- Hit Marker -->
+<div id="hit-marker">✕</div>
 
 <!-- Streak -->
 <div id="streak-hud"><div id="streak-box"><div id="streak-val">x2</div><div id="streak-lbl">Streak</div></div></div>
@@ -347,7 +322,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="pump-wrap">
   <div id="pump-lbl">⚡ Pump Energy</div>
   <div id="pump-bg"><div id="pump-fill"></div></div>
-  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch</div>
+  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ ← → ] Switch</div>
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
@@ -357,14 +332,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="flash" id="f-pick"></div>
 <div class="flash" id="f-drop"></div>
 <div class="flash" id="f-vip"></div>
-<div class="flash" id="f-boost"></div>
-<div id="glue-overlay"></div>
-<div id="glue-hud">
-  <div id="glue-msg">🍯 TERKENA LEM!</div>
-  <div id="glue-timer">5</div>
-  <div id="glue-sub">Tahan SPACE cepat-cepat atau tembak roket!</div>
-</div>
-<button id="boost-btn" onclick="activateBoost()">⚡ BOOST <span id="boost-cd"></span></button>
+<div class="flash" id="f-rocket"></div>
 <div id="notif"></div>
 <div id="pu-bar"><div id="pu-icon">⚡</div><div><div id="pu-name">BOOST</div><div id="pu-fill-bg"><div id="pu-fill"></div></div></div></div>
 <button id="mob-pump">⬆</button>
@@ -380,9 +348,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
     <li><span class="key">← →</span> Switch at junctions</li>
-    <li><span class="key">V</span> Toggle 1st/3rd person</li>
-    <li><span class="key">F</span> Fire rocket 🚀</li>
-    <li><span class="key">R</span> Open rocket shop</li>
   </ul>
   <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">12×12 grid · Flat city · Gold dots = VIP · Head to glowing dots to pick up packages · Trolley never stops!</p>
   <button class="btn" onclick="startGame()">START GAME</button>
@@ -527,13 +492,11 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.brake.code||e.code===KB.brake2.code){e.preventDefault();keys.brake=true;}
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
-  if(e.code==='KeyV'){e.preventDefault();toggleView();}
+  if(e.code==='KeyV'){e.preventDefault();toggleCamMode();}
   if(e.code==='KeyF'){e.preventDefault();fireRocket();}
-  if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
-  if(e.code==='KeyE'){e.preventDefault();activateBoost();}
-  // Glue mash to break free
-  if(GLUE.stuck&&(e.code===KB.pump.code||e.code===KB.pump2.code)){
-    e.preventDefault();GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.4);
+  if(e.code==='KeyB'){e.preventDefault();
+    if(document.getElementById('shop-overlay').style.display==='flex') closeShop();
+    else openShop();
   }
 },true);
 window.addEventListener('keyup',e=>{if(e.code===KB.pump.code||e.code===KB.pump2.code)pumpHeld=false;if(e.code===KB.brake.code||e.code===KB.brake2.code)keys.brake=false;},true);
@@ -566,28 +529,8 @@ const MS={
   choosing:false, // kept for compatibility — but trolley never halts
 };
 
-// ── Boost Charge (manual activation) ──
-let boostCharges=0;         // how many stored charges
-let boostActive=false;      // currently boosting?
-let boostTimeLeft=0;        // seconds remaining on active boost
-const BOOST_DURATION=6;     // seconds per charge
-let boostCooldown=0;        // cooldown after use
-
-// ── Glue state ──
-const GLUE={
-  stuck:false,     // player is glued
-  timer:0,         // seconds remaining
-  mashes:0,        // SPACE mashes to break free faster
-  maxTime:5,
-};
-let glueWarningShown=false;
-
-// ── Rocket system ──
-const rockets=[];
-const gluePuddles=[];
-let rocketAmmo=0;
-const ROCKET_SPEED=28;
-const ROCKET_RADIUS=3.5;
+// ═══════════════════════════════════════════
+//  THREE.JS SETUP
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
@@ -600,7 +543,7 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.0028);
+scene.fog=new THREE.FogExp2(0x05060f,0.0038);
 // Narrow FOV — cinematic, city feels denser
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
@@ -684,86 +627,8 @@ let notifTmr=null;
 function showNotif(txt,col='#ffd700'){const el=document.getElementById('notif');el.textContent=txt;el.style.color=col;el.style.opacity='1';el.style.top='26%';if(notifTmr)clearTimeout(notifTmr);notifTmr=setTimeout(()=>{el.style.opacity='0';el.style.top='30%';},2000);}
 function flash(id,dur=350){const el=document.getElementById(id);el.style.opacity='1';setTimeout(()=>el.style.opacity='0',dur);}
 
-// ── BOOST CHARGE SYSTEM ──
-function addBoostCharge(){
-  boostCharges++;
-  updBoostBtn();
-  showNotif('⚡ Boost charge stored! Press E','#ffee44');
-}
-
-function updBoostBtn(){
-  const btn=document.getElementById('boost-btn');
-  if(boostCharges<=0&&!boostActive){btn.classList.remove('ready','active');return;}
-  btn.classList.add('ready');
-  if(boostActive){
-    btn.classList.add('active');
-    btn.childNodes[0].textContent=`⚡ BOOSTING `;
-    document.getElementById('boost-cd').textContent=`${Math.ceil(boostTimeLeft)}s`;
-  }else{
-    btn.classList.remove('active');
-    btn.childNodes[0].textContent=`⚡ BOOST `;
-    document.getElementById('boost-cd').textContent=`×${boostCharges}`;
-  }
-}
-
-function activateBoost(){
-  if(!gameRunning)return;
-  if(boostCharges<=0){showNotif('⚡ No boost charges!','#ff8844');return;}
-  if(boostActive)return; // already running
-  boostCharges--;
-  boostActive=true;
-  boostTimeLeft=BOOST_DURATION;
-  updBoostBtn();
-  // Lightning flash sequence
-  lightningFlash();
-  GS.shake=2.0;
-  showNotif('⚡⚡ BOOST AKTIF!','#ffee00');
-}
-
-function lightningFlash(){
-  // Three rapid flashes of the screen
-  const el=document.getElementById('f-boost');
-  let count=0;
-  const doFlash=()=>{
-    el.style.transition='opacity 0.04s';
-    el.style.opacity='1';
-    setTimeout(()=>{
-      el.style.transition='opacity 0.12s';
-      el.style.opacity='0';
-      count++;
-      if(count<3)setTimeout(doFlash,160);
-    },60);
-  };
-  doFlash();
-  // Also spawn lightning bolt particles around trolley
-  for(let i=0;i<8;i++){
-    setTimeout(()=>spawnP(new THREE.Vector3(
-      trolley.position.x+(Math.random()-.5)*3,
-      trolley.position.y+1+Math.random()*2,
-      trolley.position.z+(Math.random()-.5)*3
-    )),i*40);
-  }
-}
-
-function updateBoost(dt){
-  if(!boostActive)return;
-  boostTimeLeft=Math.max(0,boostTimeLeft-dt);
-  // Boost effect: constant speed push + energy regen boost
-  GS.speed=Math.min(GS.speed+5*dt,22); // push beyond normal max
-  GS.energy=Math.min(GS.maxE,GS.energy+8*dt); // rapid energy fill
-  // Subtle trail flash every 0.4s
-  if(Math.floor(boostTimeLeft*2.5)!==Math.floor((boostTimeLeft+dt)*2.5)){
-    const el=document.getElementById('f-boost');
-    el.style.transition='opacity 0.02s';el.style.opacity='0.3';
-    setTimeout(()=>{el.style.transition='opacity 0.2s';el.style.opacity='0';},80);
-  }
-  updBoostBtn();
-  if(boostTimeLeft<=0){
-    boostActive=false;
-    updBoostBtn();
-    showNotif('⚡ Boost habis','#ffaa44');
-  }
-}
+// ═══════════════════════════════════════════
+//  WORLD BUILDING — FLAT
 // ═══════════════════════════════════════════
 let worldGrp=null, stationMeshes=[], stationRings=[], coinMeshes=[], puMeshes=[];
 
@@ -987,184 +852,18 @@ function buildWorld(){
     }
   }
 
-  // ══════════════════════════════════════════════════════
-  // ── RICH NIGHT SKY & CITY BACKDROP ──
-  // ══════════════════════════════════════════════════════
-
-  // Sky dome with vertex-color gradient (deep navy at top → warm purple at horizon)
-  const SKY_R=560;
-  const skyGeo=new THREE.SphereGeometry(SKY_R,32,20);
-  const skyPosArr=skyGeo.attributes.position;
-  const skyColorArr=[];
-  for(let i=0;i<skyPosArr.count;i++){
-    const yN=Math.max(0,Math.min(1,(skyPosArr.getY(i)+SKY_R)/(SKY_R*2)));
-    // top: very dark navy  mid: indigo  horizon: warm dark purple/red
-    let r,g,b;
-    if(yN>0.55){const u=(yN-0.55)/0.45; r=0.01+u*0.01; g=0.01+u*0.02; b=0.04+u*0.05;}
-    else if(yN>0.22){const u=(yN-0.22)/0.33; r=0.05+u*0.00; g=0.01+u*0.01; b=0.08+u*0.04;}
-    else{const u=yN/0.22; r=0.16-u*0.11; g=0.03+u*0.02; b=0.12+u*0.04;}
-    skyColorArr.push(r,g,b);
-  }
-  skyGeo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(skyColorArr),3));
-  worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
-
-  // ── Horizon glow planes (city light pollution) ──
-  const hGlows=[
-    {col:0x2a0818,h:90, y:6,  op:0.55, cnt:8},  // magenta/red ring
-    {col:0x100620,h:55, y:14, op:0.38, cnt:8},  // deep purple
-    {col:0x060e20,h:38, y:22, op:0.28, cnt:6},  // blue-indigo upper
-    {col:0x200804,h:50, y:4,  op:0.42, cnt:6},  // warm orange-red lower
-  ];
-  hGlows.forEach(hg=>{
-    for(let i=0;i<hg.cnt;i++){
-      const ang=i/hg.cnt*Math.PI*2;
-      const m=new THREE.Mesh(
-        new THREE.PlaneGeometry(800,hg.h),
-        new THREE.MeshBasicMaterial({color:hg.col,transparent:true,opacity:hg.op,depthWrite:false})
-      );
-      m.rotation.y=ang; m.position.set(Math.sin(ang)*480,hg.y,Math.cos(ang)*480);
-      worldGrp.add(m);
-    }
-  });
-
-  // ── Extended ground plane (covers void under silhouette buildings) ──
-  worldGrp.add(new THREE.Mesh(
-    new THREE.PlaneGeometry(1600,1600),
-    new THREE.MeshBasicMaterial({color:0x060810})
-  )).rotation.x=-Math.PI/2;
-  // Fix: create it properly
-  const extGnd=new THREE.Mesh(new THREE.PlaneGeometry(1600,1600),new THREE.MeshBasicMaterial({color:0x060810}));
-  extGnd.rotation.x=-Math.PI/2; extGnd.position.y=-0.1;
-  worldGrp.add(extGnd);
-
-  // ── Silhouette city skyline (buildings outside the grid) ──
-  const silRng=mkRng(77331);
-  const gridHalfW=(GW*CELL)/2, gridHalfH=(GH*CELL)/2;
-  const silCount=200;
-  for(let i=0;i<silCount;i++){
-    const angle=silRng()*Math.PI*2;
-    const dist=Math.max(gridHalfW,gridHalfH)+50+silRng()*200;
-    const bx=Math.cos(angle)*dist, bz=Math.sin(angle)*dist;
-    const bw=5+silRng()*18, bd=5+silRng()*16;
-    const bh=6+silRng()*50;
-
-    const silGrp=new THREE.Group();
-    silGrp.position.set(bx,0,bz);
-
-    // Main body — near-black with slight color tint
-    const tintCols=[0x080810,0x08080e,0x060c10,0x0a0806,0x07070e];
-    const bodyCol=tintCols[Math.floor(silRng()*tintCols.length)];
-    const sBody=new THREE.Mesh(
-      new THREE.BoxGeometry(bw,bh,bd),
-      new THREE.MeshBasicMaterial({color:bodyCol})
-    );
-    sBody.position.y=bh/2; silGrp.add(sBody);
-
-    // Setback top on taller buildings
-    if(bh>22&&silRng()>0.4){
-      const t2h=bh*(0.3+silRng()*0.3);
-      const t2=new THREE.Mesh(new THREE.BoxGeometry(bw*0.55,t2h,bd*0.55),
-        new THREE.MeshBasicMaterial({color:0x060708}));
-      t2.position.y=bh+t2h/2; silGrp.add(t2);
-    }
-
-    // Lit windows — warm/cool dots scattered on facade
-    const winCount=Math.floor(silRng()*10)+2;
-    for(let w=0;w<winCount;w++){
-      const wx=(silRng()-0.5)*bw*0.75;
-      const wy=silRng()*bh*0.88+0.5;
-      const litCols=[0xffeeaa,0xaaccff,0xffcc88,0xffddcc,0x88aaff];
-      const litCol=litCols[Math.floor(silRng()*litCols.length)];
-      const litW=new THREE.Mesh(
-        new THREE.PlaneGeometry(0.4+silRng()*0.5,0.55+silRng()*0.4),
-        new THREE.MeshBasicMaterial({color:litCol})
-      );
-      litW.position.set(wx,wy,bd/2+0.05); silGrp.add(litW);
-      // Back side windows too (50%)
-      if(silRng()>0.5){
-        const litW2=litW.clone(); litW2.position.z=-bd/2-0.05;
-        litW2.rotation.y=Math.PI; silGrp.add(litW2);
-      }
-    }
-
-    // Rooftop details
-    if(silRng()>0.5){
-      // Antenna
-      const antH=3+silRng()*8;
-      const ant=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,antH,4),
-        new THREE.MeshBasicMaterial({color:0x334455}));
-      ant.position.y=bh+antH/2; silGrp.add(ant);
-      // Blink light
-      const blink=new THREE.Mesh(new THREE.SphereGeometry(0.15,4,3),
-        new THREE.MeshBasicMaterial({color:0xff2200}));
-      blink.position.y=bh+antH+0.2; silGrp.add(blink);
-    }
-
-    // Neon roof accent (30%)
-    if(silRng()>0.7){
-      const neonCols2=[0x180010,0x001018,0x100800,0x001008,0x100010];
-      const nStrip=new THREE.Mesh(
-        new THREE.BoxGeometry(bw*0.9,0.35,0.12),
-        new THREE.MeshBasicMaterial({color:neonCols2[Math.floor(silRng()*neonCols2.length)]})
-      );
-      nStrip.position.set(0,bh*0.65,bd/2+0.1); silGrp.add(nStrip);
-    }
-
-    worldGrp.add(silGrp);
-  }
-
-  // ── Moon ──
-  const moonMesh=new THREE.Mesh(
-    new THREE.SphereGeometry(14,14,10),
-    new THREE.MeshBasicMaterial({color:0xe8f0ff})
-  );
-  moonMesh.position.set(-200,260,-400);
-  worldGrp.add(moonMesh);
-  // Moon halo
-  const moonHalo=new THREE.Mesh(
-    new THREE.SphereGeometry(20,10,8),
-    new THREE.MeshBasicMaterial({color:0x8899cc,transparent:true,opacity:0.1})
-  );
-  moonHalo.position.copy(moonMesh.position);
-  worldGrp.add(moonHalo);
-  // Moon light
-  const moonLight=new THREE.PointLight(0x8899cc,0.5,900);
-  moonLight.position.set(-200,260,-400);
-  scene.add(moonLight);
-
-  // ── Stars — 3 layers ──
-  // Large bright
-  const sBrPos=new Float32Array(150*3);
-  for(let i=0;i<150;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.55+0.05;
-    sBrPos[i*3]=Math.sin(b)*Math.cos(a)*530;
-    sBrPos[i*3+1]=Math.cos(b)*530;
-    sBrPos[i*3+2]=Math.sin(b)*Math.sin(a)*530;
-  }
-  const sBrGeo=new THREE.BufferGeometry();sBrGeo.setAttribute('position',new THREE.BufferAttribute(sBrPos,3));
-  worldGrp.add(new THREE.Points(sBrGeo,new THREE.PointsMaterial({color:0xffffff,size:1.5,transparent:true,opacity:0.95})));
-
-  // Medium blue-white
-  const sPos=new Float32Array(900*3);
-  for(let i=0;i<900;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;
-    sPos[i*3]=Math.sin(b)*Math.cos(a)*540;
-    sPos[i*3+1]=Math.cos(b)*540;
-    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;
+  // ── Sky + stars ──
+  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),
+    new THREE.MeshBasicMaterial({color:0x03040e,side:THREE.BackSide})));
+  const sPos=new Float32Array(700*3);
+  for(let i=0;i<700;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
+    sPos[i*3]=Math.sin(b)*Math.cos(a)*550;
+    sPos[i*3+1]=Math.abs(Math.cos(b))*550;
+    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;
   }
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
-  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaabbdd,size:0.7,transparent:true,opacity:0.82})));
-
-  // Small dim
-  const sDimPos=new Float32Array(500*3);
-  for(let i=0;i<500;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.5+0.1;
-    sDimPos[i*3]=Math.sin(b)*Math.cos(a)*545;
-    sDimPos[i*3+1]=Math.cos(b)*545;
-    sDimPos[i*3+2]=Math.sin(b)*Math.sin(a)*545;
-  }
-  const sDimGeo=new THREE.BufferGeometry();sDimGeo.setAttribute('position',new THREE.BufferAttribute(sDimPos,3));
-  worldGrp.add(new THREE.Points(sDimGeo,new THREE.PointsMaterial({color:0x6688cc,size:0.38,transparent:true,opacity:0.65})));
+  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaaccff,size:.5,transparent:true,opacity:.75})));
 
   scene.add(worldGrp);
 
@@ -1234,8 +933,7 @@ function setRing(idx,mode){
 // ═══════════════════════════════════════════
 const PU_DEFS=[
   {id:'speed',icon:'🚀',label:'SPEED BOOST',col:0xff6600,dur:8,onA(){GS.speed=Math.min(GS.speed+6,18);},onT(dt){GS.speed=Math.min(GS.speed+2*dt,18);},onE(){}},
-  // ⚡ ENERGY now gives a storable boost charge — activated manually by player
-  {id:'energy',icon:'⚡',label:'BOOST CHARGE',col:0xffee00,dur:0,onA(){addBoostCharge();},onT(){},onE(){}},
+  {id:'energy',icon:'⚡',label:'ENERGY FILL',col:0x44ff88,dur:0,onA(){GS.energy=GS.maxE;},onT(){},onE(){}},
   {id:'shield',icon:'🛡️',label:'SHIELD',col:0x4488ff,dur:8,onA(){GS.inv=8;},onT(){},onE(){GS.inv=0;}},
   {id:'time',icon:'⏱️',label:'+20 SECONDS',col:0xff88ff,dur:0,onA(){if(MS.carrying)MS.carrying.timer=Math.min(MS.carrying.timer+20,MS.carrying.maxT);},onT(){},onE(){}},
 ];
@@ -1433,14 +1131,13 @@ function selectPackageFromArrival(ch,fromSt){
   else showNotif(`${MS.carrying.pkg.emoji} Head to ${ST_NAMES[fromSt]}!`,'#ffdd44');
 }
 
-// ── Canvas tap/click — select choice marker (3D picking via raycaster) ──
+// ── Also allow clicking a choice marker (3D picking via raycaster) ──
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
-
-function handleCanvasTap(clientX, clientY){
+canvas.addEventListener('click',e=>{
   if(!MS.choosing)return;
-  mouse.x=(clientX/window.innerWidth)*2-1;
-  mouse.y=-(clientY/window.innerHeight)*2+1;
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(mouse,camera);
   const hits=raycaster.intersectObjects(choiceMarkerMeshes,true);
   if(hits.length>0){
@@ -1448,17 +1145,7 @@ function handleCanvasTap(clientX, clientY){
     while(grp.parent&&!grp.userData.ch)grp=grp.parent;
     if(grp.userData.ch)selectPackageFromArrival(grp.userData.ch,MS.pendingFrom);
   }
-}
-
-// Click (mouse / tablet simulated click)
-canvas.addEventListener('click',e=>handleCanvasTap(e.clientX,e.clientY));
-// Touchend (real touch on phones & tablets)
-canvas.addEventListener('touchend',e=>{
-  if(e.changedTouches.length>0){
-    const t=e.changedTouches[0];
-    handleCanvasTap(t.clientX,t.clientY);
-  }
-},{passive:true});
+});
 
 // ═══════════════════════════════════════════
 //  MISSION SYSTEM
@@ -1663,10 +1350,88 @@ function doDeliver(){
 // ═══════════════════════════════════════════
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
-const NPC_COUNT=3;
-const NPC_MAX=10;
-const NPC_COLORS=[0x9944cc,0x44cc99,0xcc4499,0xff6633,0x33aaff,0xffcc00,0x55dd55,0xff44aa,0x00cccc,0xffaa33];
+// ═══════════════════════════════════════════
+//  SHOP SYSTEM
+// ═══════════════════════════════════════════
+const SHOP={
+  rocketOwned:false,
+  rocketAmmo:0,
+};
+
+function openShop(){
+  if(!gameRunning)return;
+  document.getElementById('shop-coins-val').textContent=GS.coins;
+  // Update rocket item display
+  const rEl=document.getElementById('si-rocket');
+  const rPrice=document.getElementById('si-rocket-price');
+  if(SHOP.rocketOwned){
+    rEl.classList.add('owned');
+    rPrice.textContent='✓ Owned';
+    rPrice.classList.add('owned');
+  } else {
+    rEl.classList.remove('owned');
+    rPrice.textContent='🪙 150';
+    rPrice.classList.remove('owned');
+  }
+  const aEl=document.getElementById('si-ammo');
+  const aPrice=document.getElementById('si-ammo-price');
+  if(!SHOP.rocketOwned){
+    aEl.style.opacity='.4';aEl.style.pointerEvents='none';
+  } else {
+    aEl.style.opacity='1';aEl.style.pointerEvents='all';
+  }
+  document.getElementById('shop-overlay').style.display='flex';
+}
+
+function closeShop(){
+  document.getElementById('shop-overlay').style.display='none';
+}
+
+function buyItem(id){
+  if(id==='rocket'){
+    if(SHOP.rocketOwned){showNotif('Rocket sudah dimiliki!','#ffaa44');return;}
+    if(GS.coins<150){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    GS.coins-=150;
+    SHOP.rocketOwned=true;
+    SHOP.rocketAmmo=3;
+    showNotif('🚀 Rocket Launcher dibeli!','#ff8844');
+    flash('f-vip',300);
+    updateRocketHUD();
+    openShop(); // refresh display
+  } else if(id==='ammo'){
+    if(!SHOP.rocketOwned){showNotif('Beli Rocket Launcher dulu!','#ff4444');return;}
+    if(GS.coins<80){showNotif('Koin tidak cukup! 🪙','#ff4444');return;}
+    GS.coins-=80;
+    SHOP.rocketAmmo+=3;
+    showNotif('💥 +3 Amunisi Roket!','#ff8844');
+    updateRocketHUD();
+    openShop();
+  }
+}
+
+function updateRocketHUD(){
+  const hud=document.getElementById('rocket-hud');
+  if(SHOP.rocketOwned){
+    hud.style.display='flex';
+    document.getElementById('rocket-count').textContent=SHOP.rocketAmmo;
+    const btn=document.getElementById('rocket-fire-btn');
+    btn.disabled=SHOP.rocketAmmo<=0;
+  } else {
+    hud.style.display='none';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  NPC TROLLEYS — "Grandma" obstacle trolleys
+// ═══════════════════════════════════════════
+const NPC_MAX=10;    // hard cap on total grandmas ever alive
+const NPC_START=3;   // starting count
 const npcTrolleys=[];
+let npcTotalSpawned=0; // tracks how many have ever been spawned
+
+// Rocket projectile state
+const rockets=[]; // {mesh, pos, dir, life}
+const rocketMeshPool=[];
 
 function buildNpcTrolley(colorHex){
   const grp=new THREE.Group();
@@ -1674,26 +1439,20 @@ function buildNpcTrolley(colorHex){
   const mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.6,roughness:.4});
   const wM=new THREE.MeshStandardMaterial({color:0x6a4c2a,roughness:.9});
   const wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.5,roughness:.5});
-  // Platform
   const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);grp.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,1.1),mM);b.position.set(x,.8,0);grp.add(b);});
-  // Wheels
   const wGeo=new THREE.TorusGeometry(.24,.06,8,14);
   [[-0.68,-.4],[-0.68,.4],[.68,-.4],[.68,.4]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.24,z);w.rotation.y=Math.PI/2;grp.add(w);
   });
-  // Pump handle
   const ph=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.75,7),mM);ph.position.set(0,.9,0);grp.add(ph);
   const hb=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,7),bM);hb.rotation.z=Math.PI/2;hb.position.set(0,1.28,0);grp.add(hb);
-  // Grandma figure (purple shawl)
   const bodyM=new THREE.MeshStandardMaterial({color:0x884488,roughness:.8});
   const headM=new THREE.MeshStandardMaterial({color:0xf0d0b0});
   const body=new THREE.Mesh(new THREE.BoxGeometry(.34,.48,.24),bodyM);body.position.set(0,.84,0);grp.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),headM);head.position.set(0,1.18,0);grp.add(head);
-  // Hair bun
   const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
   bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
-  // Beacon (colored)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
   grp.position.set(0,.35,0);
@@ -1701,32 +1460,32 @@ function buildNpcTrolley(colorHex){
   return grp;
 }
 
-// Spawn one new grandma at a random node, avoiding player position
-function spawnNpcAt(avoidNode){
-  if(npcTrolleys.length>=NPC_MAX) return null;
-  const colorHex=NPC_COLORS[npcTrolleys.length % NPC_COLORS.length];
+function spawnNpc(avoidNode){
+  if(npcTrolleys.length>=NPC_MAX)return null;
+  npcTotalSpawned++;
+  // Pick random color — cycle through neon palette
+  const npcCols=[0x9944cc,0x44cc99,0xcc4499,0x44aaff,0xff8844,0xffcc22,0xcc2255,0x22ccaa,0xaa44ff,0xff5522];
+  const colorHex=npcCols[npcTotalSpawned%npcCols.length];
   const mesh=buildNpcTrolley(colorHex);
-
-  // Pick a random start node — avoid player and the given avoid node
-  let startNode, tries=0;
+  // Pick a random start node far from player and from avoidNode
+  let startNode;
+  let tries=0;
   do {
     const rc=Math.floor(Math.random()*(GW+1));
     const rr=Math.floor(Math.random()*(GH+1));
     startNode=nid(rc,rr);
     tries++;
-    const pc=tNode%NX, pr=Math.floor(tNode/NX);
-    const sc2=startNode%NX, sr2=Math.floor(startNode/NX);
-    if(Math.abs(sc2-pc)<3 && Math.abs(sr2-pr)<3) startNode=-1; // too close to player
-  } while((startNode<0 || startNode===avoidNode) && tries<30);
-
-  if(startNode<0) startNode=nid(Math.floor(Math.random()*(GW+1)), Math.floor(Math.random()*(GH+1)));
-
-  const sc=startNode%NX, sr=Math.floor(startNode/NX);
+  } while(tries<20 && (
+    startNode===avoidNode ||
+    Math.abs((startNode%NX)-(tNode%NX))<3 ||
+    Math.abs((Math.floor(startNode/NX))-(Math.floor(tNode/NX)))<3
+  ));
+  const sc=startNode%NX,sr=Math.floor(startNode/NX);
   const sp=npos(sc,sr);
   mesh.position.set(sp.x,.35,sp.z);
   const nbrs=getNeighbors(sc,sr,-1);
   const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
-  const npcObj={
+  const npc={
     mesh,
     node:startNode,
     nextNode:nextDir?nextDir.nodeId:nid(Math.min(GW,sc+1),sr),
@@ -1736,32 +1495,155 @@ function spawnNpcAt(avoidNode){
     pumpAng:0,
     jCool:0,
     wobble:Math.random()*Math.PI*2,
-    glueCooldown:4+Math.random()*6,
-    respawning:false,
+    alive:true,
   };
-  npcTrolleys.push(npcObj);
-  updNpcCountHUD();
-  return npcObj;
+  npcTrolleys.push(npc);
+  return npc;
 }
 
 function initNpcTrolleys(){
   npcTrolleys.forEach(n=>{if(n.mesh)scene.remove(n.mesh);});
   npcTrolleys.length=0;
-  for(let i=0;i<NPC_COUNT;i++){
-    spawnNpcAt(-1);
+  rockets.length=0;
+  npcTotalSpawned=0;
+  for(let i=0;i<NPC_START;i++) spawnNpc(-1);
+}
+
+function killNpc(npc){
+  if(!npc.alive)return;
+  npc.alive=false;
+  // Explosion effect at npc position
+  spawnExplosion(npc.mesh.position.clone());
+  scene.remove(npc.mesh);
+  // Remove from array
+  const idx=npcTrolleys.indexOf(npc);
+  if(idx>=0)npcTrolleys.splice(idx,1);
+
+  // Respawn as 2 if under cap
+  const spawnable=NPC_MAX-npcTrolleys.length;
+  const toSpawn=Math.min(2,spawnable);
+  for(let i=0;i<toSpawn;i++){
+    setTimeout(()=>{
+      if(npcTrolleys.length<NPC_MAX){
+        spawnNpc(npc.node);
+        showNotif(`👵 Nenek respawn! (${npcTrolleys.length}/${NPC_MAX})`,'#ff8844');
+      }
+    }, 800+i*400);
+  }
+  if(toSpawn===0) showNotif('💥 Max nenek tercapai! 10/10','#ff4422');
+}
+
+// ── Explosion particles ──
+const explosionParts=[];
+function spawnExplosion(pos){
+  for(let i=0;i<18;i++){
+    const geo=new THREE.SphereGeometry(0.12+Math.random()*0.1,5,4);
+    const mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0xff6622:0xffcc22});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.copy(pos);
+    const ang=Math.random()*Math.PI*2;
+    const spd=3+Math.random()*4;
+    const vy=2+Math.random()*4;
+    scene.add(m);
+    explosionParts.push({m,vx:Math.cos(ang)*spd,vy,vz:Math.sin(ang)*spd,life:0.7+Math.random()*0.4});
+  }
+}
+function updateExplosions(dt){
+  for(let i=explosionParts.length-1;i>=0;i--){
+    const p=explosionParts[i];
+    p.life-=dt;
+    if(p.life<=0){scene.remove(p.m);explosionParts.splice(i,1);continue;}
+    p.m.position.x+=p.vx*dt;
+    p.m.position.y+=p.vy*dt;
+    p.m.position.z+=p.vz*dt;
+    p.vy-=12*dt; // gravity
+    p.m.material.opacity=p.life*1.5;
+    p.m.material.transparent=true;
   }
 }
 
-function updNpcCountHUD(){
-  const el=document.getElementById('npc-count-val');
-  if(el) el.textContent=npcTrolleys.length+'/'+NPC_MAX;
+// ── Rocket firing ──
+function fireRocket(){
+  if(!SHOP.rocketOwned||SHOP.rocketAmmo<=0||!gameRunning)return;
+  SHOP.rocketAmmo--;
+  updateRocketHUD();
+
+  // Build rocket mesh
+  const rGrp=new THREE.Group();
+  const rBody=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,0.7,7),
+    new THREE.MeshBasicMaterial({color:0xff4400}));
+  rBody.rotation.x=Math.PI/2; rGrp.add(rBody);
+  const rTip=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.3,7),
+    new THREE.MeshBasicMaterial({color:0xffaa00}));
+  rTip.rotation.x=Math.PI/2; rTip.position.z=0.5; rGrp.add(rTip);
+  const rFlame=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.4,7),
+    new THREE.MeshBasicMaterial({color:0xffee44,transparent:true,opacity:0.8}));
+  rFlame.rotation.x=-Math.PI/2; rFlame.position.z=-0.5; rGrp.add(rFlame);
+  scene.add(rGrp);
+
+  // Direction: trolley forward direction
+  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
+  const p0=npos(nc,nr),p1=npos(nnc,nnr);
+  const dx=p1.x-p0.x,dz=p1.z-p0.z;
+  const hl=Math.sqrt(dx*dx+dz*dz)||1;
+  const dir=new THREE.Vector3(dx/hl,0,dz/hl);
+
+  rGrp.position.copy(trolley.position).addScaledVector(dir,1.5);
+  rGrp.position.y=1.0;
+  rGrp.lookAt(rGrp.position.clone().add(dir));
+
+  rockets.push({mesh:rGrp, pos:rGrp.position.clone(), dir:dir.clone(), life:4.0, speed:28});
+  flash('f-rocket',180);
+  GS.shake=0.5;
+  showNotif('🚀 Pfiumm!','#ff8844');
+}
+
+function updateRockets(dt){
+  for(let i=rockets.length-1;i>=0;i--){
+    const r=rockets[i];
+    r.life-=dt;
+    if(r.life<=0){scene.remove(r.mesh);rockets.splice(i,1);continue;}
+    r.pos.addScaledVector(r.dir,r.speed*dt);
+    r.mesh.position.copy(r.pos);
+    // Flame flicker
+    const fl=r.mesh.children[2];
+    if(fl){fl.scale.setScalar(0.8+Math.random()*0.4);}
+
+    // Check hit against NPCs
+    let hit=false;
+    for(let j=npcTrolleys.length-1;j>=0;j--){
+      const npc=npcTrolleys[j];
+      if(!npc.alive)continue;
+      if(r.pos.distanceTo(npc.mesh.position)<3.0){
+        // HIT!
+        spawnExplosion(r.pos.clone());
+        scene.remove(r.mesh);
+        rockets.splice(i,1);
+        GS.coins+=20; // bonus coins for hit
+        GS.score+=500;
+        showHitMarker();
+        killNpc(npc);
+        hit=true;
+        break;
+      }
+    }
+  }
+}
+
+let hitTmr=null;
+function showHitMarker(){
+  const hm=document.getElementById('hit-marker');
+  hm.style.opacity='1';hm.style.color='#ff4422';
+  if(hitTmr)clearTimeout(hitTmr);
+  hitTmr=setTimeout(()=>hm.style.opacity='0',320);
+  flash('f-rocket',200);
 }
 
 function updateNpcTrolleys(dt,gt){
   npcTrolleys.forEach(npc=>{
+    if(!npc.alive)return;
     npc.jCool=Math.max(0,npc.jCool-dt);
-    npc.glueCooldown=Math.max(0,npc.glueCooldown-dt);
-    // Slight random speed wobble — erratic grandma driving
     const wobbleSpeed=npc.speed*(0.85+Math.sin(gt*0.7+npc.wobble)*0.15);
     const advance=(wobbleSpeed*dt)/CELL;
     npc.edgeT=Math.min(npc.edgeT+advance,1.0);
@@ -1773,12 +1655,10 @@ function updateNpcTrolleys(dt,gt){
       const back=(npc.facing+2)%4;
       const nbrs=getNeighbors(nc,nr,back);
       if(nbrs.length>0){
-        // Random direction — grandma doesn't know where she's going
         const chosen=nbrs[Math.floor(Math.random()*nbrs.length)];
         npc.nextNode=chosen.nodeId;
         npc.facing=chosen.dir;
       } else {
-        // Reverse
         npc.facing=(npc.facing+2)%4;
         const fwd=DIR_VEC[npc.facing];
         const nc2=Math.max(0,Math.min(GW,nc+fwd[0]));
@@ -1786,12 +1666,9 @@ function updateNpcTrolleys(dt,gt){
         npc.nextNode=nid(nc2,nr2);
       }
       npc.edgeT=0;
-
-      // Check if NPC is on same node as player — slow player down (collision)
       checkNpcCollision(npc,nc,nr);
     }
 
-    // Render NPC position
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const p0=npos(nc,nr),p1=npos(nnc,nnr);
@@ -1802,137 +1679,23 @@ function updateNpcTrolleys(dt,gt){
     const hl=Math.sqrt(dx*dx+dz*dz);
     if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
 
-    // Animate pump wobble (slow, tired grandma motion)
     npc.pumpAng+=wobbleSpeed*0.8*dt;
-    const pump=npc.mesh.children.find(c=>c.geometry?.type==='CylinderGeometry'&&c.position.y>.85&&c.position.y<.95);
-    // Gentle body sway
     npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
 
-    // Pulse beacon
     const bec=npc.mesh.children[npc.mesh.children.length-1];
     if(bec&&bec.material){
       const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
       bec.material.opacity=p;bec.material.transparent=true;
     }
 
-    // Proximity check with player trolley (continuous, not just at nodes)
     const dist=npc.mesh.position.distanceTo(trolley.position);
-    if(!npc.respawning&&dist<3.5&&GS.speed>1){
-      // Block! Slow down player
+    if(dist<3.5&&GS.speed>1){
       GS.speed=Math.max(0,GS.speed*0.85);
-      if(dist<2.0){
-        GS.speed=Math.max(0,GS.speed-3*dt);
-        GS.shake=Math.max(GS.shake,0.8);
-      }
-      // Grandma drops glue when nearby!
-      if(!npc.respawning&&dist<5&&npc.glueCooldown<=0){
-        npcDropGlue(npc);
-        npc.glueCooldown=10+Math.random()*8; // 10-18s between drops
-      }
+      if(dist<2.0){GS.speed=Math.max(0,GS.speed-3*dt);GS.shake=Math.max(GS.shake,0.8);}
     }
   });
-}
-
-// ═══════════════════════════════════════════
-//  GLUE SYSTEM
-// ═══════════════════════════════════════════
-
-// Build a glue puddle mesh (flat yellowish disc)
-function makeGluePuddle(pos){
-  const grp=new THREE.Group();
-  // Main puddle disc
-  const disc=new THREE.Mesh(
-    new THREE.CylinderGeometry(2.2,2.2,.08,16),
-    new THREE.MeshStandardMaterial({
-      color:0xcc9900,emissive:new THREE.Color(0xaa7700),
-      emissiveIntensity:.6,roughness:.3,metalness:.2,
-      transparent:true,opacity:.85
-    })
-  );
-  grp.add(disc);
-  // Drip rings
-  [1.4,1.9].forEach(r=>{
-    const ring=new THREE.Mesh(
-      new THREE.TorusGeometry(r,.06,6,20),
-      new THREE.MeshBasicMaterial({color:0xffcc00,transparent:true,opacity:.5})
-    );
-    ring.rotation.x=Math.PI/2;grp.add(ring);
-  });
-  grp.position.set(pos.x,.05,pos.z);
-  scene.add(grp);
-  return grp;
-}
-
-// NPC drops glue when near player
-function npcDropGlue(npc){
-  if(npc.glueCooldown>0)return;
-  npc.glueCooldown=12; // drop every 12s max
-  const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
-  const pos=npos(nc,nr);
-  const mesh=makeGluePuddle(pos);
-  gluePuddles.push({mesh,col:nc,row:nr,life:20,age:0}); // 20s before it dries
-}
-
-// Apply glue to player
-function applyGlue(){
-  if(GLUE.stuck)return;
-  GLUE.stuck=true;
-  GLUE.timer=GLUE.maxTime;
-  GLUE.mashes=0;
-  GS.speed=0;
-  document.getElementById('glue-overlay').classList.add('active');
-  document.getElementById('glue-hud').style.display='block';
-  document.getElementById('glue-timer').textContent=Math.ceil(GLUE.timer);
-  showNotif('🍯 LEM! Tahan SPACE / Tembak Roket!','#ffcc44');
-  GS.shake=1.8;
-}
-
-// Release glue
-function releaseGlue(){
-  GLUE.stuck=false;
-  GLUE.timer=0;
-  document.getElementById('glue-overlay').classList.remove('active');
-  document.getElementById('glue-hud').style.display='none';
-  showNotif('✅ Bebas dari lem!','#88ffcc');
-  GS.shake=1.2;
-}
-
-function updateGlue(dt){
-  // Update puddle lifetimes
-  for(let i=gluePuddles.length-1;i>=0;i--){
-    const p=gluePuddles[i];
-    p.age+=dt;
-    if(p.age>p.life){scene.remove(p.mesh);gluePuddles.splice(i,1);continue;}
-    // Pulsing opacity
-    p.mesh.children[0].material.opacity=0.6+Math.sin(p.age*2)*0.25;
-
-    // Check if player trolley hits puddle
-    if(!GLUE.stuck){
-      const pc=tNode%NX,pr=Math.floor(tNode/NX);
-      if(pc===p.col&&pr===p.row){applyGlue();}
-    }
-  }
-
-  // Update glue countdown on player
-  if(GLUE.stuck){
-    GLUE.timer=Math.max(0,GLUE.timer-dt);
-    GS.speed=Math.max(0,GS.speed-20*dt); // hard brake
-    document.getElementById('glue-timer').textContent=Math.ceil(GLUE.timer);
-    // Shake effect while stuck
-    if(Math.random()<0.3)GS.shake=Math.max(GS.shake,0.3);
-    if(GLUE.timer<=0)releaseGlue();
-  }
-}
-
-// Remove glue puddles (called when rocket hits nearby NPC)
-function clearGlueNearPos(pos){
-  for(let i=gluePuddles.length-1;i>=0;i--){
-    const p=gluePuddles[i];
-    const pd=p.mesh.position.distanceTo(pos);
-    if(pd<8){scene.remove(p.mesh);gluePuddles.splice(i,1);}
-  }
-  // Also free player if stuck
-  if(GLUE.stuck)releaseGlue();
+  updateRockets(dt);
+  updateExplosions(dt);
 }
 
 function checkNpcCollision(npc,nc,nr){
@@ -1945,21 +1708,29 @@ function checkNpcCollision(npc,nc,nr){
 }
 
 function drawNpcsOnMinimap(){
+  const npcColors=['rgba(153,68,204,0.85)','rgba(68,204,153,0.85)','rgba(204,68,153,0.85)',
+    'rgba(68,170,255,0.85)','rgba(255,136,68,0.85)','rgba(255,204,34,0.85)',
+    'rgba(204,34,85,0.85)','rgba(34,204,170,0.85)','rgba(170,68,255,0.85)','rgba(255,85,34,0.85)'];
   npcTrolleys.forEach((npc,i)=>{
-    if(npc.respawning) return; // skip invisible respawning ones
+    if(!npc.alive)return;
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
     const tc=nc+(nnc-nc)*npc.edgeT,tr=nr+(nnr-nr)*npc.edgeT;
     const{x,y}=mmP(tc,tr);
-    // Convert hex color to rgba string
-    const col=NPC_COLORS[i%NPC_COLORS.length];
-    const r2=(col>>16)&0xff, g2=(col>>8)&0xff, b2=col&0xff;
     mmCtx.beginPath();mmCtx.arc(x,y,3.8,0,Math.PI*2);
-    mmCtx.fillStyle=`rgba(${r2},${g2},${b2},0.88)`;
+    mmCtx.fillStyle=npcColors[i%npcColors.length];
     mmCtx.fill();
     mmCtx.font='7px serif';mmCtx.fillStyle='#fff';
     mmCtx.textAlign='center';mmCtx.textBaseline='middle';
     mmCtx.fillText('👵',x,y);
+  });
+  // Draw rockets on minimap
+  rockets.forEach(r=>{
+    const rx=(r.pos.x-OX)/(GW*CELL)*GW;
+    const rz=(r.pos.z-OZ)/(GH*CELL)*GH;
+    const{x,y}=mmP(rx,rz);
+    mmCtx.beginPath();mmCtx.arc(x,y,2,0,Math.PI*2);
+    mmCtx.fillStyle='rgba(255,100,30,0.9)';mmCtx.fill();
   });
 }
 
@@ -2030,15 +1801,10 @@ function updateArrow(tgtIdx){
 let pumpAng=0;
 function doPump(){
   if(!gameRunning||GS.cd>0)return;
-  if(GLUE.stuck){
-    // While glued, pumping contributes to breaking free
-    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.35);
-    GS.shake=0.5;return;
-  }
   if(GS.energy<3)return;
-  const boost=(GS.activePU?.type.id==='speed'?1.5:1.0)*(boostActive?1.6:1.0);
+  const boost=GS.activePU?.type.id==='speed'?1.5:1.0;
   GS.energy=Math.max(0,GS.energy-5.5);
-  GS.speed=Math.min(GS.speed+2.4*boost,boostActive?22:18);
+  GS.speed=Math.min(GS.speed+2.4*boost,18);
   GS.cd=.15;
   spawnP(trolley.position);
   flash('f-pump',130);
@@ -2098,26 +1864,33 @@ function moveTrolley(){
   if(vipGlow.visible)vipGlow.rotation.y+=.04;
 }
 
+// ═══════════════════════════════════════════
+//  CAMERA — FIRST / THIRD PERSON
+// ═══════════════════════════════════════════
+let camMode='tp'; // 'tp' = third person, 'fp' = first person
 let camInit=false;
 const camTargetPos=new THREE.Vector3();
 const camLookTarget=new THREE.Vector3();
 
-// ── View mode: 'third' | 'first' ──
-let camMode='third';
-
-function toggleView(){
-  camMode=camMode==='third'?'first':'third';
-  const isFirst=camMode==='first';
-  document.getElementById('view-lbl').textContent=isFirst?'1st Person':'3rd Person';
-  document.getElementById('view-btn').textContent=isFirst?'🎥':'👁️';
-  document.getElementById('crosshair').style.display=isFirst?'block':'none';
-  document.getElementById('crosshair-dot').style.display=isFirst?'block':'none';
-  // Hide trolley body in first person
-  trolley.traverse(o=>{if(o.isMesh&&o!==pkgBox&&o!==vipGlow)o.visible=!isFirst;});
-  beacon.visible=!isFirst;
-  if(!isFirst)camInit=false; // snap back to 3rd person instantly
-  showNotif(isFirst?'👁️ First Person':'🎥 Third Person','#88ccff');
+function toggleCamMode(){
+  camMode=camMode==='tp'?'fp':'tp';
+  const btn=document.getElementById('view-btn');
+  const cross=document.getElementById('crosshair');
+  if(camMode==='fp'){
+    btn.textContent='🎯';btn.classList.add('fp');
+    btn.title='Switch to Third Person [V]';
+    cross.style.display='block';
+    // Hide trolley body in FP (optional — keep visible for shadow)
+    trolley.visible=true;
+  } else {
+    btn.textContent='👁';btn.classList.remove('fp');
+    btn.title='Switch to First Person [V]';
+    cross.style.display='none';
+  }
+  camInit=false;
 }
+
+document.getElementById('view-btn').addEventListener('click',toggleCamMode);
 
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
@@ -2125,26 +1898,30 @@ function moveCam(){
   const p0=npos(nc,nr),p1=npos(nnc,nnr);
   const px=p0.x+(p1.x-p0.x)*tEdgeT;
   const pz=p0.z+(p1.z-p0.z)*tEdgeT;
+
   const dx=p1.x-p0.x,dz=p1.z-p0.z;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
   const sh=GS.shake;
 
-  if(camMode==='first'){
-    // ── FIRST PERSON: eyes at driver's height, looking ahead ──
-    const eyeH=2.5;
-    const eyeX=px+(Math.random()-.5)*sh*.04;
-    const eyeY=eyeH+(Math.random()-.5)*sh*.03;
-    const eyeZ=pz+(Math.random()-.5)*sh*.04;
-    camera.position.set(eyeX,eyeY,eyeZ);
-    camLookTarget.set(px+fdx*8,eyeH,pz+fdz*8);
+  if(camMode==='fp'){
+    // First person: camera at driver's eye level, looking straight ahead
+    const eyeH=2.5; // eye height above trolley base
+    const tx=px+fdx*0.3+(Math.random()-.5)*sh*.06;
+    const ty=eyeH+(Math.random()-.5)*sh*.04;
+    const tz=pz+fdz*0.3+(Math.random()-.5)*sh*.06;
+    GS.shake*=.82;
+    if(!camInit){camera.position.set(tx,ty,tz);camInit=true;}
+    else camera.position.lerp(new THREE.Vector3(tx,ty,tz),.25);
+    camLookTarget.set(px+fdx*18,eyeH*0.9,pz+fdz*18);
     camera.lookAt(camLookTarget);
-  }else{
-    // ── THIRD PERSON: behind and above trolley ──
+  } else {
+    // Third person: behind and above
     const camBack=22,camUp=15;
     const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
     const ty=camUp+(Math.random()-.5)*sh*.06;
     const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
+    GS.shake*=.82;
     if(!camInit){
       camera.position.set(tx,ty,tz);
       camTargetPos.set(tx,ty,tz);
@@ -2156,7 +1933,6 @@ function moveCam(){
     camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
     camera.lookAt(camLookTarget);
   }
-  GS.shake*=.82;
 }
 
 let pumpAngV=0;
@@ -2173,184 +1949,6 @@ function animTrolley(dt){
   beacon.material.color.setRGB(1,0.2+pulse*0.3,0.1);
   trolleyLight.intensity=2.0+pulse*0.8;
   stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*(i%2===0?1.1:-1.1);});
-}
-
-// ═══════════════════════════════════════════
-//  ROCKET LAUNCHER SYSTEM
-// ═══════════════════════════════════════════
-// rocketAmmo declared above near GLUE/boost state
-
-function openShop(){
-  if(!gameRunning)return;
-  gameRunning=false;
-  document.getElementById('shop-coins-val').textContent=GS.coins+' 🪙';
-  const canBuy3=GS.coins>=50,canBuy10=GS.coins>=140;
-  document.getElementById('shop-buy-3').classList.toggle('disabled',!canBuy3);
-  document.getElementById('shop-buy-10').classList.toggle('disabled',!canBuy10);
-  document.getElementById('shop-overlay').style.display='flex';
-}
-function closeShop(){
-  document.getElementById('shop-overlay').style.display='none';
-  gameRunning=true;
-}
-function buyRockets(qty,cost){
-  if(GS.coins<cost){showNotif('🪙 Not enough coins!','#ff6644');return;}
-  GS.coins-=cost;
-  rocketAmmo+=qty;
-  updRocketHUD();
-  document.getElementById('shop-coins-val').textContent=GS.coins+' 🪙';
-  document.getElementById('shop-buy-3').classList.toggle('disabled',GS.coins<50);
-  document.getElementById('shop-buy-10').classList.toggle('disabled',GS.coins<140);
-  showNotif(`🚀 +${qty} rockets acquired!`,'#ff8866');
-  closeShop();
-}
-function updRocketHUD(){
-  const hud=document.getElementById('rocket-hud');
-  hud.style.display=rocketAmmo>0?'flex':'none';
-  document.getElementById('rocket-count').textContent=rocketAmmo;
-}
-
-// Build a rocket mesh (small elongated cylinder with glow)
-function makeRocketMesh(){
-  const grp=new THREE.Group();
-  const body=new THREE.Mesh(
-    new THREE.CylinderGeometry(.1,.1,.8,8),
-    new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3})
-  );
-  body.rotation.x=Math.PI/2;grp.add(body);
-  // Exhaust flame
-  const flame=new THREE.Mesh(
-    new THREE.ConeGeometry(.12,.5,8),
-    new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:.85})
-  );
-  flame.rotation.x=Math.PI/2;flame.position.z=.6;grp.add(flame);
-  // Trail light
-  const pLight=new THREE.PointLight(0xff4400,3,6);grp.add(pLight);
-  return grp;
-}
-
-// Spawn rocket from trolley position heading forward
-function fireRocket(){
-  if(!gameRunning)return;
-  if(rocketAmmo<=0){showNotif('🚀 No rockets! Buy at shop [R]','#ff6644');return;}
-  rocketAmmo--;updRocketHUD();
-
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const dx=p1.x-p0.x,dz=p1.z-p0.z,hl=Math.sqrt(dx*dx+dz*dz)||1;
-  const fdx=dx/hl,fdz=dz/hl;
-
-  const mesh=makeRocketMesh();
-  mesh.position.set(trolley.position.x+fdx*.5,trolley.position.y+.8,trolley.position.z+fdz*.5);
-  mesh.rotation.y=Math.atan2(fdx,fdz);
-  scene.add(mesh);
-  rockets.push({mesh,vx:fdx*ROCKET_SPEED,vz:fdz*ROCKET_SPEED,life:4,age:0});
-  GS.shake=1.0;
-  flash('f-pump',120);
-  showNotif('🚀 FIRE!','#ff8866');
-}
-
-// Explosion visual
-function spawnExplosion(pos){
-  const grp=new THREE.Group();
-  // Fireball
-  const fb=new THREE.Mesh(
-    new THREE.SphereGeometry(.8,10,8),
-    new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:.9})
-  );
-  grp.add(fb);
-  // Shockring
-  const ring=new THREE.Mesh(
-    new THREE.TorusGeometry(1.2,.12,8,24),
-    new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:.8})
-  );
-  ring.rotation.x=Math.PI/2;grp.add(ring);
-  const pL=new THREE.PointLight(0xff6600,6,12);grp.add(pL);
-  grp.position.copy(pos);scene.add(grp);
-  // Animate out
-  let t=0;
-  const explTick=()=>{
-    t+=0.05;
-    grp.scale.setScalar(1+t*3);
-    fb.material.opacity=Math.max(0,.9-t*2);
-    ring.material.opacity=Math.max(0,.8-t*1.5);
-    pL.intensity=Math.max(0,6-t*12);
-    if(t<0.5)requestAnimationFrame(explTick);
-    else scene.remove(grp);
-  };
-  requestAnimationFrame(explTick);
-  GS.shake=2.5;
-}
-
-function updateRockets(dt){
-  for(let i=rockets.length-1;i>=0;i--){
-    const r=rockets[i];
-    r.age+=dt;
-    if(r.age>r.life){scene.remove(r.mesh);rockets.splice(i,1);continue;}
-    r.mesh.position.x+=r.vx*dt;
-    r.mesh.position.z+=r.vz*dt;
-    // Wobble flame flicker
-    const flame=r.mesh.children[1];
-    if(flame)flame.material.opacity=.7+Math.sin(r.age*40)*.2;
-
-    // Check hit on NPC trolleys
-    let hit=false;
-    for(let j=npcTrolleys.length-1;j>=0;j--){
-      const npc=npcTrolleys[j];
-      if(!npc.mesh||npc.respawning)continue;
-      const dist=r.mesh.position.distanceTo(npc.mesh.position);
-      if(dist<ROCKET_RADIUS){
-        // Hit! Record position before removal
-        const hitPos=npc.mesh.position.clone();
-        const hitNode=npc.node;
-        spawnExplosion(hitPos);
-        clearGlueNearPos(hitPos);
-
-        // Remove this grandma from scene + array immediately
-        scene.remove(npc.mesh);
-        npcTrolleys.splice(j,1);
-        updNpcCountHUD();
-
-        const remaining=npcTrolleys.length;
-        const canSpawn=NPC_MAX-remaining;
-        const toSpawn=Math.min(2,canSpawn);
-
-        if(toSpawn>0){
-          const msg=toSpawn===2
-            ?`💥 Nenek kena! Respawn jadi 2! (${remaining+toSpawn}/${NPC_MAX})`
-            :`💥 Nenek kena! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
-          showNotif(msg,'#ffaa44');
-          // Spawn with short staggered delay so they appear at different positions
-          for(let s=0;s<toSpawn;s++){
-            setTimeout(()=>{
-              if(npcTrolleys.length<NPC_MAX){
-                const n=spawnNpcAt(hitNode);
-                if(n){
-                  // Brief spawn flash on new grandma
-                  spawnExplosion(n.mesh.position.clone());
-                }
-              }
-            }, 600 + s*500);
-          }
-        } else {
-          showNotif(`💥 Nenek kena! Max tercapai (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
-        }
-
-        flash('f-drop',300);
-        GS.score+=200;
-        scene.remove(r.mesh);rockets.splice(i,1);
-        hit=true;break;
-      }
-    }
-    if(hit)continue;
-
-    // Hit building/wall (simple: if age > 2.5s it hit something)
-    if(r.age>2.5){
-      spawnExplosion(r.mesh.position.clone());
-      scene.remove(r.mesh);rockets.splice(i,1);
-    }
-  }
 }
 
 function updHUD(){
@@ -2443,88 +2041,31 @@ function startGame(){
   ['scr-start','scr-fail','scr-win','scr-keys'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('map-hint').style.display='none';
   document.getElementById('streak-hud').style.display='none';
-  document.getElementById('shop-overlay').style.display='none';
   clearChoiceMarkers();
-  // Clear active rockets
-  rockets.forEach(r=>scene.remove(r.mesh));rockets.length=0;
-  // Clear glue puddles
-  gluePuddles.forEach(p=>scene.remove(p.mesh));gluePuddles.length=0;
-  // Release glue if stuck
-  if(GLUE.stuck)releaseGlue();
-  // Reset boost
-  boostCharges=0;boostActive=false;boostTimeLeft=0;updBoostBtn();
-  // Reset to third person
-  if(camMode==='first')toggleView();
   Object.assign(GS,{speed:0,score:0,coins:0,energy:60,cd:0,braking:false,shake:0,inv:0,activePU:null});
-  rocketAmmo=0;updRocketHUD();
   document.getElementById('pu-bar').style.display='none';
+  // Reset shop
+  SHOP.rocketOwned=false; SHOP.rocketAmmo=0;
+  updateRocketHUD();
+  document.getElementById('shop-overlay').style.display='none';
+  // Reset camera
+  if(camMode==='fp') toggleCamMode(); // force back to TP on new game
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
   const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
   buildWorld();
   gameRunning=true;
   initNpcTrolleys();
-  updNpcCountHUD();
   startMissions();
 }
 
 // Mobile controls
-// ── Mobile / Tablet controls ──
-// Use 'pointerdown'/'pointerup' instead of touchstart/touchend.
-// Pointer events fire on touch, mouse, AND stylus — making them work
-// on all tablets (iPad, Android tablet, Surface) regardless of how
-// the OS reports input. We also add a 'click' fallback for safety.
-
-function addBtn(id, onDown, onUp){
-  const el=document.getElementById(id);
-  if(!el) return;
-  // Primary: pointerdown / pointerup (works on all touch/stylus devices)
-  el.addEventListener('pointerdown', e=>{e.preventDefault();onDown();});
-  if(onUp) el.addEventListener('pointerup', e=>{e.preventDefault();onUp();});
-  if(onUp) el.addEventListener('pointerleave', e=>{onUp();});
-  // Fallback: touchstart / touchend (belt-and-suspenders)
-  el.addEventListener('touchstart', e=>{e.preventDefault();onDown();},{passive:false});
-  if(onUp) el.addEventListener('touchend', e=>{e.preventDefault();onUp();},{passive:false});
-}
-
-addBtn('mob-pump',
-  ()=>{ if(!pumpHeld){pumpPressed=true;pumpHeld=true;} },
-  ()=>{ pumpHeld=false; }
-);
-addBtn('mob-brake',
-  ()=>{ keys.brake=true; },
-  ()=>{ keys.brake=false; }
-);
-addBtn('mob-left',
-  ()=>{ setSW(-1); },
-  null
-);
-addBtn('mob-right',
-  ()=>{ setSW(1); },
-  null
-);
-addBtn('mob-fire',
-  ()=>{ fireRocket(); },
-  null
-);
-
-// ── Touch device detection (covers tablets/iPads that CSS media query misses) ──
-// Uses multiple signals: touch API, pointer type, and user agent fallback
-(function detectTouchDevice(){
-  const isTouchDevice=
-    ('ontouchstart' in window) ||
-    (navigator.maxTouchPoints>0) ||
-    (navigator.msMaxTouchPoints>0) ||
-    window.matchMedia('(pointer:coarse)').matches;
-
-  if(isTouchDevice){
-    const mobBtns=['mob-pump','mob-brake','mob-left','mob-right','mob-fire'];
-    mobBtns.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.style.display='flex';
-    });
-  }
-})();
+document.getElementById('mob-pump').addEventListener('touchstart',e=>{e.preventDefault();if(!pumpHeld){pumpPressed=true;pumpHeld=true;}});
+document.getElementById('mob-pump').addEventListener('touchend',()=>{pumpHeld=false;});
+document.getElementById('mob-brake').addEventListener('touchstart',e=>{e.preventDefault();keys.brake=true;});
+document.getElementById('mob-brake').addEventListener('touchend',()=>{keys.brake=false;});
+document.getElementById('mob-left').addEventListener('touchstart',e=>{e.preventDefault();setSW(-1);});
+document.getElementById('mob-right').addEventListener('touchstart',e=>{e.preventDefault();setSW(1);});
 
 // ═══════════════════════════════════════════
 //  MAIN LOOP
@@ -2537,8 +2078,7 @@ const clock=new THREE.Clock();let gt=0;
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
-    updateNpcTrolleys(dt,gt);updateRockets(dt);
-    updateBoost(dt);updateGlue(dt);
+    updateNpcTrolleys(dt,gt);
     drawMM();
   }
   moveCam();updP(dt);

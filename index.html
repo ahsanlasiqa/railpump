@@ -228,7 +228,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div style="display:flex;gap:7px;margin-right:48px">
     <div class="hp"><div class="hl">Deliveries</div><div class="hv" id="h-del">0</div></div>
     <div class="hp"><div class="hl">Coins</div><div class="hv" style="color:#ffd700" id="h-coins">0</div></div>
-    <div class="hp"><div class="hl">👵 Nenek</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
+    <div class="hp"><div class="hl">👵 Granny</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
   </div>
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
@@ -260,14 +260,14 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <div class="shop-item" id="shop-buy-3" onclick="buyRockets(3,50)">
       <div class="shop-item-left">
         <div class="shop-item-name">🚀 3 Rockets</div>
-        <div class="shop-item-desc">Enough for one nenek obstacle</div>
+        <div class="shop-item-desc">Enough for one Grannyobstacle</div>
       </div>
       <div class="shop-item-price">50 🪙</div>
     </div>
     <div class="shop-item" id="shop-buy-10" onclick="buyRockets(10,140)">
       <div class="shop-item-left">
         <div class="shop-item-name">🚀🚀 10 Rockets</div>
-        <div class="shop-item-desc">Nenek clearance pack!</div>
+        <div class="shop-item-desc">Granny clearance pack!</div>
       </div>
       <div class="shop-item-price">140 🪙</div>
     </div>
@@ -360,9 +360,9 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="flash" id="f-boost"></div>
 <div id="glue-overlay"></div>
 <div id="glue-hud">
-  <div id="glue-msg">🍯 TERKENA LEM!</div>
+  <div id="glue-msg">🍯 GLUED!</div>
   <div id="glue-timer">5</div>
-  <div id="glue-sub">Tahan SPACE cepat-cepat atau tembak roket!</div>
+  <div id="glue-sub">Press SPACE hard or launch rocket to release!</div>
 </div>
 <button id="boost-btn" onclick="activateBoost()">⚡ BOOST <span id="boost-cd"></span></button>
 <div id="notif"></div>
@@ -717,7 +717,7 @@ function activateBoost(){
   // Lightning flash sequence
   lightningFlash();
   GS.shake=2.0;
-  showNotif('⚡⚡ BOOST AKTIF!','#ffee00');
+  showNotif('⚡⚡ BOOST ACTIVATED!','#ffee00');
 }
 
 function lightningFlash(){
@@ -1894,7 +1894,7 @@ function applyGlue(){
   document.getElementById('glue-overlay').classList.add('active');
   document.getElementById('glue-hud').style.display='block';
   document.getElementById('glue-timer').textContent=Math.ceil(GLUE.timer);
-  showNotif('🍯 LEM! Tahan SPACE / Tembak Roket!','#ffcc44');
+  showNotif('🍯 GLUED! Press SPACE / Launch Roket!','#ffcc44');
   GS.shake=1.8;
 }
 
@@ -1904,7 +1904,7 @@ function releaseGlue(){
   GLUE.timer=0;
   document.getElementById('glue-overlay').classList.remove('active');
   document.getElementById('glue-hud').style.display='none';
-  showNotif('✅ Bebas dari lem!','#88ffcc');
+  showNotif('✅ Free at last!','#88ffcc');
   GS.shake=1.2;
 }
 
@@ -1949,7 +1949,7 @@ function clearGlueNearPos(pos){
 function checkNpcCollision(npc,nc,nr){
   const pc=tNode%NX,pr=Math.floor(tNode/NX);
   if(nc===pc&&nr===pr){
-    showNotif('👵 Nenek menghalangi! 🐢','#ffaa44');
+    showNotif('👵 Granny alert! 🐢','#ffaa44');
     GS.speed=Math.max(0,GS.speed*0.4);
     GS.shake=1.5;
   }
@@ -2329,8 +2329,8 @@ function updateRockets(dt){
 
         if(toSpawn>0){
           const msg=toSpawn===2
-            ?`💥 Nenek kena! Respawn jadi 2! (${remaining+toSpawn}/${NPC_MAX})`
-            :`💥 Nenek kena! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
+            ?`💥 Granny got hit! Beware of Double Respawn! (${remaining+toSpawn}/${NPC_MAX})`
+            :`💥Granny got hit! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
           showNotif(msg,'#ffaa44');
           // Spawn with short staggered delay so they appear at different positions
           for(let s=0;s<toSpawn;s++){
@@ -2345,7 +2345,7 @@ function updateRockets(dt){
             }, 600 + s*500);
           }
         } else {
-          showNotif(`💥 Nenek kena! Max tercapai (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
+          showNotif(`💥 Granny got hit! Granny Max (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
         }
 
         flash('f-drop',300);

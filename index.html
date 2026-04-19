@@ -135,7 +135,10 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #mob-brake{position:fixed;bottom:100px;left:22px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#e74c3c,#c0392b);border:none;font-size:24px;cursor:pointer;z-index:20;box-shadow:0 0 16px rgba(200,50,50,0.55);color:#fff;display:none;align-items:center;justify-content:center;}
 #mob-left{position:fixed;bottom:185px;left:22px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
 #mob-right{position:fixed;bottom:185px;right:22px;width:68px;height:68px;border-radius:50%;background:rgba(255,200,80,0.15);border:2px solid rgba(255,200,80,0.5);font-size:24px;cursor:pointer;z-index:20;color:#ffe680;display:none;align-items:center;justify-content:center;}
-@media(max-width:768px){#mob-pump,#mob-brake,#mob-left,#mob-right{display:flex;}}
+/* Show mobile controls on:
+   1. Screens ≤1024px wide (covers phones + tablets in portrait & landscape)
+   2. ANY device that uses a coarse pointer (touch screen — phones, tablets, iPads) */
+@media(max-width:1024px),(pointer:coarse){#mob-pump,#mob-brake,#mob-left,#mob-right{display:flex;}}
 #settings-btn{position:fixed;top:12px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,transform .2s;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
@@ -208,7 +211,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 /* ── Rocket fire button (mobile) ── */
 #mob-fire{position:fixed;bottom:270px;right:22px;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#cc2200,#ff6633);border:none;font-size:24px;cursor:pointer;z-index:20;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(255,80,30,0.6);}
-@media(max-width:768px){#mob-fire{display:flex;}}
+@media(max-width:1024px),(pointer:coarse){#mob-fire{display:flex;}}
 </style>
 </head>
 <body>
@@ -2290,6 +2293,24 @@ document.getElementById('mob-brake').addEventListener('touchstart',e=>{e.prevent
 document.getElementById('mob-brake').addEventListener('touchend',()=>{keys.brake=false;});
 document.getElementById('mob-left').addEventListener('touchstart',e=>{e.preventDefault();setSW(-1);});
 document.getElementById('mob-right').addEventListener('touchstart',e=>{e.preventDefault();setSW(1);});
+
+// ── Touch device detection (covers tablets/iPads that CSS media query misses) ──
+// Uses multiple signals: touch API, pointer type, and user agent fallback
+(function detectTouchDevice(){
+  const isTouchDevice=
+    ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints>0) ||
+    (navigator.msMaxTouchPoints>0) ||
+    window.matchMedia('(pointer:coarse)').matches;
+
+  if(isTouchDevice){
+    const mobBtns=['mob-pump','mob-brake','mob-left','mob-right','mob-fire'];
+    mobBtns.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='flex';
+    });
+  }
+})();
 
 // ═══════════════════════════════════════════
 //  MAIN LOOP

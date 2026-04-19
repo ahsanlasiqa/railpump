@@ -600,7 +600,7 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.0038);
+scene.fog=new THREE.FogExp2(0x05060f,0.0028);
 // Narrow FOV — cinematic, city feels denser
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
@@ -987,18 +987,184 @@ function buildWorld(){
     }
   }
 
-  // ── Sky + stars ──
-  worldGrp.add(new THREE.Mesh(new THREE.SphereGeometry(580,16,8),
-    new THREE.MeshBasicMaterial({color:0x03040e,side:THREE.BackSide})));
-  const sPos=new Float32Array(700*3);
-  for(let i=0;i<700;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
-    sPos[i*3]=Math.sin(b)*Math.cos(a)*550;
-    sPos[i*3+1]=Math.abs(Math.cos(b))*550;
-    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*550;
+  // ══════════════════════════════════════════════════════
+  // ── RICH NIGHT SKY & CITY BACKDROP ──
+  // ══════════════════════════════════════════════════════
+
+  // Sky dome with vertex-color gradient (deep navy at top → warm purple at horizon)
+  const SKY_R=560;
+  const skyGeo=new THREE.SphereGeometry(SKY_R,32,20);
+  const skyPosArr=skyGeo.attributes.position;
+  const skyColorArr=[];
+  for(let i=0;i<skyPosArr.count;i++){
+    const yN=Math.max(0,Math.min(1,(skyPosArr.getY(i)+SKY_R)/(SKY_R*2)));
+    // top: very dark navy  mid: indigo  horizon: warm dark purple/red
+    let r,g,b;
+    if(yN>0.55){const u=(yN-0.55)/0.45; r=0.01+u*0.01; g=0.01+u*0.02; b=0.04+u*0.05;}
+    else if(yN>0.22){const u=(yN-0.22)/0.33; r=0.05+u*0.00; g=0.01+u*0.01; b=0.08+u*0.04;}
+    else{const u=yN/0.22; r=0.16-u*0.11; g=0.03+u*0.02; b=0.12+u*0.04;}
+    skyColorArr.push(r,g,b);
+  }
+  skyGeo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(skyColorArr),3));
+  worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+
+  // ── Horizon glow planes (city light pollution) ──
+  const hGlows=[
+    {col:0x2a0818,h:90, y:6,  op:0.55, cnt:8},  // magenta/red ring
+    {col:0x100620,h:55, y:14, op:0.38, cnt:8},  // deep purple
+    {col:0x060e20,h:38, y:22, op:0.28, cnt:6},  // blue-indigo upper
+    {col:0x200804,h:50, y:4,  op:0.42, cnt:6},  // warm orange-red lower
+  ];
+  hGlows.forEach(hg=>{
+    for(let i=0;i<hg.cnt;i++){
+      const ang=i/hg.cnt*Math.PI*2;
+      const m=new THREE.Mesh(
+        new THREE.PlaneGeometry(800,hg.h),
+        new THREE.MeshBasicMaterial({color:hg.col,transparent:true,opacity:hg.op,depthWrite:false})
+      );
+      m.rotation.y=ang; m.position.set(Math.sin(ang)*480,hg.y,Math.cos(ang)*480);
+      worldGrp.add(m);
+    }
+  });
+
+  // ── Extended ground plane (covers void under silhouette buildings) ──
+  worldGrp.add(new THREE.Mesh(
+    new THREE.PlaneGeometry(1600,1600),
+    new THREE.MeshBasicMaterial({color:0x060810})
+  )).rotation.x=-Math.PI/2;
+  // Fix: create it properly
+  const extGnd=new THREE.Mesh(new THREE.PlaneGeometry(1600,1600),new THREE.MeshBasicMaterial({color:0x060810}));
+  extGnd.rotation.x=-Math.PI/2; extGnd.position.y=-0.1;
+  worldGrp.add(extGnd);
+
+  // ── Silhouette city skyline (buildings outside the grid) ──
+  const silRng=mkRng(77331);
+  const gridHalfW=(GW*CELL)/2, gridHalfH=(GH*CELL)/2;
+  const silCount=200;
+  for(let i=0;i<silCount;i++){
+    const angle=silRng()*Math.PI*2;
+    const dist=Math.max(gridHalfW,gridHalfH)+50+silRng()*200;
+    const bx=Math.cos(angle)*dist, bz=Math.sin(angle)*dist;
+    const bw=5+silRng()*18, bd=5+silRng()*16;
+    const bh=6+silRng()*50;
+
+    const silGrp=new THREE.Group();
+    silGrp.position.set(bx,0,bz);
+
+    // Main body — near-black with slight color tint
+    const tintCols=[0x080810,0x08080e,0x060c10,0x0a0806,0x07070e];
+    const bodyCol=tintCols[Math.floor(silRng()*tintCols.length)];
+    const sBody=new THREE.Mesh(
+      new THREE.BoxGeometry(bw,bh,bd),
+      new THREE.MeshBasicMaterial({color:bodyCol})
+    );
+    sBody.position.y=bh/2; silGrp.add(sBody);
+
+    // Setback top on taller buildings
+    if(bh>22&&silRng()>0.4){
+      const t2h=bh*(0.3+silRng()*0.3);
+      const t2=new THREE.Mesh(new THREE.BoxGeometry(bw*0.55,t2h,bd*0.55),
+        new THREE.MeshBasicMaterial({color:0x060708}));
+      t2.position.y=bh+t2h/2; silGrp.add(t2);
+    }
+
+    // Lit windows — warm/cool dots scattered on facade
+    const winCount=Math.floor(silRng()*10)+2;
+    for(let w=0;w<winCount;w++){
+      const wx=(silRng()-0.5)*bw*0.75;
+      const wy=silRng()*bh*0.88+0.5;
+      const litCols=[0xffeeaa,0xaaccff,0xffcc88,0xffddcc,0x88aaff];
+      const litCol=litCols[Math.floor(silRng()*litCols.length)];
+      const litW=new THREE.Mesh(
+        new THREE.PlaneGeometry(0.4+silRng()*0.5,0.55+silRng()*0.4),
+        new THREE.MeshBasicMaterial({color:litCol})
+      );
+      litW.position.set(wx,wy,bd/2+0.05); silGrp.add(litW);
+      // Back side windows too (50%)
+      if(silRng()>0.5){
+        const litW2=litW.clone(); litW2.position.z=-bd/2-0.05;
+        litW2.rotation.y=Math.PI; silGrp.add(litW2);
+      }
+    }
+
+    // Rooftop details
+    if(silRng()>0.5){
+      // Antenna
+      const antH=3+silRng()*8;
+      const ant=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,antH,4),
+        new THREE.MeshBasicMaterial({color:0x334455}));
+      ant.position.y=bh+antH/2; silGrp.add(ant);
+      // Blink light
+      const blink=new THREE.Mesh(new THREE.SphereGeometry(0.15,4,3),
+        new THREE.MeshBasicMaterial({color:0xff2200}));
+      blink.position.y=bh+antH+0.2; silGrp.add(blink);
+    }
+
+    // Neon roof accent (30%)
+    if(silRng()>0.7){
+      const neonCols2=[0x180010,0x001018,0x100800,0x001008,0x100010];
+      const nStrip=new THREE.Mesh(
+        new THREE.BoxGeometry(bw*0.9,0.35,0.12),
+        new THREE.MeshBasicMaterial({color:neonCols2[Math.floor(silRng()*neonCols2.length)]})
+      );
+      nStrip.position.set(0,bh*0.65,bd/2+0.1); silGrp.add(nStrip);
+    }
+
+    worldGrp.add(silGrp);
+  }
+
+  // ── Moon ──
+  const moonMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(14,14,10),
+    new THREE.MeshBasicMaterial({color:0xe8f0ff})
+  );
+  moonMesh.position.set(-200,260,-400);
+  worldGrp.add(moonMesh);
+  // Moon halo
+  const moonHalo=new THREE.Mesh(
+    new THREE.SphereGeometry(20,10,8),
+    new THREE.MeshBasicMaterial({color:0x8899cc,transparent:true,opacity:0.1})
+  );
+  moonHalo.position.copy(moonMesh.position);
+  worldGrp.add(moonHalo);
+  // Moon light
+  const moonLight=new THREE.PointLight(0x8899cc,0.5,900);
+  moonLight.position.set(-200,260,-400);
+  scene.add(moonLight);
+
+  // ── Stars — 3 layers ──
+  // Large bright
+  const sBrPos=new Float32Array(150*3);
+  for(let i=0;i<150;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.55+0.05;
+    sBrPos[i*3]=Math.sin(b)*Math.cos(a)*530;
+    sBrPos[i*3+1]=Math.cos(b)*530;
+    sBrPos[i*3+2]=Math.sin(b)*Math.sin(a)*530;
+  }
+  const sBrGeo=new THREE.BufferGeometry();sBrGeo.setAttribute('position',new THREE.BufferAttribute(sBrPos,3));
+  worldGrp.add(new THREE.Points(sBrGeo,new THREE.PointsMaterial({color:0xffffff,size:1.5,transparent:true,opacity:0.95})));
+
+  // Medium blue-white
+  const sPos=new Float32Array(900*3);
+  for(let i=0;i<900;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;
+    sPos[i*3]=Math.sin(b)*Math.cos(a)*540;
+    sPos[i*3+1]=Math.cos(b)*540;
+    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;
   }
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
-  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaaccff,size:.5,transparent:true,opacity:.75})));
+  worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaabbdd,size:0.7,transparent:true,opacity:0.82})));
+
+  // Small dim
+  const sDimPos=new Float32Array(500*3);
+  for(let i=0;i<500;i++){
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.5+0.1;
+    sDimPos[i*3]=Math.sin(b)*Math.cos(a)*545;
+    sDimPos[i*3+1]=Math.cos(b)*545;
+    sDimPos[i*3+2]=Math.sin(b)*Math.sin(a)*545;
+  }
+  const sDimGeo=new THREE.BufferGeometry();sDimGeo.setAttribute('position',new THREE.BufferAttribute(sDimPos,3));
+  worldGrp.add(new THREE.Points(sDimGeo,new THREE.PointsMaterial({color:0x6688cc,size:0.38,transparent:true,opacity:0.65})));
 
   scene.add(worldGrp);
 

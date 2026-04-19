@@ -362,7 +362,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="glue-hud">
   <div id="glue-msg">🍯 GLUED!</div>
   <div id="glue-timer">5</div>
-  <div id="glue-sub">Press SPACE hard or launch rocket to release!</div>
+  <div id="glue-sub">Press SPACE hard to release!</div>
 </div>
 <button id="boost-btn" onclick="activateBoost()">⚡ BOOST <span id="boost-cd"></span></button>
 <div id="notif"></div>
@@ -1894,7 +1894,7 @@ function applyGlue(){
   document.getElementById('glue-overlay').classList.add('active');
   document.getElementById('glue-hud').style.display='block';
   document.getElementById('glue-timer').textContent=Math.ceil(GLUE.timer);
-  showNotif('🍯 GLUED! Press SPACE / Launch Roket!','#ffcc44');
+  showNotif('🍯 GLUED! Press SPACE Hard!','#ffcc44');
   GS.shake=1.8;
 }
 
@@ -2043,7 +2043,7 @@ function doPump(){
   if(!gameRunning||GS.cd>0)return;
   if(GLUE.stuck){
     // While glued, pumping contributes to breaking free
-    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.35);
+    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.1);
     GS.shake=0.5;return;
   }
   if(GS.energy<3)return;

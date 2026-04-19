@@ -2043,7 +2043,7 @@ function doPump(){
   if(!gameRunning||GS.cd>0)return;
   if(GLUE.stuck){
     // While glued, pumping contributes to breaking free
-    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.1);
+    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.35);
     GS.shake=0.5;return;
   }
   if(GS.energy<3)return;

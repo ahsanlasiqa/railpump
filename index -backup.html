@@ -260,7 +260,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <div class="shop-item" id="shop-buy-3" onclick="buyRockets(3,50)">
       <div class="shop-item-left">
         <div class="shop-item-name">🚀 3 Rockets</div>
-        <div class="shop-item-desc">Enough for one Grannyobstacle</div>
+        <div class="shop-item-desc">Enough for one Granny obstacle</div>
       </div>
       <div class="shop-item-price">50 🪙</div>
     </div>
@@ -362,7 +362,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="glue-hud">
   <div id="glue-msg">🍯 GLUED!</div>
   <div id="glue-timer">5</div>
-  <div id="glue-sub">Press SPACE hard or launch rocket to release!</div>
+  <div id="glue-sub">Press SPACE hard to release!</div>
 </div>
 <button id="boost-btn" onclick="activateBoost()">⚡ BOOST <span id="boost-cd"></span></button>
 <div id="notif"></div>
@@ -375,7 +375,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <!-- START -->
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
-  <p>Flat city grid — ride to glowing dots on the map to pick up packages!</p>
+  <p>Ride the rail to pick up packages and deliver them on time!</p>
   <ul class="ctrl-list">
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
@@ -384,7 +384,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <li><span class="key">F</span> Fire rocket 🚀</li>
     <li><span class="key">R</span> Open rocket shop</li>
   </ul>
-  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">12×12 grid · Flat city · Gold dots = VIP · Head to glowing dots to pick up packages · Trolley never stops!</p>
+  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">Enjoy the beautiful Japanese sky night· Beware of Granny wandering the city·</p> <p>You get to rocket them in time!</p>
   <button class="btn" onclick="startGame()">START GAME</button>
   <button class="btn btn-ghost" onclick="showScr('scr-keys')">⚙ Controls</button>
 </div>
@@ -761,7 +761,7 @@ function updateBoost(dt){
   if(boostTimeLeft<=0){
     boostActive=false;
     updBoostBtn();
-    showNotif('⚡ Boost habis','#ffaa44');
+    showNotif('⚡ Boost ended','#ffaa44');
   }
 }
 // ═══════════════════════════════════════════
@@ -1894,7 +1894,7 @@ function applyGlue(){
   document.getElementById('glue-overlay').classList.add('active');
   document.getElementById('glue-hud').style.display='block';
   document.getElementById('glue-timer').textContent=Math.ceil(GLUE.timer);
-  showNotif('🍯 GLUED! Press SPACE / Launch Roket!','#ffcc44');
+  showNotif('🍯 GLUED! Press SPACE Hard!','#ffcc44');
   GS.shake=1.8;
 }
 

@@ -443,7 +443,18 @@ const nid=(c,r)=>r*NX+c;
 // ALL FLAT — elevation = 0 everywhere
 const nodeY=new Float32Array(NX*NZ); // all zeros
 
-const npos=(c,r)=>new THREE.Vector3(OX+c*CELL, 0, OZ+r*CELL);
+// Pre-computed node positions — avoids new THREE.Vector3 allocation on every npos() call
+// Flat city (Y=0), so we just store x and z, return a reused scratch vector
+const _nodePosX=new Float32Array(NX*NZ);
+const _nodePosZ=new Float32Array(NX*NZ);
+for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
+  _nodePosX[r*NX+c]=OX+c*CELL;
+  _nodePosZ[r*NX+c]=OZ+r*CELL;
+}
+const _nposVec=new THREE.Vector3();
+const npos=(c,r)=>{_nposVec.set(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);return _nposVec;};
+// nposNew: when we actually need a fresh Vector3 (building, station placement — not per-frame)
+const nposNew=(c,r)=>new THREE.Vector3(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);
 
 // ═══════════════════════════════════════════
 //  STATION POSITIONS
@@ -620,6 +631,8 @@ const fill2=new THREE.DirectionalLight(0x112233,0.12);fill2.position.set(50,20,6
 // ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
 let pumpGrp;
+// Cached refs — avoids getObjectByName() traversal every frame
+const trolleyRefs={child:null,la:null,ra:null,lever:null};
 (()=>{
   const bM=new THREE.MeshStandardMaterial({color:0xcc2200,metalness:.3,roughness:.6});
   const mM=new THREE.MeshStandardMaterial({color:0x999999,metalness:.7,roughness:.3});
@@ -659,6 +672,8 @@ let pumpGrp;
   lvPole.position.set(0,.3,0);lv.add(lvPole);
   const lh=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),lm2);lh.position.set(0,.65,0);lv.add(lh);
   lv.name='lever';lv.position.set(.8,.48,.35);trolley.add(lv);
+  // Cache references to avoid per-frame getObjectByName traversal
+  trolleyRefs.child=ch; trolleyRefs.la=la; trolleyRefs.ra=ra; trolleyRefs.lever=lv;
 })();
 
 const pkgBox=new THREE.Mesh(new THREE.BoxGeometry(.42,.32,.42),new THREE.MeshStandardMaterial({color:0xcc8833,roughness:.8}));
@@ -794,8 +809,8 @@ function buildWorld(){
   const ROFF=0.52;
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
-      const p0=npos(c,r),p1=npos(c+1,r);
-      const cx=(p0.x+p1.x)/2,cz=(p0.z+p1.z)/2;
+      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL,z1=z0;
+      const cx=(x0+x1)/2,cz=z0;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
       rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
@@ -803,7 +818,7 @@ function buildWorld(){
         rl.position.set(cx,.07,cz+off);worldGrp.add(rl);
       });
       for(let s=1;s<4;s++){
-        const tx=p0.x+(p1.x-p0.x)*(s/4),tz=p0.z+(p1.z-p0.z)*(s/4);
+        const tx=x0+(x1-x0)*(s/4),tz=z0;
         const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,1.2),tieM);
         tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
@@ -811,8 +826,8 @@ function buildWorld(){
   }
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
-      const p0=npos(c,r),p1=npos(c,r+1);
-      const cx=(p0.x+p1.x)/2,cz=(p0.z+p1.z)/2;
+      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=x0,z1=OZ+(r+1)*CELL;
+      const cx=x0,cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
       rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
@@ -820,7 +835,7 @@ function buildWorld(){
         rl.position.set(cx+off,.07,cz);worldGrp.add(rl);
       });
       for(let s=1;s<4;s++){
-        const tx=p0.x+(p1.x-p0.x)*(s/4),tz=p0.z+(p1.z-p0.z)*(s/4);
+        const tx=x0,tz=z0+(z1-z0)*(s/4);
         const tie=new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.12),tieM);
         tie.position.set(tx,.06,tz);worldGrp.add(tie);
       }
@@ -839,13 +854,32 @@ function buildWorld(){
   }
 
   // ── CYBERPUNK BUILDINGS ──
-  // Kanji signs use emissive ONLY — no PointLight per sign → zero MAX_UNIFORM overflow
   const KANJI=['ラーメン','カフェ','居酒屋','タクシー','電気','薬局','ホテル','パン','焼肉','酒','夜市','特急','温泉','美容院','映画館','コンビニ','警察','病院','銀行','食堂'];
   const NEON_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xffee00,0xff3399,0x33ffaa,0xff4400,0x0099ff,0xcc00ff,0xff8800];
   const bldPalCyber=[0x080c18,0x0a0e1c,0x0c1020,0x080a14,0x0e1022,0x060810,0x0a0c1a];
 
-  // Canvas kanji texture — create once per color/text combo
+  // ── SHARED materials & geometries (key optimisation — avoids ~5000 unique objects) ──
+  // Window materials: 10 shared instances instead of one per window
+  const WIN_SHARED_MATS=[
+    new THREE.MeshBasicMaterial({color:0xffffcc}),  // warm white
+    new THREE.MeshBasicMaterial({color:0xaaddff}),  // cool blue
+    new THREE.MeshBasicMaterial({color:0xffeeaa}),  // amber
+    new THREE.MeshBasicMaterial({color:0xccffee}),  // mint
+    new THREE.MeshBasicMaterial({color:0xffccff}),  // pink
+    new THREE.MeshBasicMaterial({color:0xff9944}),  // orange
+    new THREE.MeshBasicMaterial({color:0x000000}),  // off (dark)
+  ];
+  // Use MeshBasicMaterial (no PBR cost) — windows are emissive anyway
+  const WIN_GEO=new THREE.PlaneGeometry(.48,.68); // one shared geometry
+
+  // Body material pool — one per palette color (not one per building)
+  const BODY_MATS=bldPalCyber.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.1}));
+
+  // Kanji texture cache — reuse same texture for same kanji+color combo
+  const _kanjiCache={};
   function makeKanjiTex(txt,hexCol){
+    const key=txt+'_'+hexCol;
+    if(_kanjiCache[key])return _kanjiCache[key];
     const cv=document.createElement('canvas');cv.width=64;cv.height=256;
     const cx=cv.getContext('2d');
     cx.fillStyle='#000';cx.fillRect(0,0,64,256);
@@ -853,7 +887,22 @@ function buildWorld(){
     cx.fillStyle=cs;cx.shadowColor=cs;cx.shadowBlur=12;
     cx.font='bold 36px sans-serif';cx.textAlign='center';
     for(let i=0;i<Math.min(txt.length,5);i++)cx.fillText(txt[i],32,40+i*44);
-    return new THREE.CanvasTexture(cv);
+    const tex=new THREE.CanvasTexture(cv);
+    _kanjiCache[key]=tex;
+    return tex;
+  }
+
+  // Shared neon sign materials (one per neon color)
+  const _neonSignMats={};
+  function getNeonSignMat(nCol,tex){
+    if(_neonSignMats[nCol])return _neonSignMats[nCol];
+    const m=new THREE.MeshStandardMaterial({
+      map:tex,emissiveMap:tex,
+      emissive:new THREE.Color(nCol),emissiveIntensity:2.8,
+      color:0x111111,roughness:.9,transparent:true,depthWrite:false
+    });
+    _neonSignMats[nCol]=m;
+    return m;
   }
 
   // 8 shared area PointLights spread across the city — fixed count, no overflow
@@ -883,7 +932,7 @@ function buildWorld(){
       const totalFloors=3+Math.floor(rng()*7);
       const floorH=2.6;
       const bCol=bldPalCyber[Math.floor(rng()*bldPalCyber.length)];
-      const bodyMat=new THREE.MeshStandardMaterial({color:bCol,roughness:.75,metalness:.1});
+      const bodyMat=BODY_MATS[Math.floor(rng()*BODY_MATS.length)];
       const numTiers=totalFloors>5?1+Math.floor(rng()*2):1;
       const fpTier=Math.max(2,Math.floor(totalFloors/numTiers));
       let bot=0,cW=bW,cD=bD;
@@ -894,22 +943,18 @@ function buildWorld(){
         body.position.set(0,bot+tH/2,0);body.castShadow=true;body.receiveShadow=true;
         bldGrp.add(body);
 
-        // Glowing windows — emissive only, no extra lights
-        const winColors=[0xffffcc,0xaaddff,0xffeeaa,0xccffee,0xffccff];
+        // Windows — use shared materials and shared geometry (massive savings)
         for(let f=0;f<fpTier;f++){
           const wy=bot+f*floorH+1.5;
           for(let w=-1;w<=1;w++){
             if(rng()<0.14)continue;
-            const wc=winColors[Math.floor(rng()*winColors.length)];
-            const wMat=new THREE.MeshStandardMaterial({
-              color:wc,emissive:new THREE.Color(wc),
-              emissiveIntensity:rng()>.3?1.6:0.5,roughness:.95
-            });
-            const wG=new THREE.PlaneGeometry(.48,.68);
-            const wf=new THREE.Mesh(wG,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
-            const wb=wf.clone();wb.position.z=-cD/2-.01;wb.rotation.y=Math.PI;bldGrp.add(wb);
-            const ws=new THREE.Mesh(wG,wMat.clone());ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
-            const ws2=ws.clone();ws2.position.x=-cW/2-.01;ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
+            // Pick a shared material (no new object created)
+            const mIdx=Math.floor(rng()*WIN_SHARED_MATS.length);
+            const wMat=WIN_SHARED_MATS[mIdx];
+            const wf=new THREE.Mesh(WIN_GEO,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
+            const wb=new THREE.Mesh(WIN_GEO,wMat);wb.position.set(w*(cW/3.5),wy,-cD/2-.01);wb.rotation.y=Math.PI;bldGrp.add(wb);
+            const ws=new THREE.Mesh(WIN_GEO,wMat);ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
+            const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
           }
         }
         bot+=tH;cW*=0.82;cD*=0.82;
@@ -948,22 +993,24 @@ function buildWorld(){
     }
   }
 
-  // ── Power lines — CatmullRom sagging cables ──
-  const wireMat=new THREE.MeshBasicMaterial({color:0x1a1a2e});
+  // ── Power lines — cheap LineSegments instead of TubeGeometry (saves ~25 heavy meshes) ──
+  const wireLineMat=new THREE.LineBasicMaterial({color:0x2a2a40});
   for(let r=0;r<=GH;r+=3) for(let c=0;c<=GW;c+=3){
     if(c+3>GW)continue;
-    const pa=npos(c,r),pb=npos(c+3,r);
+    const xA=_nodePosX[r*NX+c],  zA=_nodePosZ[r*NX+c];
+    const xB=_nodePosX[r*NX+(c+3)],zB=_nodePosZ[r*NX+(c+3)];
     const pts=[];
     for(let i=0;i<=8;i++){
       const t=i/8;
-      pts.push(new THREE.Vector3(
-        pa.x+(pb.x-pa.x)*t,
+      pts.push(
+        xA+(xB-xA)*t,
         5.5-Math.sin(t*Math.PI)*(0.6+rng()*0.5),
-        pa.z+(pb.z-pa.z)*t+(rng()-.5)*0.3
-      ));
+        zA+(zB-zA)*t+(rng()-.5)*0.3
+      );
     }
-    const tube=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),8,.022,4,false);
-    worldGrp.add(new THREE.Mesh(tube,wireMat));
+    const wireGeo=new THREE.BufferGeometry();
+    wireGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pts),3));
+    worldGrp.add(new THREE.Line(wireGeo,wireLineMat));
   }
 
   // ── Street lights — neon colored, max 1 PointLight per 4 intersections ──
@@ -1294,8 +1341,7 @@ function setSW(d){
   document.getElementById('sa-l').classList.toggle('on',d===-1);
   document.getElementById('sa-s').classList.toggle('on',d===0);
   document.getElementById('sa-r').classList.toggle('on',d===1);
-  const lv=trolley.getObjectByName('lever');
-  if(lv)lv.rotation.z=d===0?0:d===-1?.45:-.45;
+  if(trolleyRefs.lever)trolleyRefs.lever.rotation.z=d===0?0:d===-1?.45:-.45;
 }
 function updateSwitchHUD(show){
   document.getElementById('switch-hud').style.opacity=show?'1':'0';
@@ -1764,8 +1810,7 @@ function initNpcTrolleys(){
 }
 
 function updNpcCountHUD(){
-  const el=document.getElementById('npc-count-val');
-  if(el) el.textContent=npcTrolleys.length+'/'+NPC_MAX;
+  if(DOM.npcCountVal) DOM.npcCountVal.textContent=npcTrolleys.length+'/'+NPC_MAX;
 }
 
 function updateNpcTrolleys(dt,gt){
@@ -1802,24 +1847,24 @@ function updateNpcTrolleys(dt,gt){
       checkNpcCollision(npc,nc,nr);
     }
 
-    // Render NPC position
+    // Render NPC position — raw lookup avoids scratch vector aliasing
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
-    const p0=npos(nc,nr),p1=npos(nnc,nnr);
-    const px=p0.x+(p1.x-p0.x)*npc.edgeT;
-    const pz=p0.z+(p1.z-p0.z)*npc.edgeT;
+    const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
+    const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
+    const px=x0+(x1-x0)*npc.edgeT;
+    const pz=z0+(z1-z0)*npc.edgeT;
     npc.mesh.position.set(px,.35,pz);
-    const dx=p1.x-p0.x,dz=p1.z-p0.z;
+    const dx=x1-x0,dz=z1-z0;
     const hl=Math.sqrt(dx*dx+dz*dz);
     if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
 
-    // Animate pump wobble (slow, tired grandma motion)
+    // Animate pump wobble
     npc.pumpAng+=wobbleSpeed*0.8*dt;
-    const pump=npc.mesh.children.find(c=>c.geometry?.type==='CylinderGeometry'&&c.position.y>.85&&c.position.y<.95);
     // Gentle body sway
     npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
 
-    // Pulse beacon
+    // Pulse beacon (last child — cached index avoids repeated .find())
     const bec=npc.mesh.children[npc.mesh.children.length-1];
     if(bec&&bec.material){
       const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
@@ -2018,7 +2063,7 @@ function levelComplete(){
 function updateArrow(tgtIdx){
   if(tgtIdx<0||tgtIdx>=ST_POS.length){document.getElementById('arrow').style.opacity='0';return;}
   const [sc,sr]=ST_POS[tgtIdx];
-  const tp=npos(sc,sr).add(new THREE.Vector3(0,3,0));
+  const tp=nposNew(sc,sr).add(new THREE.Vector3(0,3,0));
   const sp=tp.clone().project(camera);
   const sx=(sp.x*.5+.5)*window.innerWidth,sy=(-sp.y*.5+.5)*window.innerHeight;
   const el=document.getElementById('arrow');el.style.opacity='1';
@@ -2093,14 +2138,16 @@ function physics(dt){
 function moveTrolley(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const px=p0.x+(p1.x-p0.x)*tEdgeT;
-  const pz=p0.z+(p1.z-p0.z)*tEdgeT;
+  // Use lookup table directly — avoids scratch vector aliasing and new Vector3 alloc
+  const x0=_nodePosX[nr*NX+nc], z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  const px=x0+(x1-x0)*tEdgeT;
+  const pz=z0+(z1-z0)*tEdgeT;
 
   trolley.position.set(px,.35,pz);
   trolley.rotation.x=0;trolley.rotation.z=0;
 
-  const dx=p1.x-p0.x,dz=p1.z-p0.z;
+  const dx=x1-x0,dz=z1-z0;
   const hlen=Math.sqrt(dx*dx+dz*dz);
   if(hlen>0.01)trolley.rotation.y=Math.atan2(dx,dz);
 
@@ -2133,16 +2180,16 @@ function toggleView(){
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const px=p0.x+(p1.x-p0.x)*tEdgeT;
-  const pz=p0.z+(p1.z-p0.z)*tEdgeT;
-  const dx=p1.x-p0.x,dz=p1.z-p0.z;
+  const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
+  const px=x0+(x1-x0)*tEdgeT;
+  const pz=z0+(z1-z0)*tEdgeT;
+  const dx=x1-x0,dz=z1-z0;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hlen,fdz=dz/hlen;
   const sh=GS.shake;
 
   if(camMode==='first'){
-    // ── FIRST PERSON: eyes at driver's height, looking ahead ──
     const eyeH=2.3;
     const eyeX=px+(Math.random()-.5)*sh*.04;
     const eyeY=eyeH+(Math.random()-.5)*sh*.03;
@@ -2151,7 +2198,6 @@ function moveCam(){
     camLookTarget.set(px+fdx*8,eyeH,pz+fdz*8);
     camera.lookAt(camLookTarget);
   }else{
-    // ── THIRD PERSON: behind and above trolley ──
     const camBack=22,camUp=15;
     const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
     const ty=camUp+(Math.random()-.5)*sh*.06;
@@ -2175,15 +2221,15 @@ function animTrolley(dt){
   pumpAngV+=GS.speed*1.4*dt;
   pumpAng=pumpAngV;
   if(pumpGrp)pumpGrp.rotation.x=Math.sin(pumpAngV)*.38;
-  const ch=trolley.getObjectByName('child');
-  if(ch){
-    const la=ch.getObjectByName('la'),ra=ch.getObjectByName('ra');
-    if(la&&ra){const sw=Math.sin(pumpAngV)*.44*Math.min(GS.speed/5,1);la.rotation.x=sw;ra.rotation.x=-sw;}
-  }
+  // Use cached refs — no per-frame tree traversal
+  const la=trolleyRefs.la,ra=trolleyRefs.ra;
+  if(la&&ra){const sw=Math.sin(pumpAngV)*.44*Math.min(GS.speed/5,1);la.rotation.x=sw;ra.rotation.x=-sw;}
   const pulse=0.7+Math.sin(Date.now()*.006)*0.3;
   beacon.material.color.setRGB(1,0.2+pulse*0.3,0.1);
   trolleyLight.intensity=2.0+pulse*0.8;
-  stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*(i%2===0?1.1:-1.1);});
+  // Throttle ring rotation — only update every 2nd frame (visual only, not gameplay)
+  if(Math.floor(Date.now()/16)%2===0)
+    stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*2*(i%2===0?1.1:-1.1);});
 }
 
 // ═══════════════════════════════════════════
@@ -2222,22 +2268,37 @@ function updRocketHUD(){
 }
 
 // Build a rocket mesh (small elongated cylinder with glow)
-function makeRocketMesh(){
+// ── Pre-created rocket mesh pool (avoid GC on fire) ──
+const ROCKET_POOL_SIZE=5;
+const _rocketPool=[];
+(function buildRocketPool(){
+  const bGeo=new THREE.CylinderGeometry(.1,.1,.8,8);
+  const bMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3});
+  const fGeo=new THREE.ConeGeometry(.12,.5,8);
+  const fMat=new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:.85});
+  for(let i=0;i<ROCKET_POOL_SIZE;i++){
+    const grp=new THREE.Group();
+    const body=new THREE.Mesh(bGeo,bMat);body.rotation.x=Math.PI/2;grp.add(body);
+    const flame=new THREE.Mesh(fGeo,fMat.clone());flame.rotation.x=Math.PI/2;flame.position.z=.6;grp.add(flame);
+    const pLight=new THREE.PointLight(0xff4400,3,6);grp.add(pLight);
+    grp.visible=false;
+    scene.add(grp);
+    _rocketPool.push({grp,inUse:false});
+  }
+})();
+
+function acquireRocketMesh(){
+  for(const r of _rocketPool){if(!r.inUse){r.inUse=true;r.grp.visible=true;return r.grp;}}
+  // Fallback: create new if pool exhausted (rare)
   const grp=new THREE.Group();
-  const body=new THREE.Mesh(
-    new THREE.CylinderGeometry(.1,.1,.8,8),
-    new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3})
-  );
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.8,8),new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3}));
   body.rotation.x=Math.PI/2;grp.add(body);
-  // Exhaust flame
-  const flame=new THREE.Mesh(
-    new THREE.ConeGeometry(.12,.5,8),
-    new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:.85})
-  );
-  flame.rotation.x=Math.PI/2;flame.position.z=.6;grp.add(flame);
-  // Trail light
-  const pLight=new THREE.PointLight(0xff4400,3,6);grp.add(pLight);
+  scene.add(grp);
   return grp;
+}
+function releaseRocketMesh(grp){
+  grp.visible=false;
+  for(const r of _rocketPool){if(r.grp===grp){r.inUse=false;return;}}
 }
 
 // Spawn rocket from trolley position heading forward
@@ -2248,57 +2309,72 @@ function fireRocket(){
 
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const p0=npos(nc,nr),p1=npos(nnc,nnr);
-  const dx=p1.x-p0.x,dz=p1.z-p0.z,hl=Math.sqrt(dx*dx+dz*dz)||1;
+  const dx=_nodePosX[nnr*NX+nnc]-_nodePosX[nr*NX+nc];
+  const dz=_nodePosZ[nnr*NX+nnc]-_nodePosZ[nr*NX+nc];
+  const hl=Math.sqrt(dx*dx+dz*dz)||1;
   const fdx=dx/hl,fdz=dz/hl;
 
-  const mesh=makeRocketMesh();
+  const mesh=acquireRocketMesh();
   mesh.position.set(trolley.position.x+fdx*.5,trolley.position.y+.8,trolley.position.z+fdz*.5);
   mesh.rotation.y=Math.atan2(fdx,fdz);
-  scene.add(mesh);
   rockets.push({mesh,vx:fdx*ROCKET_SPEED,vz:fdz*ROCKET_SPEED,life:4,age:0});
   GS.shake=1.0;
   flash('f-pump',120);
   showNotif('🚀 FIRE!','#ff8866');
 }
 
-// Explosion visual
+// ── Pre-created explosion pool (avoid GC on hit) ──
+const EXPL_POOL_SIZE=4;
+const _explPool=[];
+(function buildExplPool(){
+  const fbGeo=new THREE.SphereGeometry(.8,8,6);
+  const ringGeo=new THREE.TorusGeometry(1.2,.12,6,18);
+  for(let i=0;i<EXPL_POOL_SIZE;i++){
+    const grp=new THREE.Group();
+    const fb=new THREE.Mesh(fbGeo,new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:0}));grp.add(fb);
+    const ring=new THREE.Mesh(ringGeo,new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:0}));
+    ring.rotation.x=Math.PI/2;grp.add(ring);
+    const pL=new THREE.PointLight(0xff6600,0,12);grp.add(pL);
+    grp.visible=false;
+    scene.add(grp);
+    _explPool.push({grp,fb,ring,pL,active:false,t:0});
+  }
+})();
+
 function spawnExplosion(pos){
-  const grp=new THREE.Group();
-  // Fireball
-  const fb=new THREE.Mesh(
-    new THREE.SphereGeometry(.8,10,8),
-    new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:.9})
-  );
-  grp.add(fb);
-  // Shockring
-  const ring=new THREE.Mesh(
-    new THREE.TorusGeometry(1.2,.12,8,24),
-    new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:.8})
-  );
-  ring.rotation.x=Math.PI/2;grp.add(ring);
-  const pL=new THREE.PointLight(0xff6600,6,12);grp.add(pL);
-  grp.position.copy(pos);scene.add(grp);
-  // Animate out
-  let t=0;
-  const explTick=()=>{
-    t+=0.05;
-    grp.scale.setScalar(1+t*3);
-    fb.material.opacity=Math.max(0,.9-t*2);
-    ring.material.opacity=Math.max(0,.8-t*1.5);
-    pL.intensity=Math.max(0,6-t*12);
-    if(t<0.5)requestAnimationFrame(explTick);
-    else scene.remove(grp);
-  };
-  requestAnimationFrame(explTick);
+  // Find free slot in pool
+  let slot=_explPool.find(e=>!e.active);
+  if(!slot)return; // all in use, skip
+  slot.active=true;slot.t=0;
+  slot.grp.position.copy(pos);
+  slot.grp.scale.setScalar(1);
+  slot.grp.visible=true;
+  slot.fb.material.opacity=.9;
+  slot.ring.material.opacity=.8;
+  slot.pL.intensity=6;
   GS.shake=2.5;
+}
+
+function updateExplosions(dt){
+  _explPool.forEach(slot=>{
+    if(!slot.active)return;
+    slot.t+=dt*2.2;
+    slot.grp.scale.setScalar(1+slot.t*3);
+    slot.fb.material.opacity=Math.max(0,.9-slot.t*2);
+    slot.ring.material.opacity=Math.max(0,.8-slot.t*1.5);
+    slot.pL.intensity=Math.max(0,6-slot.t*12);
+    if(slot.t>=0.5){
+      slot.active=false;
+      slot.grp.visible=false;
+    }
+  });
 }
 
 function updateRockets(dt){
   for(let i=rockets.length-1;i>=0;i--){
     const r=rockets[i];
     r.age+=dt;
-    if(r.age>r.life){scene.remove(r.mesh);rockets.splice(i,1);continue;}
+    if(r.age>r.life){releaseRocketMesh(r.mesh);rockets.splice(i,1);continue;}
     r.mesh.position.x+=r.vx*dt;
     r.mesh.position.z+=r.vz*dt;
     // Wobble flame flicker
@@ -2312,13 +2388,11 @@ function updateRockets(dt){
       if(!npc.mesh||npc.respawning)continue;
       const dist=r.mesh.position.distanceTo(npc.mesh.position);
       if(dist<ROCKET_RADIUS){
-        // Hit! Record position before removal
         const hitPos=npc.mesh.position.clone();
         const hitNode=npc.node;
         spawnExplosion(hitPos);
         clearGlueNearPos(hitPos);
 
-        // Remove this grandma from scene + array immediately
         scene.remove(npc.mesh);
         npcTrolleys.splice(j,1);
         updNpcCountHUD();
@@ -2330,49 +2404,59 @@ function updateRockets(dt){
         if(toSpawn>0){
           const msg=toSpawn===2
             ?`💥 Granny got hit! Beware of Double Respawn! (${remaining+toSpawn}/${NPC_MAX})`
-            :`💥Granny got hit! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
+            :`💥 Granny got hit! +1 respawn (${remaining+toSpawn}/${NPC_MAX})`;
           showNotif(msg,'#ffaa44');
-          // Spawn with short staggered delay so they appear at different positions
           for(let s=0;s<toSpawn;s++){
             setTimeout(()=>{
               if(npcTrolleys.length<NPC_MAX){
                 const n=spawnNpcAt(hitNode);
-                if(n){
-                  // Brief spawn flash on new grandma
-                  spawnExplosion(n.mesh.position.clone());
-                }
+                if(n) spawnExplosion(n.mesh.position.clone());
               }
-            }, 600 + s*500);
+            }, 600+s*500);
           }
         } else {
-          showNotif(`💥 Granny got hit! Granny Max (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
+          showNotif(`💥 Granny got hit! Max (${NPC_MAX}/${NPC_MAX}) 🔒`,'#ff6644');
         }
 
         flash('f-drop',300);
         GS.score+=200;
-        scene.remove(r.mesh);rockets.splice(i,1);
+        releaseRocketMesh(r.mesh);rockets.splice(i,1);
         hit=true;break;
       }
     }
     if(hit)continue;
 
-    // Hit building/wall (simple: if age > 2.5s it hit something)
     if(r.age>2.5){
       spawnExplosion(r.mesh.position.clone());
-      scene.remove(r.mesh);rockets.splice(i,1);
+      releaseRocketMesh(r.mesh);rockets.splice(i,1);
     }
   }
 }
 
+// Cache DOM refs once at startup — avoid getElementById every frame
+const DOM={
+  hScore:document.getElementById('h-score'),
+  hDel:document.getElementById('h-del'),
+  hCoins:document.getElementById('h-coins'),
+  spdVal:document.getElementById('spd-val'),
+  pumpFill:document.getElementById('pump-fill'),
+  npcCountVal:document.getElementById('npc-count-val'),
+};
+// Track last-written values to skip redundant DOM writes
+const _hudLast={score:-1,del:-1,coins:-1,spd:-1,energy:-1};
+
 function updHUD(){
-  document.getElementById('h-score').textContent=GS.score;
-  document.getElementById('h-del').textContent=MS.delivsDone;
-  document.getElementById('h-coins').textContent=GS.coins;
-  document.getElementById('spd-val').textContent=Math.round(GS.speed*3.6);
-  const pct=(GS.energy/GS.maxE)*100;
-  const fill=document.getElementById('pump-fill');
-  fill.style.width=pct+'%';
-  fill.style.background=pct<20?'linear-gradient(90deg,#cc2200,#ff4400)':'linear-gradient(90deg,#ff6b35,#ffe680)';
+  if(GS.score!==_hudLast.score){DOM.hScore.textContent=GS.score;_hudLast.score=GS.score;}
+  if(MS.delivsDone!==_hudLast.del){DOM.hDel.textContent=MS.delivsDone;_hudLast.del=MS.delivsDone;}
+  if(GS.coins!==_hudLast.coins){DOM.hCoins.textContent=GS.coins;_hudLast.coins=GS.coins;}
+  const spd=Math.round(GS.speed*3.6);
+  if(spd!==_hudLast.spd){DOM.spdVal.textContent=spd;_hudLast.spd=spd;}
+  const pct=Math.round((GS.energy/GS.maxE)*100);
+  if(pct!==_hudLast.energy){
+    DOM.pumpFill.style.width=pct+'%';
+    DOM.pumpFill.style.background=pct<20?'linear-gradient(90deg,#cc2200,#ff4400)':'linear-gradient(90deg,#ff6b35,#ffe680)';
+    _hudLast.energy=pct;
+  }
   GS.braking=keys.brake;
 }
 
@@ -2457,7 +2541,8 @@ function startGame(){
   document.getElementById('shop-overlay').style.display='none';
   clearChoiceMarkers();
   // Clear active rockets
-  rockets.forEach(r=>scene.remove(r.mesh));rockets.length=0;
+  rockets.forEach(r=>releaseRocketMesh(r.mesh));rockets.length=0;
+  _explPool.forEach(e=>{e.active=false;e.grp.visible=false;});
   // Clear glue puddles
   gluePuddles.forEach(p=>scene.remove(p.mesh));gluePuddles.length=0;
   // Release glue if stuck
@@ -2548,9 +2633,9 @@ const clock=new THREE.Clock();let gt=0;
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
-    updateNpcTrolleys(dt,gt);updateRockets(dt);
+    updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
     updateBoost(dt);updateGlue(dt);
-    drawMM();
+    if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
   moveCam();updP(dt);
   sunLight.target.position.copy(trolley.position);

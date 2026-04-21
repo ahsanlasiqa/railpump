@@ -559,7 +559,7 @@ const SFX=(()=>{
     },
     coin(){
       // Quick bright ping
-      tone(1200,0.1,'sine',2.0,0.005,0.09,900);
+      tone(1200,0.1,'sine',0.16,0.005,0.09,900);
     },
     powerup(){
       // Sweeping power-up
@@ -614,7 +614,7 @@ const BGM=(()=>{
     if(audio)return;
     audio=new Audio('viacheslavstarostin-action.mp3');
     audio.loop=true;
-    audio.volume=0.15;
+    audio.volume=0.01;
     audio.preload='auto';
   }
 

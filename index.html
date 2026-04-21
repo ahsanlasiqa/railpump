@@ -148,6 +148,8 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
+#mute-btn{position:fixed;top:211px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
+#mute-btn:hover{background:rgba(255,200,80,0.12);}
 
 /* ── Bidding Dialog ── */
 #bid-overlay{position:fixed;inset:0;background:rgba(2,4,12,0.82);z-index:80;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
@@ -233,6 +235,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
+<button id="mute-btn" title="Toggle Music [M]" onclick="const m=BGM.toggleMute();this.textContent=m?'🔇':'🎵';this.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';">🎵</button>
 <button id="view-btn" title="Toggle First/Third Person [V]" onclick="toggleView()">👁️</button>
 <div id="view-lbl">3rd Person</div>
 <button id="shop-btn" title="Rocket Shop [R]" onclick="openShop()">🚀</button>
@@ -575,6 +578,65 @@ const SFX=(()=>{
 // Unlock audio on first interaction
 document.addEventListener('pointerdown',()=>SFX.pump&&SFX.pump(),{once:true,passive:true});
 
+// ═══════════════════════════════════════════
+//  BACKGROUND MUSIC
+// ═══════════════════════════════════════════
+const BGM=(()=>{
+  let audio=null;
+  let muted=false;
+
+  function init(){
+    if(audio)return;
+    audio=new Audio('viacheslavstarostin-action.mp3');
+    audio.loop=true;
+    audio.volume=0.35;
+    audio.preload='auto';
+  }
+
+  return{
+    play(){
+      init();
+      if(muted)return;
+      // Resume AudioContext if needed (browser autoplay policy)
+      audio.currentTime=0;
+      const p=audio.play();
+      if(p&&p.catch)p.catch(()=>{
+        // Autoplay blocked — retry on next user gesture
+        document.addEventListener('pointerdown',()=>{if(!muted)audio.play();},{once:true,passive:true});
+      });
+    },
+    stop(){
+      if(!audio)return;
+      audio.pause();
+      audio.currentTime=0;
+    },
+    pause(){
+      if(!audio)return;
+      audio.pause();
+    },
+    resume(){
+      if(!audio||muted)return;
+      audio.play();
+    },
+    fadeOut(dur=1500){
+      if(!audio)return;
+      const startVol=audio.volume;
+      const step=startVol/(dur/50);
+      const iv=setInterval(()=>{
+        audio.volume=Math.max(0,audio.volume-step);
+        if(audio.volume<=0){clearInterval(iv);audio.pause();audio.volume=startVol;}
+      },50);
+    },
+    setVolume(v){if(audio)audio.volume=Math.max(0,Math.min(1,v));},
+    toggleMute(){
+      muted=!muted;
+      if(audio)audio.muted=muted;
+      return muted;
+    },
+    get isMuted(){return muted;},
+  };
+})();
+
 const GW=12, GH=12, CELL=18;
 const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
@@ -668,9 +730,9 @@ function k2l(e){if(e.key.length===1)return e.key.toUpperCase();const m={Space:'S
 function syncKBL(){for(const[k,v]of Object.entries(KB)){const el=document.getElementById('kb-'+k);if(el)el.textContent=v.label;}}
 function syncHints(){const p=KB.pump.label+(KB.pump2?' / '+KB.pump2.label:'');const br=KB.brake.label+(KB.brake2?' / '+KB.brake2.label:'');['h-pump','s-pump-key'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=p;});['h-brake','s-brake-key'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=br;});}
 function resetKB(){KB=cln(DEFAULTS);saveKB();syncKBL();syncHints();}
-function closeKB(){stopListen(true);document.getElementById('scr-keys').style.display='none';syncHints();document.getElementById('scr-start').style.display='flex';}
+function closeKB(){stopListen(true);document.getElementById('scr-keys').style.display='none';syncHints();if(gameRunning){BGM.resume();}else{document.getElementById('scr-start').style.display='flex';}}
 function showScr(id){['scr-start','scr-keys','scr-win','scr-fail'].forEach(s=>document.getElementById(s).style.display='none');document.getElementById(id).style.display='flex';}
-document.getElementById('settings-btn').addEventListener('click',()=>{if(!gameRunning)return;gameRunning=false;showScr('scr-keys');});
+document.getElementById('settings-btn').addEventListener('click',()=>{if(!gameRunning)return;gameRunning=false;BGM.pause();showScr('scr-keys');});
 window.addEventListener('keydown',e=>{
   if(listening){e.preventDefault();if(e.code==='Escape'){stopListen(true);return;}KB[listening]={code:e.code,label:k2l(e)};saveKB();stopListen(false);syncKBL();syncHints();return;}
   if(!gameRunning)return;
@@ -682,6 +744,11 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyF'){e.preventDefault();fireRocket();}
   if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
   if(e.code==='KeyE'){e.preventDefault();activateBoost();}
+  if(e.code==='KeyM'){e.preventDefault();
+    const btn=document.getElementById('mute-btn');
+    const m=BGM.toggleMute();
+    if(btn){btn.textContent=m?'🔇':'🎵';btn.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';}
+  }
   // Glue mash to break free
   if(GLUE.stuck&&(e.code===KB.pump.code||e.code===KB.pump2.code)){
     e.preventDefault();GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.4);
@@ -2153,6 +2220,7 @@ function checkNpcCollision(npc,nc,nr){
 function missionFailed(){
   MS.active=false;MS.streak=0;MS.choosing=false;
   SFX.failGame();
+  BGM.fadeOut(1200);
   clearChoiceMarkers();
   document.getElementById('streak-hud').style.display='none';
   document.getElementById('map-hint').style.display='none';
@@ -2174,6 +2242,7 @@ function missionFailed(){
 
 function levelComplete(){
   gameRunning=false;MS.choosing=false;
+  BGM.fadeOut(1500);
   clearChoiceMarkers();
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
@@ -2750,6 +2819,7 @@ function startGame(){
   gameRunning=true;
   initNpcTrolleys();
   updNpcCountHUD();
+  BGM.play();
   setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
   startMissions();
 }

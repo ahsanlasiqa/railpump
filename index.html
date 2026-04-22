@@ -84,6 +84,11 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #spd-val{font-size:22px;font-weight:bold;color:#ffe680;line-height:1;}
 #spd-lbl{font-size:8px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;}
 
+/* ── Slope indicator ── */
+#slope-hud{position:fixed;bottom:72px;right:18px;z-index:10;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.28);border-radius:8px;padding:4px 10px;text-align:center;backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;pointer-events:none;}
+#slope-icon{font-size:14px;line-height:1;}
+#slope-pct{font-size:9px;letter-spacing:1px;color:rgba(255,220,120,0.7);}
+
 /* ── Minimap ── */
 #minimap{position:fixed;bottom:20px;left:18px;z-index:15;width:148px;height:148px;background:rgba(6,10,22,0.9);border:1px solid rgba(255,200,80,0.28);border-radius:11px;overflow:hidden;backdrop-filter:blur(8px);}
 #mm-cv{width:100%;height:100%;display:block;}
@@ -354,6 +359,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
+<div id="slope-hud"><div id="slope-icon">⛰️</div><div id="slope-pct">0%</div></div>
 <div id="minimap"><canvas id="mm-cv" width="148" height="148"></canvas><div id="mm-lbl">City Map</div></div>
 <div id="arrow">▲</div>
 <div class="flash" id="f-pump"></div>
@@ -667,21 +673,53 @@ const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
 const nid=(c,r)=>r*NX+c;
 
-// ALL FLAT — elevation = 0 everywhere
-const nodeY=new Float32Array(NX*NZ); // all zeros
+// ═══════════════════════════════════════════
+//  ELEVATION MAP — uphill segments
+// ═══════════════════════════════════════════
+// Each node gets a Y elevation. We use a seeded smooth noise so hills are
+// gradual (max rise = HILL_MAX over one CELL). Station nodes are forced flat
+// so packages are always picked up / delivered on level ground.
+const HILL_MAX = 2.8;   // maximum height of a node in world units
+const nodeY = new Float32Array(NX * NZ); // populated below after ST_POS is defined
 
-// Pre-computed node positions — avoids new THREE.Vector3 allocation on every npos() call
-// Flat city (Y=0), so we just store x and z, return a reused scratch vector
-const _nodePosX=new Float32Array(NX*NZ);
-const _nodePosZ=new Float32Array(NX*NZ);
+// Pre-computed node positions — X and Z never change, Y follows nodeY[]
+const _nodePosX = new Float32Array(NX * NZ);
+const _nodePosZ = new Float32Array(NX * NZ);
+const _nodePosY = new Float32Array(NX * NZ); // elevation per node
 for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
   _nodePosX[r*NX+c]=OX+c*CELL;
   _nodePosZ[r*NX+c]=OZ+r*CELL;
 }
+
+// Helper: smooth value noise via cosine interpolation (no external library needed)
+function _smoothNoise2D(c,r,seed){
+  // simple deterministic hash → cosine blend
+  const h=(x,y)=>{let n=Math.sin(x*127.1+y*311.7+seed)*43758.5453123;return n-Math.floor(n);};
+  const ic=Math.floor(c),ir=Math.floor(r);
+  const fc=c-ic,fr=r-ir;
+  const sc=fc*fc*(3-2*fc),sr=fr*fr*(3-2*fr); // smoothstep
+  return h(ic,ir)*(1-sc)*(1-sr)+h(ic+1,ir)*sc*(1-sr)+h(ic,ir+1)*(1-sc)*sr+h(ic+1,ir+1)*sc*sr;
+}
+
+function buildElevation(){
+  const SEED=7331;
+  // Multi-octave: 2 octaves, low frequency → gentle rolling hills
+  for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
+    const n1=_smoothNoise2D(c*0.28,r*0.28,SEED);
+    const n2=_smoothNoise2D(c*0.55,r*0.55,SEED+99)*0.4;
+    const raw=(n1+n2)/1.4;         // 0..1
+    const elev=(raw*raw)*HILL_MAX; // bias toward flat, occasional steep hill
+    nodeY[r*NX+c]=elev;
+    _nodePosY[r*NX+c]=elev;
+  }
+  // Force station nodes flat so pickups/deliveries always on level ground
+  // ST_POS is defined just below, so we call this after that definition
+}
+
 const _nposVec=new THREE.Vector3();
-const npos=(c,r)=>{_nposVec.set(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);return _nposVec;};
-// nposNew: when we actually need a fresh Vector3 (building, station placement — not per-frame)
-const nposNew=(c,r)=>new THREE.Vector3(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);
+// npos: scratch vector — reads elevation from _nodePosY
+const npos=(c,r)=>{_nposVec.set(_nodePosX[r*NX+c],_nodePosY[r*NX+c],_nodePosZ[r*NX+c]);return _nposVec;};
+const nposNew=(c,r)=>new THREE.Vector3(_nodePosX[r*NX+c],_nodePosY[r*NX+c],_nodePosZ[r*NX+c]);
 
 // ═══════════════════════════════════════════
 //  STATION POSITIONS
@@ -695,6 +733,21 @@ const ST_POS=[
   [0,12],[6,12],[12,12],[2,12],[9,12],
   [0,3],[12,3],[0,9],[12,9],[6,9],
 ];
+
+// Build elevation map now that ST_POS is known, then flatten station nodes
+buildElevation();
+// Force all station nodes (and 1-ring neighbours) to zero so approach is always smooth
+ST_POS.forEach(([sc,sr])=>{
+  // Centre node
+  nodeY[sr*NX+sc]=0; _nodePosY[sr*NX+sc]=0;
+  // Immediate neighbours
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dc,dr])=>{
+    const nc=sc+dc,nr=sr+dr;
+    if(nc>=0&&nc<=GW&&nr>=0&&nr<=GH){
+      nodeY[nr*NX+nc]=0; _nodePosY[nr*NX+nc]=0;
+    }
+  });
+});
 
 // ═══════════════════════════════════════════
 //  PACKAGE POOL
@@ -1069,34 +1122,57 @@ function buildWorld(){
 
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL;
-      const cx=(x0+x1)/2,cz=z0;
+      const x0=OX+c*CELL,   y0=_nodePosY[r*NX+c],       z0=OZ+r*CELL;
+      const x1=OX+(c+1)*CELL, y1=_nodePosY[r*NX+(c+1)],   z1=z0;
+      const cx=(x0+x1)/2,   cy=(y0+y1)/2,   cz=z0;
+      // Road slab: tilt to match slope
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      const pitch=Math.atan2(y1-y0,CELL);
+      rd.position.set(cx,cy+.03,cz);
+      rd.rotation.z=-pitch;
+      rd.receiveShadow=true;worldGrp.add(rd);
+      // Rails — lifted slightly above road slab centre
       [-ROFF,ROFF].forEach(off=>{
-        _mDummy.position.set(cx,.07,cz+off);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.position.set(cx, cy+.07, cz+off);
+        _mDummy.rotation.set(0,0,-pitch);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailH.setMatrixAt(riH++,_mDummy.matrix);
       });
+      // Ties — evenly spaced along the segment
       for(let s=1;s<4;s++){
-        const tx=x0+(x1-x0)*(s/4);
-        _mDummy.position.set(tx,.06,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        const ft=s/4;
+        const tx=x0+(x1-x0)*ft;
+        const ty=y0+(y1-y0)*ft;
+        _mDummy.position.set(tx, ty+.06, cz);
+        _mDummy.rotation.set(0,0,-pitch);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instTieH.setMatrixAt(tiH++,_mDummy.matrix);
       }
     }
   }
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,z1=OZ+(r+1)*CELL;
-      const cx=x0,cz=(z0+z1)/2;
+      const x0=OX+c*CELL,   y0=_nodePosY[r*NX+c],       z0=OZ+r*CELL;
+      const x1=x0,          y1=_nodePosY[(r+1)*NX+c],     z1=OZ+(r+1)*CELL;
+      const cx=x0,          cy=(y0+y1)/2,   cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      const pitch=Math.atan2(y1-y0,CELL);
+      rd.position.set(cx, cy+.03, cz);
+      rd.rotation.x=pitch;
+      rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        _mDummy.position.set(cx+off,.07,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.position.set(cx+off, cy+.07, cz);
+        _mDummy.rotation.set(pitch,0,0);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailV.setMatrixAt(riV++,_mDummy.matrix);
       });
       for(let s=1;s<4;s++){
-        const tz=z0+(z1-z0)*(s/4);
-        _mDummy.position.set(cx,.06,tz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        const ft=s/4;
+        const tz=z0+(z1-z0)*ft;
+        const ty=y0+(y1-y0)*ft;
+        _mDummy.position.set(cx, ty+.06, tz);
+        _mDummy.rotation.set(pitch,0,0);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instTieV.setMatrixAt(tiV++,_mDummy.matrix);
       }
     }
@@ -1114,10 +1190,12 @@ function buildWorld(){
     _lampPostCount);
   let _pi=0;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    const p=npos(c,r);
+    const p=npos(c,r);           // now includes correct Y
     const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.08,4),platM);
-    pl.position.set(p.x,.04,p.z);worldGrp.add(pl);
-    _mDummy.position.set(p.x+1.4,.35,p.z+1.4);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+    pl.position.set(p.x, p.y+.04, p.z);  // sit on terrain
+    worldGrp.add(pl);
+    _mDummy.position.set(p.x+1.4, p.y+.35, p.z+1.4);
+    _mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
     _mDummy.updateMatrix();instPosts.setMatrixAt(_pi++,_mDummy.matrix);
   }
   instPosts.instanceMatrix.needsUpdate=true;
@@ -1204,8 +1282,14 @@ function buildWorld(){
   for(let r=0;r<GH;r++){
     for(let c=0;c<GW;c++){
       const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
+      // Sample terrain at the 4 corners of this cell, use min so buildings don't float
+      const yTL=_nodePosY[r*NX+c];
+      const yTR=_nodePosY[r*NX+(c+1)];
+      const yBL=_nodePosY[(r+1)*NX+c];
+      const yBR=_nodePosY[(r+1)*NX+(c+1)];
+      const bBaseY=Math.min(yTL,yTR,yBL,yBR); // sit on lowest corner
       const bldGrp=new THREE.Group();
-      bldGrp.position.set(bx,0,bz);worldGrp.add(bldGrp);
+      bldGrp.position.set(bx,bBaseY,bz);worldGrp.add(bldGrp);
 
       const bW=CELL-5.5, bD=CELL-5.5;
       const totalFloors=3+Math.floor(rng()*7);
@@ -1515,9 +1599,10 @@ function buildWorld(){
     const isSt=ST_POS.some(([sc,sr])=>sc===c&&sr===r);
     if(!isSt){
       const p=npos(c,r);
+      const baseY=p.y+1.2;  // float above terrain
       const m=new THREE.Mesh(cGeo,cMat);
-      m.position.set(p.x,1.2,p.z);
-      m.userData={baseY:1.2,phase:rng()*Math.PI*2,c,r};
+      m.position.set(p.x,baseY,p.z);
+      m.userData={baseY,phase:rng()*Math.PI*2,c,r};
       scene.add(m);coinMeshes.push({m,c,r,collected:false});
     }
   }
@@ -1526,10 +1611,11 @@ function buildWorld(){
   for(let i=0;i<8;i++){
     const c=1+Math.floor(rng()*(GW-1)),r=1+Math.floor(rng()*(GH-1));
     const p=npos(c,r),t=PU_DEFS[i%PU_DEFS.length];
+    const baseY=p.y+1.5;
     const grp=new THREE.Group();
     const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),
       new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:1.0,metalness:.4,roughness:.2}));
-    grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
+    grp.add(core);grp.position.set(p.x,baseY,p.z);grp.userData={baseY,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
 }
@@ -1551,7 +1637,7 @@ function buildStation(idx,col,row){
   ctx.fillText(`${ST_EMOJIS[idx]} ${ST_NAMES[idx]}`,128,28);
   const lm=new THREE.Mesh(new THREE.PlaneGeometry(3.5,.77),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
   lm.position.set(0,3.7,0);g.add(lm);
-  g.position.set(p.x,0,p.z);
+  g.position.set(p.x, p.y, p.z);  // p.y = 0 for stations (flattened), correct for any future changes
   scene.add(g);stationMeshes.push(g);stationRings.push(ring);
 }
 
@@ -2035,7 +2121,7 @@ function buildNpcTrolley(colorHex){
   // Beacon (colored)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
-  grp.position.set(0,.35,0);
+  // Note: grp.position is set externally by spawnNpcAt using terrain Y — don't set it here
   scene.add(grp);
   return grp;
 }
@@ -2062,7 +2148,7 @@ function spawnNpcAt(avoidNode){
 
   const sc=startNode%NX, sr=Math.floor(startNode/NX);
   const sp=npos(sc,sr);
-  mesh.position.set(sp.x,.35,sp.z);
+  mesh.position.set(sp.x, sp.y+0.35, sp.z);
   const nbrs=getNeighbors(sc,sr,-1);
   const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
   const npcObj={
@@ -2138,17 +2224,26 @@ function updateNpcTrolleys(dt,gt){
     // Render NPC position — raw lookup avoids scratch vector aliasing
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
-    const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
-    const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
+    const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+    const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
     const px=x0+(x1-x0)*npc.edgeT;
+    const py=y0+(y1-y0)*npc.edgeT;
     const pz=z0+(z1-z0)*npc.edgeT;
-    npc.mesh.position.set(px,.35,pz);
+    npc.mesh.position.set(px, py+0.35, pz);
 
     // OPT: skip expensive trig/cosmetics for distant NPCs (LOD)
     if(isMid){
-      const dx=x1-x0,dz=z1-z0;
-      const hl=Math.sqrt(dx*dx+dz*dz);
-      if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
+      const dx=x1-x0, dy=y1-y0, dz=z1-z0;
+      const hl=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(hl>0.01){
+        // Full quaternion rotation so NPC also tilts on slopes (same technique as player)
+        _tFwd.set(dx/hl, dy/hl, dz/hl);
+        _tRight.crossVectors(_tFwd, _tUp).normalize();
+        _tUpSlope.crossVectors(_tRight, _tFwd).normalize();
+        _tMat.makeBasis(_tRight, _tUpSlope, _tFwd.clone().negate());
+        _tQuat.setFromRotationMatrix(_tMat);
+        npc.mesh.quaternion.slerp(_tQuat, 0.15);
+      }
     }
     if(isNear){
       // Animate pump wobble
@@ -2413,6 +2508,34 @@ function physics(dt){
   GS.inv=Math.max(0,GS.inv-dt);
   jCool=Math.max(0,jCool-dt);
 
+  // ── Slope physics ──
+  // Compute the height difference between current and next node.
+  // Positive slope (climbing) → extra drag + energy cost.
+  // Negative slope (descending) → free speed bonus.
+  {
+    const nc=tNode%NX,   nr=Math.floor(tNode/NX);
+    const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+    const y0=_nodePosY[nr*NX+nc];
+    const y1=_nodePosY[nnr*NX+nnc];
+    const rise=y1-y0;   // positive = uphill, negative = downhill
+    const grade=rise/CELL;  // slope ratio (rise / run)
+
+    if(grade>0.02){
+      // Uphill: speed bleeds off proportional to steepness
+      const hillDrag=grade*18*dt;
+      GS.speed=Math.max(0,GS.speed-hillDrag);
+      // Pumping costs a bit more energy uphill (drain at half the hillDrag rate)
+      GS.energy=Math.max(0,GS.energy-grade*8*dt);
+      // Show HUD hint once per edge when climbing
+      if(tEdgeT<0.05&&grade>0.08) showNotif('⛰️ Uphill! Pump harder!','#ffaa44');
+    } else if(grade<-0.02){
+      // Downhill: free speed, capped so we don't go faster than boost max
+      const rollBonus=(-grade)*14*dt;
+      GS.speed=Math.min(GS.speed+rollBonus, boostActive?22:18);
+      if(tEdgeT<0.05&&grade<-0.08) showNotif('🎢 Downhill! Free speed!','#44ffaa');
+    }
+  }
+
   const advance=(GS.speed*dt)/CELL;
   tEdgeT=Math.min(tEdgeT+advance,1.0);
 
@@ -2440,25 +2563,48 @@ function physics(dt){
 // ═══════════════════════════════════════════
 //  RENDERING
 // ═══════════════════════════════════════════
+// ─── Reusable quaternion/vector scratch objects for moveTrolley ───
+const _tQuat   = new THREE.Quaternion();
+const _tUp     = new THREE.Vector3(0,1,0);
+const _tFwd    = new THREE.Vector3();
+const _tRight  = new THREE.Vector3();
+const _tUpSlope= new THREE.Vector3();
+const _tMat    = new THREE.Matrix4();
+
 function moveTrolley(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nc=tNode%NX,    nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  // Use lookup table directly — avoids scratch vector aliasing and new Vector3 alloc
-  const x0=_nodePosX[nr*NX+nc], z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
-  const px=x0+(x1-x0)*tEdgeT;
-  const pz=z0+(z1-z0)*tEdgeT;
 
-  trolley.position.set(px,.35,pz);
-  trolley.rotation.x=0;trolley.rotation.z=0;
+  const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  const t=tEdgeT;
 
-  const dx=x1-x0,dz=z1-z0;
-  const hlen=Math.sqrt(dx*dx+dz*dz);
-  if(hlen>0.01)trolley.rotation.y=Math.atan2(dx,dz);
+  // Interpolated world position — Y follows terrain
+  const px=x0+(x1-x0)*t;
+  const py=y0+(y1-y0)*t;
+  const pz=z0+(z1-z0)*t;
+  trolley.position.set(px, py+0.35, pz);
+
+  // Forward vector along the track segment (includes Y component → gives slope angle)
+  const dx=x1-x0, dy=y1-y0, dz=z1-z0;
+  const hlen3=Math.sqrt(dx*dx+dy*dy+dz*dz);
+  if(hlen3>0.01){
+    _tFwd.set(dx/hlen3, dy/hlen3, dz/hlen3);
+
+    // "Up slope" = world-up projected to be perpendicular to forward
+    // This gives the correct tilt (pitch) without gimbal issues
+    _tRight.crossVectors(_tFwd, _tUp).normalize();
+    _tUpSlope.crossVectors(_tRight, _tFwd).normalize();
+
+    // Build rotation matrix from axes: X=right, Y=upSlope, Z=-forward
+    _tMat.makeBasis(_tRight, _tUpSlope, _tFwd.clone().negate());
+    _tQuat.setFromRotationMatrix(_tMat);
+    trolley.quaternion.slerp(_tQuat, 0.18); // smooth interpolation prevents snap
+  }
 
   trolley.visible=GS.inv>0?Math.floor(Date.now()/100)%2===0:true;
-  if(pkgBox.visible)pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
-  if(vipGlow.visible)vipGlow.rotation.y+=.04;
+  if(pkgBox.visible) pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
+  if(vipGlow.visible) vipGlow.rotation.y+=.04;
 }
 
 let camInit=false;
@@ -2485,27 +2631,29 @@ function toggleView(){
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
-  const px=x0+(x1-x0)*tEdgeT;
-  const pz=z0+(z1-z0)*tEdgeT;
-  const dx=x1-x0,dz=z1-z0;
+  const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  const t=tEdgeT;
+  const px=x0+(x1-x0)*t;
+  const py=y0+(y1-y0)*t;   // actual terrain height at trolley
+  const pz=z0+(z1-z0)*t;
+  const dx=x1-x0, dz=z1-z0;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
-  const fdx=dx/hlen,fdz=dz/hlen;
+  const fdx=dx/hlen, fdz=dz/hlen;
   const sh=GS.shake;
 
   if(camMode==='first'){
-    const eyeH=2.3;
+    const eyeH=py+2.3;  // eye rides on terrain
     const eyeX=px+(Math.random()-.5)*sh*.04;
     const eyeY=eyeH+(Math.random()-.5)*sh*.03;
     const eyeZ=pz+(Math.random()-.5)*sh*.04;
     camera.position.set(eyeX,eyeY,eyeZ);
-    camLookTarget.set(px+fdx*8,eyeH,pz+fdz*8);
+    camLookTarget.set(px+fdx*8, eyeH, pz+fdz*8);
     camera.lookAt(camLookTarget);
   }else{
-    const camBack=22,camUp=15;
+    const camBack=22, camUp=15;
     const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
-    const ty=camUp+(Math.random()-.5)*sh*.06;
+    const ty=py+camUp+(Math.random()-.5)*sh*.06;  // camera climbs with terrain
     const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
     if(!camInit){
       camera.position.set(tx,ty,tz);
@@ -2515,7 +2663,7 @@ function moveCam(){
       camTargetPos.set(tx,ty,tz);
       camera.position.lerp(camTargetPos,.12);
     }
-    camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
+    camLookTarget.set(px+fdx*3, py+1.8, pz+fdz*3);  // look-at follows terrain
     camera.lookAt(camLookTarget);
   }
   GS.shake*=.82;
@@ -2748,6 +2896,9 @@ const DOM={
   spdVal:document.getElementById('spd-val'),
   pumpFill:document.getElementById('pump-fill'),
   npcCountVal:document.getElementById('npc-count-val'),
+  slopeHud:document.getElementById('slope-hud'),
+  slopeIcon:document.getElementById('slope-icon'),
+  slopePct:document.getElementById('slope-pct'),
 };
 // Track last-written values to skip redundant DOM writes
 const _hudLast={score:-1,del:-1,coins:-1,spd:-1,energy:-1};
@@ -2775,6 +2926,23 @@ function updHUD(){
     _hudLast.energy=pct;
   }
   GS.braking=keys.brake;
+
+  // ── Slope indicator HUD ──
+  {
+    const nc=tNode%NX,   nr=Math.floor(tNode/NX);
+    const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+    const rise=_nodePosY[nnr*NX+nnc]-_nodePosY[nr*NX+nc];
+    const grade=rise/CELL;
+    const pct=Math.round(Math.abs(grade)*100);
+    if(pct>2){
+      DOM.slopeHud.style.opacity='1';
+      DOM.slopeIcon.textContent=grade>0?'⛰️':'🎢';
+      DOM.slopePct.textContent=(grade>0?'+':'-')+pct+'%';
+      DOM.slopeHud.style.borderColor=grade>0?'rgba(255,140,40,0.6)':'rgba(80,220,120,0.6)';
+    } else {
+      DOM.slopeHud.style.opacity='0';
+    }
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -2806,6 +2974,21 @@ let mmStaticDirty=true; // set true to rebake
 
 function bakeMmStatic(){
   mmSCtx.clearRect(0,0,MM,MM);
+
+  // ── Elevation heatmap: draw each node cell as a coloured square ──
+  // High nodes = warm orange tint, flat = dark blue, downhill runs visible
+  for(let r=0;r<GH;r++) for(let c=0;c<GW;c++){
+    const avg=(_nodePosY[r*NX+c]+_nodePosY[r*NX+(c+1)]+_nodePosY[(r+1)*NX+c]+_nodePosY[(r+1)*NX+(c+1)])/4;
+    const t=Math.min(1,avg/HILL_MAX);
+    const x0=_mmX[r*(GW+1)+c], y0=_mmY[r*(GW+1)+c];
+    const x1=_mmX[r*(GW+1)+(c+1)], y1=_mmY[(r+1)*(GW+1)+c];
+    if(t>0.05){
+      // Warm orange for hills, alpha proportional to height
+      mmSCtx.fillStyle=`rgba(255,${Math.round(160-t*120)},30,${(t*0.38).toFixed(2)})`;
+      mmSCtx.fillRect(x0,y0,x1-x0,y1-y0);
+    }
+  }
+
   // Grid lines
   mmSCtx.strokeStyle='rgba(255,200,80,0.12)';mmSCtx.lineWidth=.5;
   for(let c=0;c<=GW;c++){
@@ -2928,7 +3111,7 @@ function startGame(){
   document.getElementById('pu-bar').style.display='none';
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
-  const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
+  const sp=npos(6,6);trolley.position.set(sp.x, sp.y+0.35, sp.z);
   buildWorld();
   gameRunning=true;
   initNpcTrolleys();

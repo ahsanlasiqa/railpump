@@ -84,6 +84,11 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #spd-val{font-size:22px;font-weight:bold;color:#ffe680;line-height:1;}
 #spd-lbl{font-size:8px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;}
 
+/* ── Slope indicator ── */
+#slope-hud{position:fixed;bottom:72px;right:18px;z-index:10;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.28);border-radius:8px;padding:4px 10px;text-align:center;backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;pointer-events:none;}
+#slope-icon{font-size:14px;line-height:1;}
+#slope-pct{font-size:9px;letter-spacing:1px;color:rgba(255,220,120,0.7);}
+
 /* ── Minimap ── */
 #minimap{position:fixed;bottom:20px;left:18px;z-index:15;width:148px;height:148px;background:rgba(6,10,22,0.9);border:1px solid rgba(255,200,80,0.28);border-radius:11px;overflow:hidden;backdrop-filter:blur(8px);}
 #mm-cv{width:100%;height:100%;display:block;}
@@ -176,29 +181,8 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #bid-skip:hover{background:rgba(255,255,255,0.12);}
 #bid-countdown{font-size:9px;color:rgba(255,220,120,0.4);margin-top:8px;letter-spacing:1px;}
 
-/* ── AI Competitor Score Bar (top centre) ── */
-#race-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:30;display:none;flex-direction:column;align-items:center;gap:3px;padding:7px 18px 8px;background:rgba(4,6,18,0.92);border:1.5px solid rgba(180,80,255,0.5);border-top:none;border-radius:0 0 14px 14px;backdrop-filter:blur(10px);pointer-events:none;}
-#race-title{font-size:8px;letter-spacing:3px;color:rgba(200,150,255,0.6);text-transform:uppercase;}
-#race-scores{display:flex;gap:22px;align-items:center;}
-.rs-block{text-align:center;}
-.rs-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
-.rs-val{font-size:17px;font-weight:bold;line-height:1.1;}
-#rs-player .rs-val{color:#ffe680;text-shadow:0 0 8px rgba(255,220,80,0.7);}
-#rs-ai .rs-val{color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,0.7);}
-#race-vs{font-size:12px;color:rgba(255,255,255,0.3);font-weight:bold;}
-#race-progress{width:220px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:visible;position:relative;margin-top:2px;}
-#rp-player{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#ff6b35,#ffe680);border-radius:3px;transition:width .3s;}
-#rp-ai{position:absolute;top:0;height:100%;background:linear-gradient(90deg,#9933ff,#cc88ff);border-radius:3px;transition:width .3s;opacity:.75;}
-#race-goal{font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:1px;}
-
-/* ── AI trolley label ── */
-#ai-label{position:fixed;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s;font-size:11px;font-weight:bold;color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,1);letter-spacing:1px;display:none;}
-
-/* ── Race result overlay ── */
-#scr-race{display:none;}
-#scr-race .win-banner{font-size:clamp(26px,6vw,58px);margin-bottom:8px;}
-#scr-race .race-detail{font-size:13px;color:rgba(220,180,255,0.8);margin:3px 0;}
-
+/* ── NPC Trolley label ── */
+.npc-label{position:absolute;pointer-events:none;}
 
 /* ── View toggle button ── */
 #view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,180,255,0.4);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;pointer-events:all;}
@@ -254,24 +238,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <div class="hp"><div class="hl">👵 Granny</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
   </div>
 </div>
-
-<!-- Race progress bar (top centre) -->
-<div id="race-bar">
-  <div id="race-title">🏁 Race to 1,000,000</div>
-  <div id="race-scores">
-    <div class="rs-block" id="rs-player"><div class="rs-lbl">You</div><div class="rs-val" id="rs-player-val">0</div></div>
-    <div id="race-vs">VS</div>
-    <div class="rs-block" id="rs-ai"><div class="rs-lbl">🤖 CPU</div><div class="rs-val" id="rs-ai-val">0</div></div>
-  </div>
-  <div id="race-progress">
-    <div id="rp-player" style="width:0%"></div>
-    <div id="rp-ai" style="width:0%"></div>
-  </div>
-  <div id="race-goal">First to 1,000,000 wins</div>
-</div>
-
-<!-- AI trolley floating label -->
-<div id="ai-label">🤖 CPU</div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
 <button id="mute-btn" title="Toggle Music [M]" onclick="const m=BGM.toggleMute();this.textContent=m?'🔇':'🎵';this.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';">🎵</button>
@@ -393,6 +359,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
+<div id="slope-hud"><div id="slope-icon">⛰️</div><div id="slope-pct">0%</div></div>
 <div id="minimap"><canvas id="mm-cv" width="148" height="148"></canvas><div id="mm-lbl">City Map</div></div>
 <div id="arrow">▲</div>
 <div class="flash" id="f-pump"></div>
@@ -468,36 +435,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <p id="fail-desc">You didn't reach the station in time.</p>
   <p id="fail-tip" style="font-size:11px;color:rgba(255,200,100,0.5)"></p>
   <button class="btn" onclick="startGame()">🔄 RETRY</button>
-  <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
-</div>
-
-<!-- RACE WIN -->
-<div class="overlay" id="scr-race-win" style="display:none">
-  <div class="win-banner">🏆 YOU WIN!</div>
-  <h1 style="color:#ffe680;font-size:clamp(18px,4vw,32px)">First to 1,000,000!</h1>
-  <div id="score-final-rw" style="font-size:42px;color:#ffe680;text-shadow:0 0 20px rgba(255,200,80,1);margin:6px 0">0</div>
-  <div style="margin:10px 0">
-    <div class="res-row"><span>Your final score</span><span id="rw-pscore">0</span></div>
-    <div class="res-row"><span>CPU score</span><span id="rw-aiscore" style="color:#cc88ff">0</span></div>
-    <div class="res-row"><span>Total Deliveries</span><span id="rw-del">0</span></div>
-    <div class="res-row"><span>Best streak</span><span id="rw-str">0×</span></div>
-  </div>
-  <button class="btn" onclick="startGame()">🔄 Race Again</button>
-  <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
-</div>
-
-<!-- RACE LOSE -->
-<div class="overlay" id="scr-race-lose" style="display:none">
-  <div class="win-banner" style="font-size:clamp(22px,5vw,48px)">🤖 CPU WINS!</div>
-  <h1 style="color:#cc88ff;font-size:clamp(16px,3vw,26px)">CPU reached 1,000,000 first!</h1>
-  <div id="score-final-rl" style="font-size:36px;color:#ffe680;text-shadow:0 0 16px rgba(255,200,80,0.8);margin:6px 0">0</div>
-  <div style="margin:10px 0">
-    <div class="res-row"><span>Your score</span><span id="rl-pscore">0</span></div>
-    <div class="res-row"><span>CPU score</span><span id="rl-aiscore" style="color:#cc88ff">1,000,000 🤖</span></div>
-    <div class="res-row"><span>Total Deliveries</span><span id="rl-del">0</span></div>
-  </div>
-  <p style="font-size:11px;color:rgba(255,180,100,0.55)" id="rl-tip"></p>
-  <button class="btn" onclick="startGame()">🔄 Rematch</button>
   <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
 </div>
 
@@ -736,21 +673,53 @@ const NX=GW+1, NZ=GH+1;
 const OX=-(GW*CELL)/2, OZ=-(GH*CELL)/2;
 const nid=(c,r)=>r*NX+c;
 
-// ALL FLAT — elevation = 0 everywhere
-const nodeY=new Float32Array(NX*NZ); // all zeros
+// ═══════════════════════════════════════════
+//  ELEVATION MAP — uphill segments
+// ═══════════════════════════════════════════
+// Each node gets a Y elevation. We use a seeded smooth noise so hills are
+// gradual (max rise = HILL_MAX over one CELL). Station nodes are forced flat
+// so packages are always picked up / delivered on level ground.
+const HILL_MAX = 2.8;   // maximum height of a node in world units
+const nodeY = new Float32Array(NX * NZ); // populated below after ST_POS is defined
 
-// Pre-computed node positions — avoids new THREE.Vector3 allocation on every npos() call
-// Flat city (Y=0), so we just store x and z, return a reused scratch vector
-const _nodePosX=new Float32Array(NX*NZ);
-const _nodePosZ=new Float32Array(NX*NZ);
+// Pre-computed node positions — X and Z never change, Y follows nodeY[]
+const _nodePosX = new Float32Array(NX * NZ);
+const _nodePosZ = new Float32Array(NX * NZ);
+const _nodePosY = new Float32Array(NX * NZ); // elevation per node
 for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
   _nodePosX[r*NX+c]=OX+c*CELL;
   _nodePosZ[r*NX+c]=OZ+r*CELL;
 }
+
+// Helper: smooth value noise via cosine interpolation (no external library needed)
+function _smoothNoise2D(c,r,seed){
+  // simple deterministic hash → cosine blend
+  const h=(x,y)=>{let n=Math.sin(x*127.1+y*311.7+seed)*43758.5453123;return n-Math.floor(n);};
+  const ic=Math.floor(c),ir=Math.floor(r);
+  const fc=c-ic,fr=r-ir;
+  const sc=fc*fc*(3-2*fc),sr=fr*fr*(3-2*fr); // smoothstep
+  return h(ic,ir)*(1-sc)*(1-sr)+h(ic+1,ir)*sc*(1-sr)+h(ic,ir+1)*(1-sc)*sr+h(ic+1,ir+1)*sc*sr;
+}
+
+function buildElevation(){
+  const SEED=7331;
+  // Multi-octave: 2 octaves, low frequency → gentle rolling hills
+  for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
+    const n1=_smoothNoise2D(c*0.28,r*0.28,SEED);
+    const n2=_smoothNoise2D(c*0.55,r*0.55,SEED+99)*0.4;
+    const raw=(n1+n2)/1.4;         // 0..1
+    const elev=(raw*raw)*HILL_MAX; // bias toward flat, occasional steep hill
+    nodeY[r*NX+c]=elev;
+    _nodePosY[r*NX+c]=elev;
+  }
+  // Force station nodes flat so pickups/deliveries always on level ground
+  // ST_POS is defined just below, so we call this after that definition
+}
+
 const _nposVec=new THREE.Vector3();
-const npos=(c,r)=>{_nposVec.set(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);return _nposVec;};
-// nposNew: when we actually need a fresh Vector3 (building, station placement — not per-frame)
-const nposNew=(c,r)=>new THREE.Vector3(_nodePosX[r*NX+c],0,_nodePosZ[r*NX+c]);
+// npos: scratch vector — reads elevation from _nodePosY
+const npos=(c,r)=>{_nposVec.set(_nodePosX[r*NX+c],_nodePosY[r*NX+c],_nodePosZ[r*NX+c]);return _nposVec;};
+const nposNew=(c,r)=>new THREE.Vector3(_nodePosX[r*NX+c],_nodePosY[r*NX+c],_nodePosZ[r*NX+c]);
 
 // ═══════════════════════════════════════════
 //  STATION POSITIONS
@@ -764,6 +733,21 @@ const ST_POS=[
   [0,12],[6,12],[12,12],[2,12],[9,12],
   [0,3],[12,3],[0,9],[12,9],[6,9],
 ];
+
+// Build elevation map now that ST_POS is known, then flatten station nodes
+buildElevation();
+// Force all station nodes (and 1-ring neighbours) to zero so approach is always smooth
+ST_POS.forEach(([sc,sr])=>{
+  // Centre node
+  nodeY[sr*NX+sc]=0; _nodePosY[sr*NX+sc]=0;
+  // Immediate neighbours
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dc,dr])=>{
+    const nc=sc+dc,nr=sr+dr;
+    if(nc>=0&&nc<=GW&&nr>=0&&nr<=GH){
+      nodeY[nr*NX+nc]=0; _nodePosY[nr*NX+nc]=0;
+    }
+  });
+});
 
 // ═══════════════════════════════════════════
 //  PACKAGE POOL
@@ -1138,34 +1122,57 @@ function buildWorld(){
 
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL;
-      const cx=(x0+x1)/2,cz=z0;
+      const x0=OX+c*CELL,   y0=_nodePosY[r*NX+c],       z0=OZ+r*CELL;
+      const x1=OX+(c+1)*CELL, y1=_nodePosY[r*NX+(c+1)],   z1=z0;
+      const cx=(x0+x1)/2,   cy=(y0+y1)/2,   cz=z0;
+      // Road slab: tilt to match slope
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      const pitch=Math.atan2(y1-y0,CELL);
+      rd.position.set(cx,cy+.03,cz);
+      rd.rotation.z=-pitch;
+      rd.receiveShadow=true;worldGrp.add(rd);
+      // Rails — lifted slightly above road slab centre
       [-ROFF,ROFF].forEach(off=>{
-        _mDummy.position.set(cx,.07,cz+off);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.position.set(cx, cy+.07, cz+off);
+        _mDummy.rotation.set(0,0,-pitch);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailH.setMatrixAt(riH++,_mDummy.matrix);
       });
+      // Ties — evenly spaced along the segment
       for(let s=1;s<4;s++){
-        const tx=x0+(x1-x0)*(s/4);
-        _mDummy.position.set(tx,.06,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        const ft=s/4;
+        const tx=x0+(x1-x0)*ft;
+        const ty=y0+(y1-y0)*ft;
+        _mDummy.position.set(tx, ty+.06, cz);
+        _mDummy.rotation.set(0,0,-pitch);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instTieH.setMatrixAt(tiH++,_mDummy.matrix);
       }
     }
   }
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,z1=OZ+(r+1)*CELL;
-      const cx=x0,cz=(z0+z1)/2;
+      const x0=OX+c*CELL,   y0=_nodePosY[r*NX+c],       z0=OZ+r*CELL;
+      const x1=x0,          y1=_nodePosY[(r+1)*NX+c],     z1=OZ+(r+1)*CELL;
+      const cx=x0,          cy=(y0+y1)/2,   cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      const pitch=Math.atan2(y1-y0,CELL);
+      rd.position.set(cx, cy+.03, cz);
+      rd.rotation.x=pitch;
+      rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        _mDummy.position.set(cx+off,.07,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.position.set(cx+off, cy+.07, cz);
+        _mDummy.rotation.set(pitch,0,0);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailV.setMatrixAt(riV++,_mDummy.matrix);
       });
       for(let s=1;s<4;s++){
-        const tz=z0+(z1-z0)*(s/4);
-        _mDummy.position.set(cx,.06,tz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        const ft=s/4;
+        const tz=z0+(z1-z0)*ft;
+        const ty=y0+(y1-y0)*ft;
+        _mDummy.position.set(cx, ty+.06, tz);
+        _mDummy.rotation.set(pitch,0,0);
+        _mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instTieV.setMatrixAt(tiV++,_mDummy.matrix);
       }
     }
@@ -1183,10 +1190,12 @@ function buildWorld(){
     _lampPostCount);
   let _pi=0;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
-    const p=npos(c,r);
+    const p=npos(c,r);           // now includes correct Y
     const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.08,4),platM);
-    pl.position.set(p.x,.04,p.z);worldGrp.add(pl);
-    _mDummy.position.set(p.x+1.4,.35,p.z+1.4);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+    pl.position.set(p.x, p.y+.04, p.z);  // sit on terrain
+    worldGrp.add(pl);
+    _mDummy.position.set(p.x+1.4, p.y+.35, p.z+1.4);
+    _mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
     _mDummy.updateMatrix();instPosts.setMatrixAt(_pi++,_mDummy.matrix);
   }
   instPosts.instanceMatrix.needsUpdate=true;
@@ -1273,8 +1282,14 @@ function buildWorld(){
   for(let r=0;r<GH;r++){
     for(let c=0;c<GW;c++){
       const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
+      // Sample terrain at the 4 corners of this cell, use min so buildings don't float
+      const yTL=_nodePosY[r*NX+c];
+      const yTR=_nodePosY[r*NX+(c+1)];
+      const yBL=_nodePosY[(r+1)*NX+c];
+      const yBR=_nodePosY[(r+1)*NX+(c+1)];
+      const bBaseY=Math.min(yTL,yTR,yBL,yBR); // sit on lowest corner
       const bldGrp=new THREE.Group();
-      bldGrp.position.set(bx,0,bz);worldGrp.add(bldGrp);
+      bldGrp.position.set(bx,bBaseY,bz);worldGrp.add(bldGrp);
 
       const bW=CELL-5.5, bD=CELL-5.5;
       const totalFloors=3+Math.floor(rng()*7);
@@ -1584,9 +1599,10 @@ function buildWorld(){
     const isSt=ST_POS.some(([sc,sr])=>sc===c&&sr===r);
     if(!isSt){
       const p=npos(c,r);
+      const baseY=p.y+1.2;  // float above terrain
       const m=new THREE.Mesh(cGeo,cMat);
-      m.position.set(p.x,1.2,p.z);
-      m.userData={baseY:1.2,phase:rng()*Math.PI*2,c,r};
+      m.position.set(p.x,baseY,p.z);
+      m.userData={baseY,phase:rng()*Math.PI*2,c,r};
       scene.add(m);coinMeshes.push({m,c,r,collected:false});
     }
   }
@@ -1595,10 +1611,11 @@ function buildWorld(){
   for(let i=0;i<8;i++){
     const c=1+Math.floor(rng()*(GW-1)),r=1+Math.floor(rng()*(GH-1));
     const p=npos(c,r),t=PU_DEFS[i%PU_DEFS.length];
+    const baseY=p.y+1.5;
     const grp=new THREE.Group();
     const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),
       new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:1.0,metalness:.4,roughness:.2}));
-    grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
+    grp.add(core);grp.position.set(p.x,baseY,p.z);grp.userData={baseY,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
 }
@@ -1620,7 +1637,7 @@ function buildStation(idx,col,row){
   ctx.fillText(`${ST_EMOJIS[idx]} ${ST_NAMES[idx]}`,128,28);
   const lm=new THREE.Mesh(new THREE.PlaneGeometry(3.5,.77),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
   lm.position.set(0,3.7,0);g.add(lm);
-  g.position.set(p.x,0,p.z);
+  g.position.set(p.x, p.y, p.z);  // p.y = 0 for stations (flattened), correct for any future changes
   scene.add(g);stationMeshes.push(g);stationRings.push(ring);
 }
 
@@ -2065,9 +2082,6 @@ function doDeliver(){
     document.getElementById('streak-val').textContent=`×${MS.streak}`;
   }
   MS.active=false;
-  // ── Race: check if player reached target ──
-  updateRaceBar();
-  if(GS.score>=RACE_TARGET){raceOver('player');return;}
   setTimeout(()=>{if(gameRunning)showPackageChoice(MS.toSt);},1200);
 }
 
@@ -2107,7 +2121,7 @@ function buildNpcTrolley(colorHex){
   // Beacon (colored)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
   bec.position.set(0,1.48,0);grp.add(bec);
-  grp.position.set(0,.35,0);
+  // Note: grp.position is set externally by spawnNpcAt using terrain Y — don't set it here
   scene.add(grp);
   return grp;
 }
@@ -2134,7 +2148,7 @@ function spawnNpcAt(avoidNode){
 
   const sc=startNode%NX, sr=Math.floor(startNode/NX);
   const sp=npos(sc,sr);
-  mesh.position.set(sp.x,.35,sp.z);
+  mesh.position.set(sp.x, sp.y+0.35, sp.z);
   const nbrs=getNeighbors(sc,sr,-1);
   const nextDir=nbrs[Math.floor(Math.random()*nbrs.length)];
   const npcObj={
@@ -2210,17 +2224,26 @@ function updateNpcTrolleys(dt,gt){
     // Render NPC position — raw lookup avoids scratch vector aliasing
     const nc=npc.node%NX,nr=Math.floor(npc.node/NX);
     const nnc=npc.nextNode%NX,nnr=Math.floor(npc.nextNode/NX);
-    const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
-    const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
+    const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+    const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
     const px=x0+(x1-x0)*npc.edgeT;
+    const py=y0+(y1-y0)*npc.edgeT;
     const pz=z0+(z1-z0)*npc.edgeT;
-    npc.mesh.position.set(px,.35,pz);
+    npc.mesh.position.set(px, py+0.35, pz);
 
     // OPT: skip expensive trig/cosmetics for distant NPCs (LOD)
     if(isMid){
-      const dx=x1-x0,dz=z1-z0;
-      const hl=Math.sqrt(dx*dx+dz*dz);
-      if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
+      const dx=x1-x0, dy=y1-y0, dz=z1-z0;
+      const hl=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(hl>0.01){
+        // Full quaternion rotation so NPC also tilts on slopes (same technique as player)
+        _tFwd.set(dx/hl, dy/hl, dz/hl);
+        _tRight.crossVectors(_tFwd, _tUp).normalize();
+        _tUpSlope.crossVectors(_tRight, _tFwd).normalize();
+        _tMat.makeBasis(_tRight, _tUpSlope, _tFwd.clone().negate());
+        _tQuat.setFromRotationMatrix(_tMat);
+        npc.mesh.quaternion.slerp(_tQuat, 0.15);
+      }
     }
     if(isNear){
       // Animate pump wobble
@@ -2252,332 +2275,6 @@ function updateNpcTrolleys(dt,gt){
       }
     }
   });
-}
-
-// ═══════════════════════════════════════════
-//  AI COMPETITOR — CPU Player
-// ═══════════════════════════════════════════
-// The CPU rides its own trolley on the same grid, picks up & delivers packages
-// using BFS pathfinding. It scores independently and races the player to 1,000,000.
-
-const RACE_TARGET = 1_000_000;
-
-// ── AI state ──
-const AI = {
-  score: 0,
-  node: 0, nextNode: 1, edgeT: 0, facing: 0,
-  speed: 0,
-  energy: 60,
-  // mission
-  phase: 'idle',   // 'idle' | 'going_pickup' | 'going_deliver'
-  fromSt: -1, toSt: -1,
-  path: [],        // BFS path as array of nodeIds
-  pathIdx: 0,
-  delivsDone: 0,
-  streak: 0,
-  // cosmetic
-  pumpAng: 0,
-  mesh: null,
-  pumpGrp: null,
-  labelEl: null,
-};
-
-// ── BFS pathfinding on the grid graph ──
-function aiBFS(startNode, targetNode) {
-  if (startNode === targetNode) return [startNode];
-  const prev = new Int32Array(NX * NZ).fill(-1);
-  const queue = [startNode];
-  prev[startNode] = startNode;
-  let head = 0;
-  while (head < queue.length) {
-    const cur = queue[head++];
-    if (cur === targetNode) break;
-    const cc = cur % NX, cr = Math.floor(cur / NX);
-    DIR_VEC.forEach(([dc, dr]) => {
-      const nc2 = cc + dc, nr2 = cr + dr;
-      if (nc2 < 0 || nc2 > GW || nr2 < 0 || nr2 > GH) return;
-      const nb = nid(nc2, nr2);
-      if (prev[nb] !== -1) return;
-      prev[nb] = cur;
-      queue.push(nb);
-    });
-  }
-  // Reconstruct path
-  const path = [];
-  let cur = targetNode;
-  while (cur !== startNode) {
-    path.unshift(cur);
-    cur = prev[cur];
-    if (cur === -1) return [startNode]; // unreachable fallback
-  }
-  path.unshift(startNode);
-  return path;
-}
-
-// ── Derive facing direction between two adjacent nodes ──
-function aiGetFacing(fromNode, toNode) {
-  const fc = fromNode % NX, fr = Math.floor(fromNode / NX);
-  const tc = toNode % NX,   tr = Math.floor(toNode / NX);
-  const dc = tc - fc, dr = tr - fr;
-  return DIR_VEC.findIndex(([x, z]) => x === dc && z === dr);
-}
-
-// ── Build AI trolley mesh (cyan/teal coloured, distinct from player and grandmas) ──
-function buildAiTrolley() {
-  const grp = new THREE.Group();
-  const bM = new THREE.MeshStandardMaterial({ color: 0x00ccff, metalness: .4, roughness: .5,
-    emissive: new THREE.Color(0x0088bb), emissiveIntensity: .3 });
-  const mM = new THREE.MeshStandardMaterial({ color: 0x888899, metalness: .7, roughness: .3 });
-  const wM = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: .9 });
-  const wlM = new THREE.MeshStandardMaterial({ color: 0x112233, metalness: .6, roughness: .4 });
-  const skM = new THREE.MeshStandardMaterial({ color: 0x99ccee });
-  const shM = new THREE.MeshStandardMaterial({ color: 0x005577 });
-  // Platform
-  const plat = new THREE.Mesh(new THREE.BoxGeometry(2, .18, 1.1), wM);
-  plat.position.set(0, .5, 0); plat.castShadow = true; grp.add(plat);
-  [-0.85, 0.85].forEach(x => {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(.07, .55, 1.1), mM);
-    b.position.set(x, .87, 0); grp.add(b);
-  });
-  // Wheels
-  const wGeo = new THREE.TorusGeometry(.26, .065, 8, 16);
-  [[-0.72, -.44], [-0.72, .44], [.72, -.44], [.72, .44]].forEach(([x, z]) => {
-    const w = new THREE.Mesh(wGeo, wlM); w.position.set(x, .26, z); w.rotation.y = Math.PI / 2; grp.add(w);
-  });
-  // Pump
-  const pg = new THREE.Group();
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .85, 8), mM);
-  pole.position.set(0, .58, 0); pg.add(pole);
-  const hbar = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 1.3, 8), bM);
-  hbar.rotation.z = Math.PI / 2; hbar.position.set(0, 1.02, 0); pg.add(hbar);
-  [-0.6, .6].forEach(x => {
-    const g2 = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .22, 8), bM);
-    g2.position.set(x, 1.02, 0); pg.add(g2);
-  });
-  pg.position.set(0, .48, 0); grp.add(pg);
-  AI.pumpGrp = pg;
-  // Rider — robot figure
-  const body = new THREE.Mesh(new THREE.BoxGeometry(.38, .52, .26), shM);
-  body.position.set(0, .84, 0); grp.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(.28, .24, .24),
-    new THREE.MeshStandardMaterial({ color: 0x003344, metalness: .8, roughness: .2 }));
-  head.position.set(0, 1.22, 0); grp.add(head);
-  // Eye visor
-  const visor = new THREE.Mesh(new THREE.BoxGeometry(.22, .08, .02),
-    new THREE.MeshBasicMaterial({ color: 0x00ffff }));
-  visor.position.set(0, 1.24, .13); grp.add(visor);
-  // Antenna
-  const ant = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .28, 4), mM);
-  ant.position.set(.1, 1.44, 0); grp.add(ant);
-  const antTip = new THREE.Mesh(new THREE.SphereGeometry(.04, 5, 4),
-    new THREE.MeshBasicMaterial({ color: 0xff4488 }));
-  antTip.position.set(.1, 1.58, 0); grp.add(antTip);
-  // Glow beacon
-  const bec = new THREE.Mesh(new THREE.SphereGeometry(.2, 8, 6),
-    new THREE.MeshBasicMaterial({ color: 0x00ccff, transparent: true, opacity: .8 }));
-  bec.position.set(0, 1.65, 0); grp.add(bec);
-  // Point light carried by AI trolley
-  const ptL = new THREE.PointLight(0x00ccff, 3.5, 22);
-  ptL.position.set(0, 1.5, 0); grp.add(ptL);
-  grp.position.set(0, .35, 0);
-  scene.add(grp);
-  return grp;
-}
-
-// ── Assign next AI mission ──
-function aiNextMission() {
-  // Pick a random from/to station pair (prefer VIP-tier occasionally)
-  const fromSt = Math.floor(Math.random() * ST_POS.length);
-  let toSt = fromSt;
-  while (toSt === fromSt) toSt = Math.floor(Math.random() * ST_POS.length);
-  AI.fromSt = fromSt;
-  AI.toSt = toSt;
-  AI.phase = 'going_pickup';
-  const [tc, tr] = ST_POS[fromSt];
-  AI.path = aiBFS(AI.node, nid(tc, tr));
-  AI.pathIdx = 0;
-}
-
-// ── Init / reset AI ──
-function initAI() {
-  if (AI.mesh) { scene.remove(AI.mesh); AI.mesh = null; }
-  AI.score = 0; AI.delivsDone = 0; AI.streak = 0;
-  AI.speed = 0; AI.energy = 60;
-  AI.phase = 'idle';
-  AI.path = []; AI.pathIdx = 0;
-  // Spawn at opposite corner from player
-  AI.node = nid(0, 0); AI.nextNode = nid(1, 0); AI.edgeT = 0; AI.facing = 0;
-  AI.mesh = buildAiTrolley();
-  const sp = npos(0, 0);
-  AI.mesh.position.set(sp.x, .35, sp.z);
-  // Show label
-  if (!AI.labelEl) AI.labelEl = document.getElementById('ai-label');
-  AI.labelEl.style.display = 'block';
-  // Show race bar
-  document.getElementById('race-bar').style.display = 'flex';
-  updateRaceBar();
-  // Start first mission after a short delay
-  setTimeout(() => { if (gameRunning) aiNextMission(); }, 1500);
-}
-
-// ── AI physics update ──
-function updateAI(dt, gt) {
-  if (!AI.mesh || AI.phase === 'idle') return;
-
-  // Energy regen
-  AI.energy = Math.min(100, AI.energy + 3.5 * dt);
-
-  // Auto-pump: AI always pumps as fast as possible
-  if (AI.energy >= 3) {
-    AI.energy -= 5.5;
-    // AI speed — slightly slower than a skilled human (tunable)
-    AI.speed = Math.min(AI.speed + 2.0, 15);
-  }
-  // Drag
-  AI.speed = Math.max(0, AI.speed - 0.35 * dt);
-
-  // Advance along current edge
-  const advance = (AI.speed * dt) / CELL;
-  AI.edgeT = Math.min(AI.edgeT + advance, 1.0);
-
-  if (AI.edgeT >= 1.0) {
-    AI.node = AI.nextNode;
-    AI.edgeT = 0;
-    AI.pathIdx++;
-
-    // Check if reached destination
-    const [destC, destR] = ST_POS[AI.phase === 'going_pickup' ? AI.fromSt : AI.toSt];
-    if (AI.node === nid(destC, destR)) {
-      if (AI.phase === 'going_pickup') {
-        // Picked up package
-        AI.phase = 'going_deliver';
-        const [tc, tr] = ST_POS[AI.toSt];
-        AI.path = aiBFS(AI.node, nid(tc, tr));
-        AI.pathIdx = 0;
-        showNotif('🤖 CPU picked up a package!', '#00ccff');
-      } else {
-        // Delivered!
-        AI.delivsDone++;
-        AI.streak++;
-        const mul = AI.streak >= 3 ? 1.5 : AI.streak >= 2 ? 1.25 : 1.0;
-        // Simulate a mid-tier delivery score
-        const baseBonus = 3000 + Math.floor(Math.random() * 4000);
-        const bonus = Math.floor(baseBonus * mul);
-        AI.score += bonus;
-        updateRaceBar();
-        showNotif(`🤖 CPU delivered! +${bonus}`, '#cc88ff');
-        // Check if AI won
-        if (AI.score >= RACE_TARGET) { raceOver('ai'); return; }
-        // Next mission
-        setTimeout(() => { if (gameRunning) aiNextMission(); }, 800);
-        AI.phase = 'idle';
-        return;
-      }
-    }
-
-    // Choose next node from BFS path
-    if (AI.pathIdx < AI.path.length - 1) {
-      AI.nextNode = AI.path[AI.pathIdx + 1];
-      AI.facing = aiGetFacing(AI.node, AI.nextNode);
-    } else {
-      // Already at destination but nid check above didn't trigger — recalculate
-      aiNextMission();
-    }
-  }
-
-  // ── Render AI trolley position ──
-  const nc = AI.node % NX, nr = Math.floor(AI.node / NX);
-  const nnc = AI.nextNode % NX, nnr = Math.floor(AI.nextNode / NX);
-  const x0 = _nodePosX[nr * NX + nc],  z0 = _nodePosZ[nr * NX + nc];
-  const x1 = _nodePosX[nnr * NX + nnc], z1 = _nodePosZ[nnr * NX + nnc];
-  const px = x0 + (x1 - x0) * AI.edgeT;
-  const pz = z0 + (z1 - z0) * AI.edgeT;
-  AI.mesh.position.set(px, .35, pz);
-  const dx = x1 - x0, dz = z1 - z0;
-  const hl = Math.sqrt(dx * dx + dz * dz);
-  if (hl > 0.01) AI.mesh.rotation.y = Math.atan2(dx, dz);
-
-  // Animate pump
-  AI.pumpAng += AI.speed * 1.4 * dt;
-  if (AI.pumpGrp) AI.pumpGrp.rotation.x = Math.sin(AI.pumpAng) * .38;
-
-  // Floating label: project to screen
-  if (AI.labelEl) {
-    const aiScreenPos = new THREE.Vector3(px, .35 + 2.2, pz).project(camera);
-    const sx = (aiScreenPos.x * .5 + .5) * window.innerWidth;
-    const sy = (-aiScreenPos.y * .5 + .5) * window.innerHeight;
-    if (aiScreenPos.z < 1 && sx > 0 && sx < window.innerWidth && sy > 0 && sy < window.innerHeight) {
-      AI.labelEl.style.display = 'block';
-      AI.labelEl.style.opacity = '1';
-      AI.labelEl.style.left = sx + 'px';
-      AI.labelEl.style.top = (sy - 20) + 'px';
-      AI.labelEl.style.transform = 'translateX(-50%)';
-    } else {
-      AI.labelEl.style.opacity = '0';
-    }
-  }
-}
-
-// ── Race bar updater ──
-function updateRaceBar() {
-  const pPct = Math.min(100, (GS.score / RACE_TARGET) * 100).toFixed(1);
-  const aPct = Math.min(100, (AI.score / RACE_TARGET) * 100).toFixed(1);
-  document.getElementById('rs-player-val').textContent = GS.score.toLocaleString();
-  document.getElementById('rs-ai-val').textContent = AI.score.toLocaleString();
-  document.getElementById('rp-player').style.width = pPct + '%';
-  document.getElementById('rp-ai').style.width = aPct + '%';
-  // Urgent flash when either is close
-  const bar = document.getElementById('race-bar');
-  if (pPct > 80 || aPct > 80) {
-    bar.style.borderColor = 'rgba(255,80,80,0.8)';
-  } else if (pPct > 50 || aPct > 50) {
-    bar.style.borderColor = 'rgba(255,200,0,0.7)';
-  } else {
-    bar.style.borderColor = 'rgba(180,80,255,0.5)';
-  }
-}
-
-// ── Race over ──
-function raceOver(winner) {
-  gameRunning = false;
-  BGM.fadeOut(1500);
-  clearChoiceMarkers();
-  document.getElementById('mission-panel').style.display = 'none';
-  document.getElementById('arrow').style.opacity = '0';
-  document.getElementById('streak-hud').style.display = 'none';
-  document.getElementById('map-hint').style.display = 'none';
-  document.getElementById('race-bar').style.display = 'none';
-  if (AI.labelEl) AI.labelEl.style.display = 'none';
-
-  if (winner === 'player') {
-    document.getElementById('score-final-rw').textContent = GS.score.toLocaleString();
-    document.getElementById('rw-pscore').textContent = GS.score.toLocaleString();
-    document.getElementById('rw-aiscore').textContent = AI.score.toLocaleString();
-    document.getElementById('rw-del').textContent = MS.delivsDone;
-    document.getElementById('rw-str').textContent = MS.bestStreak + '×';
-    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-lose'].forEach(s => {
-      const el = document.getElementById(s); if (el) el.style.display = 'none';
-    });
-    document.getElementById('scr-race-win').style.display = 'flex';
-    SFX.deliver(); setTimeout(() => SFX.deliver(), 200); setTimeout(() => SFX.deliver(), 400);
-    showNotif('🏆 YOU WIN THE RACE!', '#ffd700');
-  } else {
-    document.getElementById('score-final-rl').textContent = GS.score.toLocaleString();
-    document.getElementById('rl-pscore').textContent = GS.score.toLocaleString();
-    document.getElementById('rl-del').textContent = MS.delivsDone;
-    const tips = [
-      '💡 Prioritise VIP packages — they score way more!',
-      '💡 Keep your streak alive — 3× multiplier is huge!',
-      '💡 Use ⚡ Boost on long straight routes!',
-      '💡 Avoid Grandma lanes — glue costs precious seconds!',
-    ];
-    document.getElementById('rl-tip').textContent = tips[Math.floor(Math.random() * tips.length)];
-    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win'].forEach(s => {
-      const el = document.getElementById(s); if (el) el.style.display = 'none';
-    });
-    document.getElementById('scr-race-lose').style.display = 'flex';
-    SFX.failGame();
-  }
 }
 
 // ═══════════════════════════════════════════
@@ -2811,6 +2508,34 @@ function physics(dt){
   GS.inv=Math.max(0,GS.inv-dt);
   jCool=Math.max(0,jCool-dt);
 
+  // ── Slope physics ──
+  // Compute the height difference between current and next node.
+  // Positive slope (climbing) → extra drag + energy cost.
+  // Negative slope (descending) → free speed bonus.
+  {
+    const nc=tNode%NX,   nr=Math.floor(tNode/NX);
+    const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+    const y0=_nodePosY[nr*NX+nc];
+    const y1=_nodePosY[nnr*NX+nnc];
+    const rise=y1-y0;   // positive = uphill, negative = downhill
+    const grade=rise/CELL;  // slope ratio (rise / run)
+
+    if(grade>0.02){
+      // Uphill: speed bleeds off proportional to steepness
+      const hillDrag=grade*18*dt;
+      GS.speed=Math.max(0,GS.speed-hillDrag);
+      // Pumping costs a bit more energy uphill (drain at half the hillDrag rate)
+      GS.energy=Math.max(0,GS.energy-grade*8*dt);
+      // Show HUD hint once per edge when climbing
+      if(tEdgeT<0.05&&grade>0.08) showNotif('⛰️ Uphill! Pump harder!','#ffaa44');
+    } else if(grade<-0.02){
+      // Downhill: free speed, capped so we don't go faster than boost max
+      const rollBonus=(-grade)*14*dt;
+      GS.speed=Math.min(GS.speed+rollBonus, boostActive?22:18);
+      if(tEdgeT<0.05&&grade<-0.08) showNotif('🎢 Downhill! Free speed!','#44ffaa');
+    }
+  }
+
   const advance=(GS.speed*dt)/CELL;
   tEdgeT=Math.min(tEdgeT+advance,1.0);
 
@@ -2838,25 +2563,48 @@ function physics(dt){
 // ═══════════════════════════════════════════
 //  RENDERING
 // ═══════════════════════════════════════════
+// ─── Reusable quaternion/vector scratch objects for moveTrolley ───
+const _tQuat   = new THREE.Quaternion();
+const _tUp     = new THREE.Vector3(0,1,0);
+const _tFwd    = new THREE.Vector3();
+const _tRight  = new THREE.Vector3();
+const _tUpSlope= new THREE.Vector3();
+const _tMat    = new THREE.Matrix4();
+
 function moveTrolley(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
+  const nc=tNode%NX,    nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  // Use lookup table directly — avoids scratch vector aliasing and new Vector3 alloc
-  const x0=_nodePosX[nr*NX+nc], z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
-  const px=x0+(x1-x0)*tEdgeT;
-  const pz=z0+(z1-z0)*tEdgeT;
 
-  trolley.position.set(px,.35,pz);
-  trolley.rotation.x=0;trolley.rotation.z=0;
+  const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  const t=tEdgeT;
 
-  const dx=x1-x0,dz=z1-z0;
-  const hlen=Math.sqrt(dx*dx+dz*dz);
-  if(hlen>0.01)trolley.rotation.y=Math.atan2(dx,dz);
+  // Interpolated world position — Y follows terrain
+  const px=x0+(x1-x0)*t;
+  const py=y0+(y1-y0)*t;
+  const pz=z0+(z1-z0)*t;
+  trolley.position.set(px, py+0.35, pz);
+
+  // Forward vector along the track segment (includes Y component → gives slope angle)
+  const dx=x1-x0, dy=y1-y0, dz=z1-z0;
+  const hlen3=Math.sqrt(dx*dx+dy*dy+dz*dz);
+  if(hlen3>0.01){
+    _tFwd.set(dx/hlen3, dy/hlen3, dz/hlen3);
+
+    // "Up slope" = world-up projected to be perpendicular to forward
+    // This gives the correct tilt (pitch) without gimbal issues
+    _tRight.crossVectors(_tFwd, _tUp).normalize();
+    _tUpSlope.crossVectors(_tRight, _tFwd).normalize();
+
+    // Build rotation matrix from axes: X=right, Y=upSlope, Z=-forward
+    _tMat.makeBasis(_tRight, _tUpSlope, _tFwd.clone().negate());
+    _tQuat.setFromRotationMatrix(_tMat);
+    trolley.quaternion.slerp(_tQuat, 0.18); // smooth interpolation prevents snap
+  }
 
   trolley.visible=GS.inv>0?Math.floor(Date.now()/100)%2===0:true;
-  if(pkgBox.visible)pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
-  if(vipGlow.visible)vipGlow.rotation.y+=.04;
+  if(pkgBox.visible) pkgBox.position.y=1.05+Math.sin(pumpAng*2)*.04;
+  if(vipGlow.visible) vipGlow.rotation.y+=.04;
 }
 
 let camInit=false;
@@ -2883,27 +2631,29 @@ function toggleView(){
 function moveCam(){
   const nc=tNode%NX,nr=Math.floor(tNode/NX);
   const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
-  const px=x0+(x1-x0)*tEdgeT;
-  const pz=z0+(z1-z0)*tEdgeT;
-  const dx=x1-x0,dz=z1-z0;
+  const x0=_nodePosX[nr*NX+nc],   y0=_nodePosY[nr*NX+nc],   z0=_nodePosZ[nr*NX+nc];
+  const x1=_nodePosX[nnr*NX+nnc], y1=_nodePosY[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  const t=tEdgeT;
+  const px=x0+(x1-x0)*t;
+  const py=y0+(y1-y0)*t;   // actual terrain height at trolley
+  const pz=z0+(z1-z0)*t;
+  const dx=x1-x0, dz=z1-z0;
   const hlen=Math.sqrt(dx*dx+dz*dz)||1;
-  const fdx=dx/hlen,fdz=dz/hlen;
+  const fdx=dx/hlen, fdz=dz/hlen;
   const sh=GS.shake;
 
   if(camMode==='first'){
-    const eyeH=2.3;
+    const eyeH=py+2.3;  // eye rides on terrain
     const eyeX=px+(Math.random()-.5)*sh*.04;
     const eyeY=eyeH+(Math.random()-.5)*sh*.03;
     const eyeZ=pz+(Math.random()-.5)*sh*.04;
     camera.position.set(eyeX,eyeY,eyeZ);
-    camLookTarget.set(px+fdx*8,eyeH,pz+fdz*8);
+    camLookTarget.set(px+fdx*8, eyeH, pz+fdz*8);
     camera.lookAt(camLookTarget);
   }else{
-    const camBack=22,camUp=15;
+    const camBack=22, camUp=15;
     const tx=px-fdx*camBack+(Math.random()-.5)*sh*.1;
-    const ty=camUp+(Math.random()-.5)*sh*.06;
+    const ty=py+camUp+(Math.random()-.5)*sh*.06;  // camera climbs with terrain
     const tz=pz-fdz*camBack+(Math.random()-.5)*sh*.1;
     if(!camInit){
       camera.position.set(tx,ty,tz);
@@ -2913,7 +2663,7 @@ function moveCam(){
       camTargetPos.set(tx,ty,tz);
       camera.position.lerp(camTargetPos,.12);
     }
-    camLookTarget.set(px+fdx*3,1.8,pz+fdz*3);
+    camLookTarget.set(px+fdx*3, py+1.8, pz+fdz*3);  // look-at follows terrain
     camera.lookAt(camLookTarget);
   }
   GS.shake*=.82;
@@ -3146,6 +2896,9 @@ const DOM={
   spdVal:document.getElementById('spd-val'),
   pumpFill:document.getElementById('pump-fill'),
   npcCountVal:document.getElementById('npc-count-val'),
+  slopeHud:document.getElementById('slope-hud'),
+  slopeIcon:document.getElementById('slope-icon'),
+  slopePct:document.getElementById('slope-pct'),
 };
 // Track last-written values to skip redundant DOM writes
 const _hudLast={score:-1,del:-1,coins:-1,spd:-1,energy:-1};
@@ -3173,6 +2926,23 @@ function updHUD(){
     _hudLast.energy=pct;
   }
   GS.braking=keys.brake;
+
+  // ── Slope indicator HUD ──
+  {
+    const nc=tNode%NX,   nr=Math.floor(tNode/NX);
+    const nnc=tNextNode%NX, nnr=Math.floor(tNextNode/NX);
+    const rise=_nodePosY[nnr*NX+nnc]-_nodePosY[nr*NX+nc];
+    const grade=rise/CELL;
+    const pct=Math.round(Math.abs(grade)*100);
+    if(pct>2){
+      DOM.slopeHud.style.opacity='1';
+      DOM.slopeIcon.textContent=grade>0?'⛰️':'🎢';
+      DOM.slopePct.textContent=(grade>0?'+':'-')+pct+'%';
+      DOM.slopeHud.style.borderColor=grade>0?'rgba(255,140,40,0.6)':'rgba(80,220,120,0.6)';
+    } else {
+      DOM.slopeHud.style.opacity='0';
+    }
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -3204,6 +2974,21 @@ let mmStaticDirty=true; // set true to rebake
 
 function bakeMmStatic(){
   mmSCtx.clearRect(0,0,MM,MM);
+
+  // ── Elevation heatmap: draw each node cell as a coloured square ──
+  // High nodes = warm orange tint, flat = dark blue, downhill runs visible
+  for(let r=0;r<GH;r++) for(let c=0;c<GW;c++){
+    const avg=(_nodePosY[r*NX+c]+_nodePosY[r*NX+(c+1)]+_nodePosY[(r+1)*NX+c]+_nodePosY[(r+1)*NX+(c+1)])/4;
+    const t=Math.min(1,avg/HILL_MAX);
+    const x0=_mmX[r*(GW+1)+c], y0=_mmY[r*(GW+1)+c];
+    const x1=_mmX[r*(GW+1)+(c+1)], y1=_mmY[(r+1)*(GW+1)+c];
+    if(t>0.05){
+      // Warm orange for hills, alpha proportional to height
+      mmSCtx.fillStyle=`rgba(255,${Math.round(160-t*120)},30,${(t*0.38).toFixed(2)})`;
+      mmSCtx.fillRect(x0,y0,x1-x0,y1-y0);
+    }
+  }
+
   // Grid lines
   mmSCtx.strokeStyle='rgba(255,200,80,0.12)';mmSCtx.lineWidth=.5;
   for(let c=0;c<=GW;c++){
@@ -3299,35 +3084,13 @@ function drawMM(){
   mmCtx2.fillStyle='rgba(255,80,30,0.9)';mmCtx2.fill();
   mmCtx2.beginPath();mmCtx2.arc(px,py,2.8,0,Math.PI*2);
   mmCtx2.fillStyle='#ffffff';mmCtx2.fill();
-
-  // ── Dynamic: AI competitor trolley (cyan star) ──
-  if(AI.mesh&&AI.phase!=='idle'){
-    const anc=AI.node%NX, anr=Math.floor(AI.node/NX);
-    const annc=AI.nextNode%NX, annr=Math.floor(AI.nextNode/NX);
-    const afc=anc+(annc-anc)*AI.edgeT, afr=anr+(annr-anr)*AI.edgeT;
-    const{x:ax,y:ay}=mmPf(afc,afr);
-    // Outer glow
-    const aGrad=mmCtx2.createRadialGradient(ax,ay,0,ax,ay,9);
-    aGrad.addColorStop(0,'rgba(0,200,255,0.5)');
-    aGrad.addColorStop(1,'rgba(0,200,255,0)');
-    mmCtx2.beginPath();mmCtx2.arc(ax,ay,9,0,Math.PI*2);
-    mmCtx2.fillStyle=aGrad;mmCtx2.fill();
-    // Core dot
-    mmCtx2.beginPath();mmCtx2.arc(ax,ay,4.5,0,Math.PI*2);
-    mmCtx2.fillStyle='rgba(0,220,255,0.95)';mmCtx2.fill();
-    mmCtx2.beginPath();mmCtx2.arc(ax,ay,2,0,Math.PI*2);
-    mmCtx2.fillStyle='#ffffff';mmCtx2.fill();
-    // "AI" label
-    mmCtx2.font='bold 7px sans-serif';mmCtx2.fillStyle='rgba(0,220,255,0.85)';
-    mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
-  }
 }
 
 // ═══════════════════════════════════════════
 //  GAME FLOW
 // ═══════════════════════════════════════════
 function startGame(){
-  ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win','scr-race-lose'].forEach(s=>{const el=document.getElementById(s);if(el)el.style.display='none';});
+  ['scr-start','scr-fail','scr-win','scr-keys'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('map-hint').style.display='none';
   document.getElementById('streak-hud').style.display='none';
   document.getElementById('shop-overlay').style.display='none';
@@ -3348,13 +3111,11 @@ function startGame(){
   document.getElementById('pu-bar').style.display='none';
   setSW(0);camInit=false;
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
-  const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
+  const sp=npos(6,6);trolley.position.set(sp.x, sp.y+0.35, sp.z);
   buildWorld();
   gameRunning=true;
   initNpcTrolleys();
   updNpcCountHUD();
-  // ── Start AI competitor ──
-  initAI();
   BGM.play();
   setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
   startMissions();
@@ -3440,7 +3201,7 @@ let _fpsSmooth=60;
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
     updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
-    updateBoost(dt);updateGlue(dt);updateAI(dt,gt);
+    updateBoost(dt);updateGlue(dt);
     if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
   if(_skipFrame)return; // OPT: skip GPU work on low-end mobile

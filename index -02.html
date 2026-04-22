@@ -193,8 +193,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 /* ── AI trolley label ── */
 #ai-label{position:fixed;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s;font-size:11px;font-weight:bold;color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,1);letter-spacing:1px;display:none;}
-/* ── AI collision exclamation bubble ── */
-#ai-exclaim{position:fixed;pointer-events:none;z-index:21;opacity:0;font-size:18px;display:none;transform:translateX(-50%);text-shadow:0 0 10px rgba(255,80,80,1);}
 
 /* ── Race result overlay ── */
 #scr-race{display:none;}
@@ -274,8 +272,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 <!-- AI trolley floating label -->
 <div id="ai-label">🤖 CPU</div>
-<!-- AI collision exclamation -->
-<div id="ai-exclaim">❗</div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
 <button id="mute-btn" title="Toggle Music [M]" onclick="const m=BGM.toggleMute();this.textContent=m?'🔇':'🎵';this.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';">🎵</button>
@@ -2273,23 +2269,17 @@ const AI = {
   speed: 0,
   energy: 60,
   // mission
-  phase: 'idle',
+  phase: 'idle',   // 'idle' | 'going_pickup' | 'going_deliver'
   fromSt: -1, toSt: -1,
-  path: [],
+  path: [],        // BFS path as array of nodeIds
   pathIdx: 0,
   delivsDone: 0,
   streak: 0,
-  // collision / avoidance
-  collideState: 'clear',
-  collideCooldown: 0,
-  stopTimer: 0,
-  rerouteNode: -1,
   // cosmetic
   pumpAng: 0,
   mesh: null,
   pumpGrp: null,
   labelEl: null,
-  exclamEl: null,
 };
 
 // ── BFS pathfinding on the grid graph ──
@@ -2420,13 +2410,9 @@ function initAI() {
   AI.mesh = buildAiTrolley();
   const sp = npos(0, 0);
   AI.mesh.position.set(sp.x, .35, sp.z);
-  // Show label + exclamation bubble
+  // Show label
   if (!AI.labelEl) AI.labelEl = document.getElementById('ai-label');
   AI.labelEl.style.display = 'block';
-  if (!AI.exclamEl) AI.exclamEl = document.getElementById('ai-exclaim');
-  AI.exclamEl.style.display = 'block';
-  AI.exclamEl.style.opacity = '0';
-  AI.collideState = 'clear'; AI.collideCooldown = 0; AI.stopTimer = 0;
   // Show race bar
   document.getElementById('race-bar').style.display = 'flex';
   updateRaceBar();
@@ -2435,103 +2421,22 @@ function initAI() {
 }
 
 // ── AI physics update ──
-// Collision logic:
-//   BRAKING  — AI and player on same edge heading toward each other  → AI brakes hard
-//   STOPPED  — distance < 3 units after braking                      → AI stops 1-2s, beeps
-//   REROUTING— stopped >1s or same node blocked                      → BFS detour via side node
 function updateAI(dt, gt) {
   if (!AI.mesh || AI.phase === 'idle') return;
 
-  // Cooldown tick
-  if (AI.collideCooldown > 0) AI.collideCooldown -= dt;
-
-  // ── Collision detection ──
-  const aiPos = AI.mesh.position;
-  const plPos = trolley.position;
-  const dist3 = aiPos.distanceTo(plPos);
-
-  // Check if on same or adjacent edge (close approach)
-  const aiNc  = AI.node % NX,      aiNr  = Math.floor(AI.node / NX);
-  const aiNnc = AI.nextNode % NX,  aiNnr = Math.floor(AI.nextNode / NX);
-  const plNc  = tNode % NX,        plNr  = Math.floor(tNode / NX);
-  const plNnc = tNextNode % NX,    plNnr = Math.floor(tNextNode / NX);
-
-  // Head-on: AI going A→B while player going B→A on same edge
-  const headOn = (AI.node === tNextNode && AI.nextNode === tNode);
-  // Same edge same direction (catch-up)
-  const sameEdge = (AI.node === tNode && AI.nextNode === tNextNode) ||
-                   (AI.node === tNextNode && AI.nextNode === tNode);
-  // Very close in world space
-  const tooClose = dist3 < 3.5;
-
-  if (AI.collideState === 'clear' && AI.collideCooldown <= 0) {
-    if (headOn || (tooClose && sameEdge)) {
-      AI.collideState = 'braking';
-      AI.collideCooldown = 0.1;
-      // Visual reaction: show "!" bubble
-      if (AI.exclamEl) { AI.exclamEl.style.opacity = '1'; }
-      SFX.brake && SFX.brake();
-      showNotif('🤖 CPU braking!', '#00ccff');
-    }
-  }
-
-  if (AI.collideState === 'braking') {
-    // Hard brake
-    AI.speed = Math.max(0, AI.speed - 18 * dt);
-    if (dist3 < 2.8) {
-      AI.collideState = 'stopped';
-      AI.stopTimer = 0.8 + Math.random() * 0.8; // 0.8–1.6s stop
-      AI.speed = 0;
-    } else if (dist3 > 6 && AI.collideCooldown <= 0) {
-      // Player moved away — resume
-      AI.collideState = 'clear';
-      AI.collideCooldown = 1.0;
-      if (AI.exclamEl) AI.exclamEl.style.opacity = '0';
-    }
-  }
-
-  if (AI.collideState === 'stopped') {
-    AI.speed = 0;
-    AI.stopTimer -= dt;
-    // Blink exclamation while stopped
-    if (AI.exclamEl) {
-      AI.exclamEl.style.opacity = Math.floor(gt * 4) % 2 === 0 ? '1' : '0.3';
-    }
-    if (AI.stopTimer <= 0) {
-      // Try to reroute: pick a neighbour of current node that is NOT toward player
-      const blocked = AI.nextNode;
-      const nbrs = getNeighbors(aiNc, aiNr, (AI.facing + 2) % 4);
-      // Prefer a neighbour that is NOT the blocked direction and NOT the player's node
-      const alt = nbrs.find(nb => nb.nodeId !== blocked && nb.nodeId !== tNode && nb.nodeId !== tNextNode);
-      if (alt) {
-        // Reroute: go to alt node first, then re-BFS to destination
-        AI.rerouteNode = alt.nodeId;
-        const destSt = AI.phase === 'going_pickup' ? AI.fromSt : AI.toSt;
-        const [dc, dr] = ST_POS[destSt];
-        const detourPath = aiBFS(alt.nodeId, nid(dc, dr));
-        AI.path = [AI.node, alt.nodeId, ...detourPath.slice(1)];
-        AI.pathIdx = 0;
-        AI.nextNode = alt.nodeId;
-        AI.facing = aiGetFacing(AI.node, AI.nextNode);
-        showNotif('🤖 CPU rerouting!', '#00ccff');
-      }
-      AI.collideState = 'clear';
-      AI.collideCooldown = 2.0; // grace period before next collision check
-      if (AI.exclamEl) AI.exclamEl.style.opacity = '0';
-    }
-    // Render only — skip movement below
-    _aiRender(aiNc, aiNr, aiNnc, aiNnr, dt, gt);
-    return;
-  }
-
-  // ── Normal movement (not stopped) ──
+  // Energy regen
   AI.energy = Math.min(100, AI.energy + 3.5 * dt);
-  if (AI.collideState === 'clear' && AI.energy >= 3) {
+
+  // Auto-pump: AI always pumps as fast as possible
+  if (AI.energy >= 3) {
     AI.energy -= 5.5;
+    // AI speed — slightly slower than a skilled human (tunable)
     AI.speed = Math.min(AI.speed + 2.0, 15);
   }
+  // Drag
   AI.speed = Math.max(0, AI.speed - 0.35 * dt);
 
+  // Advance along current edge
   const advance = (AI.speed * dt) / CELL;
   AI.edgeT = Math.min(AI.edgeT + advance, 1.0);
 
@@ -2544,42 +2449,45 @@ function updateAI(dt, gt) {
     const [destC, destR] = ST_POS[AI.phase === 'going_pickup' ? AI.fromSt : AI.toSt];
     if (AI.node === nid(destC, destR)) {
       if (AI.phase === 'going_pickup') {
+        // Picked up package
         AI.phase = 'going_deliver';
         const [tc, tr] = ST_POS[AI.toSt];
         AI.path = aiBFS(AI.node, nid(tc, tr));
         AI.pathIdx = 0;
         showNotif('🤖 CPU picked up a package!', '#00ccff');
       } else {
+        // Delivered!
         AI.delivsDone++;
         AI.streak++;
         const mul = AI.streak >= 3 ? 1.5 : AI.streak >= 2 ? 1.25 : 1.0;
+        // Simulate a mid-tier delivery score
         const baseBonus = 3000 + Math.floor(Math.random() * 4000);
         const bonus = Math.floor(baseBonus * mul);
         AI.score += bonus;
         updateRaceBar();
         showNotif(`🤖 CPU delivered! +${bonus}`, '#cc88ff');
+        // Check if AI won
         if (AI.score >= RACE_TARGET) { raceOver('ai'); return; }
+        // Next mission
         setTimeout(() => { if (gameRunning) aiNextMission(); }, 800);
         AI.phase = 'idle';
         return;
       }
     }
 
-    // Advance to next node in path
+    // Choose next node from BFS path
     if (AI.pathIdx < AI.path.length - 1) {
       AI.nextNode = AI.path[AI.pathIdx + 1];
       AI.facing = aiGetFacing(AI.node, AI.nextNode);
     } else {
+      // Already at destination but nid check above didn't trigger — recalculate
       aiNextMission();
     }
   }
 
-  _aiRender(AI.node % NX, Math.floor(AI.node / NX),
-            AI.nextNode % NX, Math.floor(AI.nextNode / NX), dt, gt);
-}
-
-// ── Separated render helper (called from both stopped and moving paths) ──
-function _aiRender(nc, nr, nnc, nnr, dt, gt) {
+  // ── Render AI trolley position ──
+  const nc = AI.node % NX, nr = Math.floor(AI.node / NX);
+  const nnc = AI.nextNode % NX, nnr = Math.floor(AI.nextNode / NX);
   const x0 = _nodePosX[nr * NX + nc],  z0 = _nodePosZ[nr * NX + nc];
   const x1 = _nodePosX[nnr * NX + nnc], z1 = _nodePosZ[nnr * NX + nnc];
   const px = x0 + (x1 - x0) * AI.edgeT;
@@ -2589,11 +2497,11 @@ function _aiRender(nc, nr, nnc, nnr, dt, gt) {
   const hl = Math.sqrt(dx * dx + dz * dz);
   if (hl > 0.01) AI.mesh.rotation.y = Math.atan2(dx, dz);
 
-  // Pump animation — stops when speed = 0
+  // Animate pump
   AI.pumpAng += AI.speed * 1.4 * dt;
   if (AI.pumpGrp) AI.pumpGrp.rotation.x = Math.sin(AI.pumpAng) * .38;
 
-  // Floating label
+  // Floating label: project to screen
   if (AI.labelEl) {
     const aiScreenPos = new THREE.Vector3(px, .35 + 2.2, pz).project(camera);
     const sx = (aiScreenPos.x * .5 + .5) * window.innerWidth;
@@ -2604,18 +2512,11 @@ function _aiRender(nc, nr, nnc, nnr, dt, gt) {
       AI.labelEl.style.left = sx + 'px';
       AI.labelEl.style.top = (sy - 20) + 'px';
       AI.labelEl.style.transform = 'translateX(-50%)';
-      // Move "!" bubble alongside label
-      if (AI.exclamEl && AI.exclamEl.style.opacity !== '0') {
-        AI.exclamEl.style.left = sx + 'px';
-        AI.exclamEl.style.top = (sy - 38) + 'px';
-        AI.exclamEl.style.display = 'block';
-      }
     } else {
       AI.labelEl.style.opacity = '0';
     }
   }
 }
-
 
 // ── Race bar updater ──
 function updateRaceBar() {
@@ -2647,7 +2548,6 @@ function raceOver(winner) {
   document.getElementById('map-hint').style.display = 'none';
   document.getElementById('race-bar').style.display = 'none';
   if (AI.labelEl) AI.labelEl.style.display = 'none';
-  if (AI.exclamEl) { AI.exclamEl.style.display = 'none'; AI.exclamEl.style.opacity = '0'; }
 
   if (winner === 'player') {
     document.getElementById('score-final-rw').textContent = GS.score.toLocaleString();

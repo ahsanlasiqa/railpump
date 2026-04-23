@@ -176,8 +176,31 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #bid-skip:hover{background:rgba(255,255,255,0.12);}
 #bid-countdown{font-size:9px;color:rgba(255,220,120,0.4);margin-top:8px;letter-spacing:1px;}
 
-/* ── NPC Trolley label ── */
-.npc-label{position:absolute;pointer-events:none;}
+/* ── AI Competitor Score Bar (top centre) ── */
+#race-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:30;display:none;flex-direction:column;align-items:center;gap:3px;padding:7px 18px 8px;background:rgba(4,6,18,0.92);border:1.5px solid rgba(180,80,255,0.5);border-top:none;border-radius:0 0 14px 14px;backdrop-filter:blur(10px);pointer-events:none;}
+#race-title{font-size:8px;letter-spacing:3px;color:rgba(200,150,255,0.6);text-transform:uppercase;}
+#race-scores{display:flex;gap:22px;align-items:center;}
+.rs-block{text-align:center;}
+.rs-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.rs-val{font-size:17px;font-weight:bold;line-height:1.1;}
+#rs-player .rs-val{color:#ffe680;text-shadow:0 0 8px rgba(255,220,80,0.7);}
+#rs-ai .rs-val{color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,0.7);}
+#race-vs{font-size:12px;color:rgba(255,255,255,0.3);font-weight:bold;}
+#race-progress{width:220px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:visible;position:relative;margin-top:2px;}
+#rp-player{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#ff6b35,#ffe680);border-radius:3px;transition:width .3s;}
+#rp-ai{position:absolute;top:0;height:100%;background:linear-gradient(90deg,#9933ff,#cc88ff);border-radius:3px;transition:width .3s;opacity:.75;}
+#race-goal{font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:1px;}
+
+/* ── AI trolley label ── */
+#ai-label{position:fixed;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s;font-size:11px;font-weight:bold;color:#cc88ff;text-shadow:0 0 8px rgba(180,80,255,1);letter-spacing:1px;display:none;}
+/* ── AI collision exclamation bubble ── */
+#ai-exclaim{position:fixed;pointer-events:none;z-index:21;opacity:0;font-size:18px;display:none;transform:translateX(-50%);text-shadow:0 0 10px rgba(255,80,80,1);}
+
+/* ── Race result overlay ── */
+#scr-race{display:none;}
+#scr-race .win-banner{font-size:clamp(26px,6vw,58px);margin-bottom:8px;}
+#scr-race .race-detail{font-size:13px;color:rgba(220,180,255,0.8);margin:3px 0;}
+
 
 /* ── View toggle button ── */
 #view-btn{position:fixed;top:112px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(100,180,255,0.4);color:#88ccff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,border-color .2s;pointer-events:all;}
@@ -233,6 +256,26 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <div class="hp"><div class="hl">👵 Granny</div><div class="hv" style="color:#ff88cc;font-size:13px" id="npc-count-val">3/10</div></div>
   </div>
 </div>
+
+<!-- Race progress bar (top centre) -->
+<div id="race-bar">
+  <div id="race-title">🏁 Race to 1,000,000</div>
+  <div id="race-scores">
+    <div class="rs-block" id="rs-player"><div class="rs-lbl">You</div><div class="rs-val" id="rs-player-val">0</div></div>
+    <div id="race-vs">VS</div>
+    <div class="rs-block" id="rs-ai"><div class="rs-lbl">🤖 CPU</div><div class="rs-val" id="rs-ai-val">0</div></div>
+  </div>
+  <div id="race-progress">
+    <div id="rp-player" style="width:0%"></div>
+    <div id="rp-ai" style="width:0%"></div>
+  </div>
+  <div id="race-goal">First to 1,000,000 wins</div>
+</div>
+
+<!-- AI trolley floating label -->
+<div id="ai-label">🤖 CPU</div>
+<!-- AI collision exclamation -->
+<div id="ai-exclaim">❗</div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
 <button id="mute-btn" title="Toggle Music [M]" onclick="const m=BGM.toggleMute();this.textContent=m?'🔇':'🎵';this.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';">🎵</button>
@@ -379,6 +422,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
   <p>Ride the rail to pick up packages and deliver them on time!</p>
+  <p>Who ever reaches $1 Million first wins! Race against the robot!</p>
   <ul class="ctrl-list">
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
@@ -432,9 +476,65 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
 </div>
 
+<!-- RACE WIN -->
+<div class="overlay" id="scr-race-win" style="display:none">
+  <div class="win-banner">🏆 YOU WIN!</div>
+  <h1 style="color:#ffe680;font-size:clamp(18px,4vw,32px)">First to 1,000,000!</h1>
+  <div id="score-final-rw" style="font-size:42px;color:#ffe680;text-shadow:0 0 20px rgba(255,200,80,1);margin:6px 0">0</div>
+  <div style="margin:10px 0">
+    <div class="res-row"><span>Your final score</span><span id="rw-pscore">0</span></div>
+    <div class="res-row"><span>CPU score</span><span id="rw-aiscore" style="color:#cc88ff">0</span></div>
+    <div class="res-row"><span>Total Deliveries</span><span id="rw-del">0</span></div>
+    <div class="res-row"><span>Best streak</span><span id="rw-str">0×</span></div>
+  </div>
+  <button class="btn" onclick="startGame()">🔄 Race Again</button>
+  <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
+</div>
+
+<!-- RACE LOSE -->
+<div class="overlay" id="scr-race-lose" style="display:none">
+  <div class="win-banner" style="font-size:clamp(22px,5vw,48px)">🤖 CPU WINS!</div>
+  <h1 style="color:#cc88ff;font-size:clamp(16px,3vw,26px)">CPU reached 1,000,000 first!</h1>
+  <div id="score-final-rl" style="font-size:36px;color:#ffe680;text-shadow:0 0 16px rgba(255,200,80,0.8);margin:6px 0">0</div>
+  <div style="margin:10px 0">
+    <div class="res-row"><span>Your score</span><span id="rl-pscore">0</span></div>
+    <div class="res-row"><span>CPU score</span><span id="rl-aiscore" style="color:#cc88ff">1,000,000 🤖</span></div>
+    <div class="res-row"><span>Total Deliveries</span><span id="rl-del">0</span></div>
+  </div>
+  <p style="font-size:11px;color:rgba(255,180,100,0.55)" id="rl-tip"></p>
+  <button class="btn" onclick="startGame()">🔄 Rematch</button>
+  <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script async src="https://vibejam.cc/2026/widget.js"></script>
 <script>
 'use strict';
+// ═══════════════════════════════════════════
+//  PERFORMANCE OPTIMIZATIONS APPLIED
+// ═══════════════════════════════════════════
+//  [RUNTIME]
+//  1. InstancedMesh for rails, ties, lamp posts → reduces hundreds of draw calls to ~4
+//  2. Object Pool: rockets, explosions, glue puddles → zero GC pressure during gameplay
+//  3. NPC LOD: cosmetics (beacon pulse, body sway) skipped for NPCs > 80 units away
+//     rotation update skipped > 160 units away
+//  4. Building geometry cache (getBldGeo): reuses BoxGeometry by rounded dimensions
+//  5. Neon sign material cache (getNeonSignMat): reuses MeshStandardMaterial per color
+//  6. Building body material pool (BODY_MATS): one material per palette color
+//  7. requestIdleCallback queue: score/coins/NPC-count DOM writes deferred to idle time
+//  8. Adaptive FPS throttle: on mobile @ <28fps, every-other render frame is skipped
+//     keeping physics smooth while halving GPU pressure
+//
+//  [RENDERING]
+//  9. Pixel ratio capped at 2 (devicePixelRatio can be 3–4 on modern phones)
+//  10. antialias disabled on mobile (saves ~30% fragment shader cost)
+//  11. stencil buffer disabled (unused) → saves GPU memory
+//  12. Shadow map 512×512 on mobile, 1024×1024 on desktop
+//  13. PCFShadowMap (cheaper) on mobile vs PCFSoftShadowMap on desktop
+//  14. Shadow frustum tightened to 140×140 (was 160×160) → higher shadow texel density
+//  15. Silhouette city count: 80 on mobile, 180 on desktop
+//  16. Station ring rotation throttled to every 3rd frame (was every 2nd)
+// ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
 //  SOUND SYSTEM — Web Audio API (no external files)
 // ═══════════════════════════════════════════
@@ -589,7 +689,7 @@ const BGM=(()=>{
     if(audio)return;
     audio=new Audio('viacheslavstarostin-action.mp3');
     audio.loop=true;
-    audio.volume=0.35;
+    audio.volume=0.01;
     audio.preload='auto';
   }
 
@@ -808,11 +908,15 @@ const ROCKET_SPEED=28;
 const ROCKET_RADIUS=3.5;
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+// OPT: stencil disabled (unused) → frees GPU memory; antialias off on mobile saves ~30% fill cost
+const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:!_isMobile,stencil:false,powerPreference:'high-performance'});
+// OPT: cap pixel ratio at 2 — Retina/4K screens would otherwise 4-9× the fragment load
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// OPT: PCFSoft on desktop, cheaper PCF on mobile
+renderer.shadowMap.type=_isMobile?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;
 renderer.setClearColor(0x03040e,1);
 // Tone mapping makes emissive neons "bloom" without post-processing
 renderer.toneMapping=THREE.ReinhardToneMapping;
@@ -827,10 +931,12 @@ window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.inn
 const ambLight=new THREE.AmbientLight(0x0d1528,0.8);scene.add(ambLight);
 const sunLight=new THREE.DirectionalLight(0x8899cc,0.5); // cold blue moon
 sunLight.position.set(60,100,40);sunLight.castShadow=true;
-sunLight.shadow.mapSize.set(1024,1024);
+// OPT: mobile uses 512 shadow map; desktop keeps 1024 — halves GPU shadow memory on mobile
+sunLight.shadow.mapSize.set(_isMobile?512:1024,_isMobile?512:1024);
 sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
-sunLight.shadow.camera.left=-160;sunLight.shadow.camera.right=160;
-sunLight.shadow.camera.top=160;sunLight.shadow.camera.bottom=-160;
+// OPT: tighten shadow frustum to actual grid bounds — removes wasted shadow texels outside play area
+sunLight.shadow.camera.left=-140;sunLight.shadow.camera.right=140;
+sunLight.shadow.camera.top=140;sunLight.shadow.camera.bottom=-140;
 scene.add(sunLight);scene.add(sunLight.target);
 const fill1=new THREE.DirectionalLight(0x221133,0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
 const fill2=new THREE.DirectionalLight(0x112233,0.12);fill2.position.set(50,20,60);scene.add(fill2);
@@ -1010,56 +1116,87 @@ function buildWorld(){
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
 
-  // ── Roads + rails ──
+  // ── Roads + rails — InstancedMesh for rails & ties (1 draw call each vs hundreds) ──
   const roadM=new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
   const railM=new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
   const tieM=new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
   const ROFF=0.52;
+
+  // OPT: count instances ahead of time — avoids Array.push + GC
+  const hEdgeCount=((GH+1)*GW);   // horizontal road segments
+  const vEdgeCount=(GW+1)*GH;     // vertical road segments
+  const hRailCount=hEdgeCount*2;
+  const vRailCount=vEdgeCount*2;
+  const hTieCount=hEdgeCount*3;   // 3 ties per segment
+  const vTieCount=vEdgeCount*3;
+  const totalRailCount=hRailCount+vRailCount;
+  const totalTieCount=hTieCount+vTieCount;
+
+  // OPT: InstancedMesh — all rails = 1 draw call, all ties = 1 draw call
+  const instRailH=new THREE.InstancedMesh(new THREE.BoxGeometry(CELL,.07,.1),railM,hRailCount);
+  const instRailV=new THREE.InstancedMesh(new THREE.BoxGeometry(.1,.07,CELL),railM,vRailCount);
+  const instTieH=new THREE.InstancedMesh(new THREE.BoxGeometry(.12,.08,1.2),tieM,hTieCount);
+  const instTieV=new THREE.InstancedMesh(new THREE.BoxGeometry(1.2,.08,.12),tieM,vTieCount);
+  instRailH.receiveShadow=false;instRailV.receiveShadow=false;
+  instTieH.receiveShadow=false;instTieV.receiveShadow=false;
+  const _mDummy=new THREE.Object3D();
+  let riH=0,riV=0,tiH=0,tiV=0;
+
   for(let r=0;r<=GH;r++){
     for(let c=0;c<GW;c++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL,z1=z0;
+      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL;
       const cx=(x0+x1)/2,cz=z0;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
       rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        const rl=new THREE.Mesh(new THREE.BoxGeometry(CELL,.07,.1),railM);
-        rl.position.set(cx,.07,cz+off);worldGrp.add(rl);
+        _mDummy.position.set(cx,.07,cz+off);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.updateMatrix();instRailH.setMatrixAt(riH++,_mDummy.matrix);
       });
       for(let s=1;s<4;s++){
-        const tx=x0+(x1-x0)*(s/4),tz=z0;
-        const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,1.2),tieM);
-        tie.position.set(tx,.06,tz);worldGrp.add(tie);
+        const tx=x0+(x1-x0)*(s/4);
+        _mDummy.position.set(tx,.06,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.updateMatrix();instTieH.setMatrixAt(tiH++,_mDummy.matrix);
       }
     }
   }
   for(let c=0;c<=GW;c++){
     for(let r=0;r<GH;r++){
-      const x0=OX+c*CELL,z0=OZ+r*CELL,x1=x0,z1=OZ+(r+1)*CELL;
+      const x0=OX+c*CELL,z0=OZ+r*CELL,z1=OZ+(r+1)*CELL;
       const cx=x0,cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
       rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
-        const rl=new THREE.Mesh(new THREE.BoxGeometry(.1,.07,CELL),railM);
-        rl.position.set(cx+off,.07,cz);worldGrp.add(rl);
+        _mDummy.position.set(cx+off,.07,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.updateMatrix();instRailV.setMatrixAt(riV++,_mDummy.matrix);
       });
       for(let s=1;s<4;s++){
-        const tx=x0,tz=z0+(z1-z0)*(s/4);
-        const tie=new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.12),tieM);
-        tie.position.set(tx,.06,tz);worldGrp.add(tie);
+        const tz=z0+(z1-z0)*(s/4);
+        _mDummy.position.set(cx,.06,tz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+        _mDummy.updateMatrix();instTieV.setMatrixAt(tiV++,_mDummy.matrix);
       }
     }
   }
+  instRailH.instanceMatrix.needsUpdate=true;instRailV.instanceMatrix.needsUpdate=true;
+  instTieH.instanceMatrix.needsUpdate=true;instTieV.instanceMatrix.needsUpdate=true;
+  worldGrp.add(instRailH);worldGrp.add(instRailV);worldGrp.add(instTieH);worldGrp.add(instTieV);
 
-  // ── Intersection plates ──
+  // ── Intersection plates + lamp posts — posts use InstancedMesh ──
   const platM=new THREE.MeshStandardMaterial({color:0x141828,roughness:.88});
+  // OPT: InstancedMesh for lamp posts — replaces (GW+1)*(GH+1) individual meshes
+  const _lampPostCount=(GW+1)*(GH+1);
+  const instPosts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.05,.05,.7,6),
+    new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.4,metalness:.5}),
+    _lampPostCount);
+  let _pi=0;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     const p=npos(c,r);
     const pl=new THREE.Mesh(new THREE.BoxGeometry(4,0.08,4),platM);
     pl.position.set(p.x,.04,p.z);worldGrp.add(pl);
-    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.7,6),
-      new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.4,metalness:.5}));
-    lp.position.set(p.x+1.4,.35,p.z+1.4);worldGrp.add(lp);
+    _mDummy.position.set(p.x+1.4,.35,p.z+1.4);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
+    _mDummy.updateMatrix();instPosts.setMatrixAt(_pi++,_mDummy.matrix);
   }
+  instPosts.instanceMatrix.needsUpdate=true;
+  worldGrp.add(instPosts);
 
   // ── CYBERPUNK BUILDINGS ──
   const KANJI=['ラーメン','カフェ','居酒屋','タクシー','電気','薬局','ホテル','パン','焼肉','酒','夜市','特急','温泉','美容院','映画館','コンビニ','警察','病院','銀行','食堂'];
@@ -1130,6 +1267,15 @@ function buildWorld(){
     pl.position.set(x,y,z);worldGrp.add(pl);
   });
 
+  // OPT: building body geometry cache — shared across ALL buildings (not just per-building)
+  // Key = rounded W_H_D to avoid float precision mismatches
+  const _bGeoCache={};
+  function getBldGeo(w,h,d){
+    const key=`${w.toFixed(1)}_${h.toFixed(1)}_${d.toFixed(1)}`;
+    if(!_bGeoCache[key])_bGeoCache[key]=new THREE.BoxGeometry(w,h,d);
+    return _bGeoCache[key];
+  }
+
   for(let r=0;r<GH;r++){
     for(let c=0;c<GW;c++){
       const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
@@ -1147,7 +1293,7 @@ function buildWorld(){
 
       for(let t=0;t<numTiers;t++){
         const tH=fpTier*floorH+(t===numTiers-1?rng()*2:0);
-        const body=new THREE.Mesh(new THREE.BoxGeometry(cW,tH,cD),bodyMat);
+        const body=new THREE.Mesh(getBldGeo(cW,parseFloat(tH.toFixed(1)),cD),bodyMat);
         body.position.set(0,bot+tH/2,0);body.castShadow=true;body.receiveShadow=true;
         bldGrp.add(body);
 
@@ -1177,11 +1323,8 @@ function buildWorld(){
         const yPos=floorH*1.2+rng()*(bot*0.5);
         const side=Math.floor(rng()*4);
         const tex=makeKanjiTex(kanji,nCol);
-        const signMat=new THREE.MeshStandardMaterial({
-          map:tex,emissiveMap:tex,
-          emissive:new THREE.Color(nCol),emissiveIntensity:2.8,
-          color:0x111111,roughness:.9,transparent:true,depthWrite:false
-        });
+        // OPT: reuse cached material per neon color (avoids new MeshStandardMaterial per sign)
+        const signMat=getNeonSignMat(nCol,tex);
         const sign=new THREE.Mesh(new THREE.PlaneGeometry(.52,signH),signMat);
         const off=bW/2+.06;
         if(side===0) sign.position.set((rng()-.5)*bW*.5,yPos,off);
@@ -1304,7 +1447,8 @@ function buildWorld(){
   const gridHalf = (GW * CELL) / 2;
 
   // Place silhouette buildings in a ring 60–220 units outside the grid
-  const silCount = 180;
+  // OPT: fewer background buildings on mobile — not visible at low res anyway
+  const silCount=_isMobile?80:180;
   for(let i = 0; i < silCount; i++){
     const angle = silRng() * Math.PI * 2;
     const dist = gridHalf + 55 + silRng() * 170;
@@ -1927,6 +2071,9 @@ function doDeliver(){
     document.getElementById('streak-val').textContent=`×${MS.streak}`;
   }
   MS.active=false;
+  // ── Race: check if player reached target ──
+  updateRaceBar();
+  if(GS.score>=RACE_TARGET){raceOver('player');return;}
   setTimeout(()=>{if(gameRunning)showPackageChoice(MS.toSt);},1200);
 }
 
@@ -2023,13 +2170,19 @@ function initNpcTrolleys(){
 }
 
 function updNpcCountHUD(){
-  if(DOM.npcCountVal) DOM.npcCountVal.textContent=npcTrolleys.length+'/'+NPC_MAX;
+  // OPT: NPC count changes rarely — safe to defer to idle
+  if(DOM.npcCountVal) _scheduleIdle(()=>DOM.npcCountVal.textContent=npcTrolleys.length+'/'+NPC_MAX);
 }
 
 function updateNpcTrolleys(dt,gt){
   npcTrolleys.forEach(npc=>{
     npc.jCool=Math.max(0,npc.jCool-dt);
     npc.glueCooldown=Math.max(0,npc.glueCooldown-dt);
+
+    // OPT: distance-based LOD — skip expensive rendering & glue logic for far-away NPCs
+    const distToPlayer=npc.mesh.position.distanceTo(trolley.position);
+    const isNear=distToPlayer<80; // within 80 units — always update
+    const isMid=distToPlayer<160; // 80-160 units — physics only, skip cosmetics
     // Slight random speed wobble — erratic grandma driving
     const wobbleSpeed=npc.speed*(0.85+Math.sin(gt*0.7+npc.wobble)*0.15);
     const advance=(wobbleSpeed*dt)/CELL;
@@ -2068,24 +2221,29 @@ function updateNpcTrolleys(dt,gt){
     const px=x0+(x1-x0)*npc.edgeT;
     const pz=z0+(z1-z0)*npc.edgeT;
     npc.mesh.position.set(px,.35,pz);
-    const dx=x1-x0,dz=z1-z0;
-    const hl=Math.sqrt(dx*dx+dz*dz);
-    if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
 
-    // Animate pump wobble
-    npc.pumpAng+=wobbleSpeed*0.8*dt;
-    // Gentle body sway
-    npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
+    // OPT: skip expensive trig/cosmetics for distant NPCs (LOD)
+    if(isMid){
+      const dx=x1-x0,dz=z1-z0;
+      const hl=Math.sqrt(dx*dx+dz*dz);
+      if(hl>0.01)npc.mesh.rotation.y=Math.atan2(dx,dz);
+    }
+    if(isNear){
+      // Animate pump wobble
+      npc.pumpAng+=wobbleSpeed*0.8*dt;
+      // Gentle body sway
+      npc.mesh.rotation.z=Math.sin(npc.pumpAng*1.2)*0.04;
 
-    // Pulse beacon (last child — cached index avoids repeated .find())
-    const bec=npc.mesh.children[npc.mesh.children.length-1];
-    if(bec&&bec.material){
-      const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
-      bec.material.opacity=p;bec.material.transparent=true;
+      // Pulse beacon (last child — cached index avoids repeated .find())
+      const bec=npc.mesh.children[npc.mesh.children.length-1];
+      if(bec&&bec.material){
+        const p=0.6+Math.sin(gt*2+npc.wobble)*0.4;
+        bec.material.opacity=p;bec.material.transparent=true;
+      }
     }
 
     // Proximity check with player trolley (continuous, not just at nodes)
-    const dist=npc.mesh.position.distanceTo(trolley.position);
+    const dist=distToPlayer; // OPT: reuse already-computed distance
     if(!npc.respawning&&dist<3.5&&GS.speed>1){
       // Block! Slow down player
       GS.speed=Math.max(0,GS.speed*0.85);
@@ -2103,33 +2261,477 @@ function updateNpcTrolleys(dt,gt){
 }
 
 // ═══════════════════════════════════════════
+//  AI COMPETITOR — CPU Player
+// ═══════════════════════════════════════════
+// The CPU rides its own trolley on the same grid, picks up & delivers packages
+// using BFS pathfinding. It scores independently and races the player to 1,000,000.
+
+const RACE_TARGET = 1_000_000;
+
+// ── AI state ──
+const AI = {
+  score: 0,
+  node: 0, nextNode: 1, edgeT: 0, facing: 0,
+  speed: 0,
+  energy: 60,
+  // mission
+  phase: 'idle',
+  fromSt: -1, toSt: -1,
+  path: [],
+  pathIdx: 0,
+  delivsDone: 0,
+  streak: 0,
+  // collision / avoidance
+  collideState: 'clear',
+  collideCooldown: 0,
+  stopTimer: 0,
+  rerouteNode: -1,
+  // cosmetic
+  pumpAng: 0,
+  mesh: null,
+  pumpGrp: null,
+  labelEl: null,
+  exclamEl: null,
+};
+
+// ── BFS pathfinding on the grid graph ──
+function aiBFS(startNode, targetNode) {
+  if (startNode === targetNode) return [startNode];
+  const prev = new Int32Array(NX * NZ).fill(-1);
+  const queue = [startNode];
+  prev[startNode] = startNode;
+  let head = 0;
+  while (head < queue.length) {
+    const cur = queue[head++];
+    if (cur === targetNode) break;
+    const cc = cur % NX, cr = Math.floor(cur / NX);
+    DIR_VEC.forEach(([dc, dr]) => {
+      const nc2 = cc + dc, nr2 = cr + dr;
+      if (nc2 < 0 || nc2 > GW || nr2 < 0 || nr2 > GH) return;
+      const nb = nid(nc2, nr2);
+      if (prev[nb] !== -1) return;
+      prev[nb] = cur;
+      queue.push(nb);
+    });
+  }
+  // Reconstruct path
+  const path = [];
+  let cur = targetNode;
+  while (cur !== startNode) {
+    path.unshift(cur);
+    cur = prev[cur];
+    if (cur === -1) return [startNode]; // unreachable fallback
+  }
+  path.unshift(startNode);
+  return path;
+}
+
+// ── Derive facing direction between two adjacent nodes ──
+function aiGetFacing(fromNode, toNode) {
+  const fc = fromNode % NX, fr = Math.floor(fromNode / NX);
+  const tc = toNode % NX,   tr = Math.floor(toNode / NX);
+  const dc = tc - fc, dr = tr - fr;
+  return DIR_VEC.findIndex(([x, z]) => x === dc && z === dr);
+}
+
+// ── Build AI trolley mesh (cyan/teal coloured, distinct from player and grandmas) ──
+function buildAiTrolley() {
+  const grp = new THREE.Group();
+  const bM = new THREE.MeshStandardMaterial({ color: 0x00ccff, metalness: .4, roughness: .5,
+    emissive: new THREE.Color(0x0088bb), emissiveIntensity: .3 });
+  const mM = new THREE.MeshStandardMaterial({ color: 0x888899, metalness: .7, roughness: .3 });
+  const wM = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: .9 });
+  const wlM = new THREE.MeshStandardMaterial({ color: 0x112233, metalness: .6, roughness: .4 });
+  const skM = new THREE.MeshStandardMaterial({ color: 0x99ccee });
+  const shM = new THREE.MeshStandardMaterial({ color: 0x005577 });
+  // Platform
+  const plat = new THREE.Mesh(new THREE.BoxGeometry(2, .18, 1.1), wM);
+  plat.position.set(0, .5, 0); plat.castShadow = true; grp.add(plat);
+  [-0.85, 0.85].forEach(x => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.07, .55, 1.1), mM);
+    b.position.set(x, .87, 0); grp.add(b);
+  });
+  // Wheels
+  const wGeo = new THREE.TorusGeometry(.26, .065, 8, 16);
+  [[-0.72, -.44], [-0.72, .44], [.72, -.44], [.72, .44]].forEach(([x, z]) => {
+    const w = new THREE.Mesh(wGeo, wlM); w.position.set(x, .26, z); w.rotation.y = Math.PI / 2; grp.add(w);
+  });
+  // Pump
+  const pg = new THREE.Group();
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .85, 8), mM);
+  pole.position.set(0, .58, 0); pg.add(pole);
+  const hbar = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 1.3, 8), bM);
+  hbar.rotation.z = Math.PI / 2; hbar.position.set(0, 1.02, 0); pg.add(hbar);
+  [-0.6, .6].forEach(x => {
+    const g2 = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .22, 8), bM);
+    g2.position.set(x, 1.02, 0); pg.add(g2);
+  });
+  pg.position.set(0, .48, 0); grp.add(pg);
+  AI.pumpGrp = pg;
+  // Rider — robot figure
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.38, .52, .26), shM);
+  body.position.set(0, .84, 0); grp.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.28, .24, .24),
+    new THREE.MeshStandardMaterial({ color: 0x003344, metalness: .8, roughness: .2 }));
+  head.position.set(0, 1.22, 0); grp.add(head);
+  // Eye visor
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(.22, .08, .02),
+    new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+  visor.position.set(0, 1.24, .13); grp.add(visor);
+  // Antenna
+  const ant = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .28, 4), mM);
+  ant.position.set(.1, 1.44, 0); grp.add(ant);
+  const antTip = new THREE.Mesh(new THREE.SphereGeometry(.04, 5, 4),
+    new THREE.MeshBasicMaterial({ color: 0xff4488 }));
+  antTip.position.set(.1, 1.58, 0); grp.add(antTip);
+  // Glow beacon
+  const bec = new THREE.Mesh(new THREE.SphereGeometry(.2, 8, 6),
+    new THREE.MeshBasicMaterial({ color: 0x00ccff, transparent: true, opacity: .8 }));
+  bec.position.set(0, 1.65, 0); grp.add(bec);
+  // Point light carried by AI trolley
+  const ptL = new THREE.PointLight(0x00ccff, 3.5, 22);
+  ptL.position.set(0, 1.5, 0); grp.add(ptL);
+  grp.position.set(0, .35, 0);
+  scene.add(grp);
+  return grp;
+}
+
+// ── Assign next AI mission ──
+function aiNextMission() {
+  // Pick a random from/to station pair (prefer VIP-tier occasionally)
+  const fromSt = Math.floor(Math.random() * ST_POS.length);
+  let toSt = fromSt;
+  while (toSt === fromSt) toSt = Math.floor(Math.random() * ST_POS.length);
+  AI.fromSt = fromSt;
+  AI.toSt = toSt;
+  AI.phase = 'going_pickup';
+  const [tc, tr] = ST_POS[fromSt];
+  AI.path = aiBFS(AI.node, nid(tc, tr));
+  AI.pathIdx = 0;
+}
+
+// ── Init / reset AI ──
+function initAI() {
+  if (AI.mesh) { scene.remove(AI.mesh); AI.mesh = null; }
+  AI.score = 0; AI.delivsDone = 0; AI.streak = 0;
+  AI.speed = 0; AI.energy = 60;
+  AI.phase = 'idle';
+  AI.path = []; AI.pathIdx = 0;
+  // Spawn at opposite corner from player
+  AI.node = nid(0, 0); AI.nextNode = nid(1, 0); AI.edgeT = 0; AI.facing = 0;
+  AI.mesh = buildAiTrolley();
+  const sp = npos(0, 0);
+  AI.mesh.position.set(sp.x, .35, sp.z);
+  // Show label + exclamation bubble
+  if (!AI.labelEl) AI.labelEl = document.getElementById('ai-label');
+  AI.labelEl.style.display = 'block';
+  if (!AI.exclamEl) AI.exclamEl = document.getElementById('ai-exclaim');
+  AI.exclamEl.style.display = 'block';
+  AI.exclamEl.style.opacity = '0';
+  AI.collideState = 'clear'; AI.collideCooldown = 0; AI.stopTimer = 0;
+  // Show race bar
+  document.getElementById('race-bar').style.display = 'flex';
+  updateRaceBar();
+  // Start first mission after a short delay
+  setTimeout(() => { if (gameRunning) aiNextMission(); }, 1500);
+}
+
+// ── AI physics update ──
+// Collision logic:
+//   BRAKING  — AI and player on same edge heading toward each other  → AI brakes hard
+//   STOPPED  — distance < 3 units after braking                      → AI stops 1-2s, beeps
+//   REROUTING— stopped >1s or same node blocked                      → BFS detour via side node
+function updateAI(dt, gt) {
+  if (!AI.mesh || AI.phase === 'idle') return;
+
+  // Cooldown tick
+  if (AI.collideCooldown > 0) AI.collideCooldown -= dt;
+
+  // ── Collision detection ──
+  const aiPos = AI.mesh.position;
+  const plPos = trolley.position;
+  const dist3 = aiPos.distanceTo(plPos);
+
+  // Check if on same or adjacent edge (close approach)
+  const aiNc  = AI.node % NX,      aiNr  = Math.floor(AI.node / NX);
+  const aiNnc = AI.nextNode % NX,  aiNnr = Math.floor(AI.nextNode / NX);
+  const plNc  = tNode % NX,        plNr  = Math.floor(tNode / NX);
+  const plNnc = tNextNode % NX,    plNnr = Math.floor(tNextNode / NX);
+
+  // Head-on: AI going A→B while player going B→A on same edge
+  const headOn = (AI.node === tNextNode && AI.nextNode === tNode);
+  // Same edge same direction (catch-up)
+  const sameEdge = (AI.node === tNode && AI.nextNode === tNextNode) ||
+                   (AI.node === tNextNode && AI.nextNode === tNode);
+  // Very close in world space
+  const tooClose = dist3 < 3.5;
+
+  if (AI.collideState === 'clear' && AI.collideCooldown <= 0) {
+    if (headOn || (tooClose && sameEdge)) {
+      AI.collideState = 'braking';
+      AI.collideCooldown = 0.1;
+      // Visual reaction: show "!" bubble
+      if (AI.exclamEl) { AI.exclamEl.style.opacity = '1'; }
+      SFX.brake && SFX.brake();
+      showNotif('🤖 CPU braking!', '#00ccff');
+    }
+  }
+
+  if (AI.collideState === 'braking') {
+    // Hard brake
+    AI.speed = Math.max(0, AI.speed - 18 * dt);
+    if (dist3 < 2.8) {
+      AI.collideState = 'stopped';
+      AI.stopTimer = 0.8 + Math.random() * 0.8; // 0.8–1.6s stop
+      AI.speed = 0;
+    } else if (dist3 > 6 && AI.collideCooldown <= 0) {
+      // Player moved away — resume
+      AI.collideState = 'clear';
+      AI.collideCooldown = 1.0;
+      if (AI.exclamEl) AI.exclamEl.style.opacity = '0';
+    }
+  }
+
+  if (AI.collideState === 'stopped') {
+    AI.speed = 0;
+    AI.stopTimer -= dt;
+    // Blink exclamation while stopped
+    if (AI.exclamEl) {
+      AI.exclamEl.style.opacity = Math.floor(gt * 4) % 2 === 0 ? '1' : '0.3';
+    }
+    if (AI.stopTimer <= 0) {
+      // Try to reroute: pick a neighbour of current node that is NOT toward player
+      const blocked = AI.nextNode;
+      const nbrs = getNeighbors(aiNc, aiNr, (AI.facing + 2) % 4);
+      // Prefer a neighbour that is NOT the blocked direction and NOT the player's node
+      const alt = nbrs.find(nb => nb.nodeId !== blocked && nb.nodeId !== tNode && nb.nodeId !== tNextNode);
+      if (alt) {
+        // Reroute: go to alt node first, then re-BFS to destination
+        AI.rerouteNode = alt.nodeId;
+        const destSt = AI.phase === 'going_pickup' ? AI.fromSt : AI.toSt;
+        const [dc, dr] = ST_POS[destSt];
+        const detourPath = aiBFS(alt.nodeId, nid(dc, dr));
+        AI.path = [AI.node, alt.nodeId, ...detourPath.slice(1)];
+        AI.pathIdx = 0;
+        AI.nextNode = alt.nodeId;
+        AI.facing = aiGetFacing(AI.node, AI.nextNode);
+        showNotif('🤖 CPU rerouting!', '#00ccff');
+      }
+      AI.collideState = 'clear';
+      AI.collideCooldown = 2.0; // grace period before next collision check
+      if (AI.exclamEl) AI.exclamEl.style.opacity = '0';
+    }
+    // Render only — skip movement below
+    _aiRender(aiNc, aiNr, aiNnc, aiNnr, dt, gt);
+    return;
+  }
+
+  // ── Normal movement (not stopped) ──
+  AI.energy = Math.min(100, AI.energy + 3.5 * dt);
+  if (AI.collideState === 'clear' && AI.energy >= 3) {
+    AI.energy -= 5.5;
+    AI.speed = Math.min(AI.speed + 2.0, 15);
+  }
+  AI.speed = Math.max(0, AI.speed - 0.35 * dt);
+
+  const advance = (AI.speed * dt) / CELL;
+  AI.edgeT = Math.min(AI.edgeT + advance, 1.0);
+
+  if (AI.edgeT >= 1.0) {
+    AI.node = AI.nextNode;
+    AI.edgeT = 0;
+    AI.pathIdx++;
+
+    // Check if reached destination
+    const [destC, destR] = ST_POS[AI.phase === 'going_pickup' ? AI.fromSt : AI.toSt];
+    if (AI.node === nid(destC, destR)) {
+      if (AI.phase === 'going_pickup') {
+        AI.phase = 'going_deliver';
+        const [tc, tr] = ST_POS[AI.toSt];
+        AI.path = aiBFS(AI.node, nid(tc, tr));
+        AI.pathIdx = 0;
+        showNotif('🤖 CPU picked up a package!', '#00ccff');
+      } else {
+        AI.delivsDone++;
+        AI.streak++;
+        const mul = AI.streak >= 3 ? 1.5 : AI.streak >= 2 ? 1.25 : 1.0;
+        const baseBonus = 3000 + Math.floor(Math.random() * 4000);
+        const bonus = Math.floor(baseBonus * mul);
+        AI.score += bonus;
+        updateRaceBar();
+        showNotif(`🤖 CPU delivered! +${bonus}`, '#cc88ff');
+        if (AI.score >= RACE_TARGET) { raceOver('ai'); return; }
+        setTimeout(() => { if (gameRunning) aiNextMission(); }, 800);
+        AI.phase = 'idle';
+        return;
+      }
+    }
+
+    // Advance to next node in path
+    if (AI.pathIdx < AI.path.length - 1) {
+      AI.nextNode = AI.path[AI.pathIdx + 1];
+      AI.facing = aiGetFacing(AI.node, AI.nextNode);
+    } else {
+      aiNextMission();
+    }
+  }
+
+  _aiRender(AI.node % NX, Math.floor(AI.node / NX),
+            AI.nextNode % NX, Math.floor(AI.nextNode / NX), dt, gt);
+}
+
+// ── Separated render helper (called from both stopped and moving paths) ──
+function _aiRender(nc, nr, nnc, nnr, dt, gt) {
+  const x0 = _nodePosX[nr * NX + nc],  z0 = _nodePosZ[nr * NX + nc];
+  const x1 = _nodePosX[nnr * NX + nnc], z1 = _nodePosZ[nnr * NX + nnc];
+  const px = x0 + (x1 - x0) * AI.edgeT;
+  const pz = z0 + (z1 - z0) * AI.edgeT;
+  AI.mesh.position.set(px, .35, pz);
+  const dx = x1 - x0, dz = z1 - z0;
+  const hl = Math.sqrt(dx * dx + dz * dz);
+  if (hl > 0.01) AI.mesh.rotation.y = Math.atan2(dx, dz);
+
+  // Pump animation — stops when speed = 0
+  AI.pumpAng += AI.speed * 1.4 * dt;
+  if (AI.pumpGrp) AI.pumpGrp.rotation.x = Math.sin(AI.pumpAng) * .38;
+
+  // Floating label
+  if (AI.labelEl) {
+    const aiScreenPos = new THREE.Vector3(px, .35 + 2.2, pz).project(camera);
+    const sx = (aiScreenPos.x * .5 + .5) * window.innerWidth;
+    const sy = (-aiScreenPos.y * .5 + .5) * window.innerHeight;
+    if (aiScreenPos.z < 1 && sx > 0 && sx < window.innerWidth && sy > 0 && sy < window.innerHeight) {
+      AI.labelEl.style.display = 'block';
+      AI.labelEl.style.opacity = '1';
+      AI.labelEl.style.left = sx + 'px';
+      AI.labelEl.style.top = (sy - 20) + 'px';
+      AI.labelEl.style.transform = 'translateX(-50%)';
+      // Move "!" bubble alongside label
+      if (AI.exclamEl && AI.exclamEl.style.opacity !== '0') {
+        AI.exclamEl.style.left = sx + 'px';
+        AI.exclamEl.style.top = (sy - 38) + 'px';
+        AI.exclamEl.style.display = 'block';
+      }
+    } else {
+      AI.labelEl.style.opacity = '0';
+    }
+  }
+}
+
+
+// ── Race bar updater ──
+function updateRaceBar() {
+  const pPct = Math.min(100, (GS.score / RACE_TARGET) * 100).toFixed(1);
+  const aPct = Math.min(100, (AI.score / RACE_TARGET) * 100).toFixed(1);
+  document.getElementById('rs-player-val').textContent = GS.score.toLocaleString();
+  document.getElementById('rs-ai-val').textContent = AI.score.toLocaleString();
+  document.getElementById('rp-player').style.width = pPct + '%';
+  document.getElementById('rp-ai').style.width = aPct + '%';
+  // Urgent flash when either is close
+  const bar = document.getElementById('race-bar');
+  if (pPct > 80 || aPct > 80) {
+    bar.style.borderColor = 'rgba(255,80,80,0.8)';
+  } else if (pPct > 50 || aPct > 50) {
+    bar.style.borderColor = 'rgba(255,200,0,0.7)';
+  } else {
+    bar.style.borderColor = 'rgba(180,80,255,0.5)';
+  }
+}
+
+// ── Race over ──
+function raceOver(winner) {
+  gameRunning = false;
+  BGM.fadeOut(1500);
+  clearChoiceMarkers();
+  document.getElementById('mission-panel').style.display = 'none';
+  document.getElementById('arrow').style.opacity = '0';
+  document.getElementById('streak-hud').style.display = 'none';
+  document.getElementById('map-hint').style.display = 'none';
+  document.getElementById('race-bar').style.display = 'none';
+  if (AI.labelEl) AI.labelEl.style.display = 'none';
+  if (AI.exclamEl) { AI.exclamEl.style.display = 'none'; AI.exclamEl.style.opacity = '0'; }
+
+  if (winner === 'player') {
+    document.getElementById('score-final-rw').textContent = GS.score.toLocaleString();
+    document.getElementById('rw-pscore').textContent = GS.score.toLocaleString();
+    document.getElementById('rw-aiscore').textContent = AI.score.toLocaleString();
+    document.getElementById('rw-del').textContent = MS.delivsDone;
+    document.getElementById('rw-str').textContent = MS.bestStreak + '×';
+    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-lose'].forEach(s => {
+      const el = document.getElementById(s); if (el) el.style.display = 'none';
+    });
+    document.getElementById('scr-race-win').style.display = 'flex';
+    SFX.deliver(); setTimeout(() => SFX.deliver(), 200); setTimeout(() => SFX.deliver(), 400);
+    showNotif('🏆 YOU WIN THE RACE!', '#ffd700');
+  } else {
+    document.getElementById('score-final-rl').textContent = GS.score.toLocaleString();
+    document.getElementById('rl-pscore').textContent = GS.score.toLocaleString();
+    document.getElementById('rl-del').textContent = MS.delivsDone;
+    const tips = [
+      '💡 Prioritise VIP packages — they score way more!',
+      '💡 Keep your streak alive — 3× multiplier is huge!',
+      '💡 Use ⚡ Boost on long straight routes!',
+      '💡 Avoid Grandma lanes — glue costs precious seconds!',
+    ];
+    document.getElementById('rl-tip').textContent = tips[Math.floor(Math.random() * tips.length)];
+    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win'].forEach(s => {
+      const el = document.getElementById(s); if (el) el.style.display = 'none';
+    });
+    document.getElementById('scr-race-lose').style.display = 'flex';
+    SFX.failGame();
+  }
+}
+
+// ═══════════════════════════════════════════
 //  GLUE SYSTEM
 // ═══════════════════════════════════════════
 
+// ── Glue puddle object pool — avoids new THREE.Group/Mesh allocation on every drop ──
+const GLUE_POOL_SIZE=8;
+const _gluePuddlePool=[];
+(function buildGluePuddlePool(){
+  const discGeo=new THREE.CylinderGeometry(2.2,2.2,.08,16);
+  const ringGeo1=new THREE.TorusGeometry(1.4,.06,6,20);
+  const ringGeo2=new THREE.TorusGeometry(1.9,.06,6,20);
+  for(let i=0;i<GLUE_POOL_SIZE;i++){
+    const grp=new THREE.Group();
+    const disc=new THREE.Mesh(discGeo,new THREE.MeshStandardMaterial({
+      color:0xcc9900,emissive:new THREE.Color(0xaa7700),emissiveIntensity:.6,
+      roughness:.3,metalness:.2,transparent:true,opacity:.85
+    }));
+    grp.add(disc);
+    [ringGeo1,ringGeo2].forEach(rg=>{
+      const ring=new THREE.Mesh(rg,new THREE.MeshBasicMaterial({color:0xffcc00,transparent:true,opacity:.5}));
+      ring.rotation.x=Math.PI/2;grp.add(ring);
+    });
+    grp.visible=false;
+    scene.add(grp);
+    _gluePuddlePool.push({grp,inUse:false});
+  }
+})();
+
+function acquireGluePuddle(pos){
+  let slot=_gluePuddlePool.find(s=>!s.inUse);
+  if(!slot){
+    // Fallback: steal oldest puddle
+    slot=_gluePuddlePool[0];
+    const oldIdx=gluePuddles.findIndex(p=>p.mesh===slot.grp);
+    if(oldIdx>=0)gluePuddles.splice(oldIdx,1);
+  }
+  slot.inUse=true;
+  slot.grp.position.set(pos.x,.05,pos.z);
+  slot.grp.visible=true;
+  return slot.grp;
+}
+function releaseGluePuddle(grp){
+  grp.visible=false;
+  const s=_gluePuddlePool.find(s=>s.grp===grp);
+  if(s)s.inUse=false;
+}
+
 // Build a glue puddle mesh (flat yellowish disc)
 function makeGluePuddle(pos){
-  const grp=new THREE.Group();
-  // Main puddle disc
-  const disc=new THREE.Mesh(
-    new THREE.CylinderGeometry(2.2,2.2,.08,16),
-    new THREE.MeshStandardMaterial({
-      color:0xcc9900,emissive:new THREE.Color(0xaa7700),
-      emissiveIntensity:.6,roughness:.3,metalness:.2,
-      transparent:true,opacity:.85
-    })
-  );
-  grp.add(disc);
-  // Drip rings
-  [1.4,1.9].forEach(r=>{
-    const ring=new THREE.Mesh(
-      new THREE.TorusGeometry(r,.06,6,20),
-      new THREE.MeshBasicMaterial({color:0xffcc00,transparent:true,opacity:.5})
-    );
-    ring.rotation.x=Math.PI/2;grp.add(ring);
-  });
-  grp.position.set(pos.x,.05,pos.z);
-  scene.add(grp);
-  return grp;
+  return acquireGluePuddle(pos);
 }
 
 // NPC drops glue when near player
@@ -2173,7 +2775,8 @@ function updateGlue(dt){
   for(let i=gluePuddles.length-1;i>=0;i--){
     const p=gluePuddles[i];
     p.age+=dt;
-    if(p.age>p.life){scene.remove(p.mesh);gluePuddles.splice(i,1);continue;}
+    // OPT: return to pool instead of scene.remove (avoids GC + scene graph mutation)
+    if(p.age>p.life){releaseGluePuddle(p.mesh);gluePuddles.splice(i,1);continue;}
     // Pulsing opacity
     p.mesh.children[0].material.opacity=0.6+Math.sin(p.age*2)*0.25;
 
@@ -2200,7 +2803,8 @@ function clearGlueNearPos(pos){
   for(let i=gluePuddles.length-1;i>=0;i--){
     const p=gluePuddles[i];
     const pd=p.mesh.position.distanceTo(pos);
-    if(pd<8){scene.remove(p.mesh);gluePuddles.splice(i,1);}
+    // OPT: return to pool instead of scene.remove
+    if(pd<8){releaseGluePuddle(p.mesh);gluePuddles.splice(i,1);}
   }
   // Also free player if stuck
   if(GLUE.stuck)releaseGlue();
@@ -2428,8 +3032,8 @@ function animTrolley(dt){
   const pulse=0.7+Math.sin(Date.now()*.006)*0.3;
   beacon.material.color.setRGB(1,0.2+pulse*0.3,0.1);
   trolleyLight.intensity=2.0+pulse*0.8;
-  // Throttle ring rotation — only update every 2nd frame (visual only, not gameplay)
-  if(Math.floor(Date.now()/16)%2===0)
+  // OPT: throttle ring rotation — only update every 3rd frame (visual only, not gameplay)
+  if(Math.floor(Date.now()/16)%3===0)
     stationRings.forEach((r,i)=>{if(r)r.rotation.z+=dt*2*(i%2===0?1.1:-1.1);});
 }
 
@@ -2647,11 +3251,21 @@ const DOM={
 };
 // Track last-written values to skip redundant DOM writes
 const _hudLast={score:-1,del:-1,coins:-1,spd:-1,energy:-1};
+// OPT: requestIdleCallback queue — defers low-priority DOM writes to idle time
+//      so the rendering thread is never blocked by score/coin text updates
+const _idleQueue=[];
+const _ric=window.requestIdleCallback||((cb)=>setTimeout(cb,0));
+function _scheduleIdle(fn){
+  _idleQueue.push(fn);
+  if(_idleQueue.length===1) _ric(()=>{const q=[..._idleQueue];_idleQueue.length=0;q.forEach(f=>f());},{timeout:200});
+}
 
 function updHUD(){
-  if(GS.score!==_hudLast.score){DOM.hScore.textContent=GS.score;_hudLast.score=GS.score;}
-  if(MS.delivsDone!==_hudLast.del){DOM.hDel.textContent=MS.delivsDone;_hudLast.del=MS.delivsDone;}
-  if(GS.coins!==_hudLast.coins){DOM.hCoins.textContent=GS.coins;_hudLast.coins=GS.coins;}
+  // OPT: score/coins are low-priority — defer to idle time so render loop is unblocked
+  if(GS.score!==_hudLast.score){const s=GS.score;_scheduleIdle(()=>DOM.hScore.textContent=s);_hudLast.score=s;}
+  if(MS.delivsDone!==_hudLast.del){const d=MS.delivsDone;_scheduleIdle(()=>DOM.hDel.textContent=d);_hudLast.del=d;}
+  if(GS.coins!==_hudLast.coins){const c=GS.coins;_scheduleIdle(()=>DOM.hCoins.textContent=c);_hudLast.coins=c;}
+  // Speed & pump bar are gameplay-feedback — keep immediate
   const spd=Math.round(GS.speed*3.6);
   if(spd!==_hudLast.spd){DOM.spdVal.textContent=spd;_hudLast.spd=spd;}
   const pct=Math.round((GS.energy/GS.maxE)*100);
@@ -2787,13 +3401,35 @@ function drawMM(){
   mmCtx2.fillStyle='rgba(255,80,30,0.9)';mmCtx2.fill();
   mmCtx2.beginPath();mmCtx2.arc(px,py,2.8,0,Math.PI*2);
   mmCtx2.fillStyle='#ffffff';mmCtx2.fill();
+
+  // ── Dynamic: AI competitor trolley (cyan star) ──
+  if(AI.mesh&&AI.phase!=='idle'){
+    const anc=AI.node%NX, anr=Math.floor(AI.node/NX);
+    const annc=AI.nextNode%NX, annr=Math.floor(AI.nextNode/NX);
+    const afc=anc+(annc-anc)*AI.edgeT, afr=anr+(annr-anr)*AI.edgeT;
+    const{x:ax,y:ay}=mmPf(afc,afr);
+    // Outer glow
+    const aGrad=mmCtx2.createRadialGradient(ax,ay,0,ax,ay,9);
+    aGrad.addColorStop(0,'rgba(0,200,255,0.5)');
+    aGrad.addColorStop(1,'rgba(0,200,255,0)');
+    mmCtx2.beginPath();mmCtx2.arc(ax,ay,9,0,Math.PI*2);
+    mmCtx2.fillStyle=aGrad;mmCtx2.fill();
+    // Core dot
+    mmCtx2.beginPath();mmCtx2.arc(ax,ay,4.5,0,Math.PI*2);
+    mmCtx2.fillStyle='rgba(0,220,255,0.95)';mmCtx2.fill();
+    mmCtx2.beginPath();mmCtx2.arc(ax,ay,2,0,Math.PI*2);
+    mmCtx2.fillStyle='#ffffff';mmCtx2.fill();
+    // "AI" label
+    mmCtx2.font='bold 7px sans-serif';mmCtx2.fillStyle='rgba(0,220,255,0.85)';
+    mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
+  }
 }
 
 // ═══════════════════════════════════════════
 //  GAME FLOW
 // ═══════════════════════════════════════════
 function startGame(){
-  ['scr-start','scr-fail','scr-win','scr-keys'].forEach(s=>document.getElementById(s).style.display='none');
+  ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win','scr-race-lose'].forEach(s=>{const el=document.getElementById(s);if(el)el.style.display='none';});
   document.getElementById('map-hint').style.display='none';
   document.getElementById('streak-hud').style.display='none';
   document.getElementById('shop-overlay').style.display='none';
@@ -2802,7 +3438,7 @@ function startGame(){
   rockets.forEach(r=>releaseRocketMesh(r.mesh));rockets.length=0;
   _explPool.forEach(e=>{e.active=false;e.grp.visible=false;});
   // Clear glue puddles
-  gluePuddles.forEach(p=>scene.remove(p.mesh));gluePuddles.length=0;
+  gluePuddles.forEach(p=>releaseGluePuddle(p.mesh));gluePuddles.length=0;
   // Release glue if stuck
   if(GLUE.stuck)releaseGlue();
   // Reset boost
@@ -2819,6 +3455,8 @@ function startGame(){
   gameRunning=true;
   initNpcTrolleys();
   updNpcCountHUD();
+  // ── Start AI competitor ──
+  initAI();
   BGM.play();
   setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
   startMissions();
@@ -2885,18 +3523,29 @@ addBtn('mob-fire',
 // ═══════════════════════════════════════════
 //  MAIN LOOP
 // ═══════════════════════════════════════════
+// ── Adaptive FPS throttle ──
+// OPT: on low-end devices, skip a render frame if we're running below ~28 fps
+// This keeps physics/logic smooth while reducing GPU pressure
 const clock=new THREE.Clock();let gt=0;
+let _skipFrame=false;
+let _fpsSmooth=60;
+
 (function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(clock.getDelta(),.05);gt+=dt;
+  // OPT: exponential moving average of FPS — react to sustained slowdowns, not spikes
+  _fpsSmooth=_fpsSmooth*.92+(dt>0?1/dt:.0)*0.08;
+  // On mobile, if sustained FPS < 28, skip every other render (halves GPU cost)
+  if(_isMobile&&_fpsSmooth<28){_skipFrame=!_skipFrame;}else{_skipFrame=false;}
   if(gameRunning){
     if(pumpPressed){doPump();pumpPressed=false;GS.shake=.6;}
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
     updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
-    updateBoost(dt);updateGlue(dt);
+    updateBoost(dt);updateGlue(dt);updateAI(dt,gt);
     if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
+  if(_skipFrame)return; // OPT: skip GPU work on low-end mobile
   moveCam();updP(dt);
   sunLight.target.position.copy(trolley.position);
   trolleyLight.position.set(trolley.position.x,trolley.position.y+5,trolley.position.z);

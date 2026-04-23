@@ -3510,7 +3510,9 @@ function startGame(){
   // ── Start AI competitor ──
   initAI();
   BGM.play();
-  setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
+  setTimeout(()=>SFX.startGame(),200);
+  // Check for silent WebGL failure after a few frames have had time to render
+  setTimeout(_checkBlackScreen, 1500);
   startMissions();
 }
 
@@ -3591,23 +3593,31 @@ canvas.addEventListener('webglcontextrestored', () => {
 }, false);
 
 // ── Startup diagnostic: detect black screen ──
-// After 3 seconds, if the canvas is still all-black (render failed silently),
-// show a helpful overlay rather than leaving the user confused.
-setTimeout(()=>{
-  if(!gameRunning) return; // only check while game is running
+// Called from startGame() after first render, not on page load.
+// Only fires on mobile/Adreno where silent WebGL failure is possible.
+function _checkBlackScreen(){
+  if(!_isMobile) return; // desktop never needs this
   try {
     const gl=renderer.getContext();
     const px=new Uint8Array(4);
-    gl.readPixels(window.innerWidth>>1, window.innerHeight>>1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    // If centre pixel is near-black (r+g+b < 10), scene is not rendering
-    if(px[0]+px[1]+px[2]<10){
+    // Sample multiple points — centre, and offset from centre
+    let totalBrightness=0;
+    [[.5,.5],[.3,.4],[.6,.6],[.4,.7]].forEach(([fx,fy])=>{
+      gl.readPixels(
+        Math.floor(fx*window.innerWidth), Math.floor(fy*window.innerHeight),
+        1,1, gl.RGBA, gl.UNSIGNED_BYTE, px
+      );
+      totalBrightness+=px[0]+px[1]+px[2];
+    });
+    // All 4 samples near-black → scene is not rendering
+    if(totalBrightness<40){
       const warn=document.createElement('div');
       warn.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;background:rgba(10,5,20,0.95);border:2px solid #ff6644;border-radius:12px;padding:18px 24px;text-align:center;color:#ffe680;font-family:Georgia,serif;max-width:320px;';
       warn.innerHTML='<div style="font-size:22px;margin-bottom:8px">⚠️ Display Issue</div><div style="font-size:12px;line-height:1.6;color:rgba(255,220,150,0.8)">Your device GPU had trouble rendering the scene.<br><br>Try: <b>reload the page</b>, or open in <b>Chrome browser</b> if using another app.</div><button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:20px;cursor:pointer;font-family:Georgia,serif;font-weight:bold">↺ Reload</button>';
       document.body.appendChild(warn);
     }
   } catch(e){ /* readPixels may fail on some devices — ignore */ }
-}, 3000);
+}
 
 const clock=new THREE.Clock();let gt=0;
 let _skipFrame=false;

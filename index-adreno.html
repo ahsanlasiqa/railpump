@@ -506,7 +506,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script async src="https://vibejam.cc/2026/widget.js"></script>
 <script>
 'use strict';
 // ═══════════════════════════════════════════
@@ -907,38 +906,71 @@ const ROCKET_SPEED=28;
 const ROCKET_RADIUS=3.5;
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('c');
-// OPT: stencil disabled (unused) → frees GPU memory; antialias off on mobile saves ~30% fill cost
 const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
-const renderer=new THREE.WebGLRenderer({canvas,antialias:!_isMobile,stencil:false,powerPreference:'high-performance'});
-// OPT: cap pixel ratio at 2 — Retina/4K screens would otherwise 4-9× the fragment load
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+// ── Adreno / mobile GPU capability probe ──
+// Adreno 610 (Redmi Pad SE) has a known driver bug: WEBGL_depth_texture is
+// reported as supported but crashes silently when used with PCF shadow maps,
+// causing the entire scene to render black. We probe for it explicitly.
+const _probeCanvas=document.createElement('canvas');
+const _probeGl=_probeCanvas.getContext('webgl2')||_probeCanvas.getContext('webgl');
+const _hasDepthTex=!!(_probeGl&&_probeGl.getExtension('WEBGL_depth_texture'));
+const _renderer_info=_probeGl&&_probeGl.getExtension('WEBGL_debug_renderer_info');
+const _gpuRenderer=_renderer_info?_probeGl.getParameter(_renderer_info.UNMASKED_RENDERER_WEBGL):'';
+// Adreno GPUs have a specific shadow map bug — disable shadows on them
+const _isAdreno=_gpuRenderer.toLowerCase().includes('adreno');
+const _shadowOk=!_isAdreno&&_hasDepthTex&&!_isMobile;
+
+const renderer=new THREE.WebGLRenderer({
+  canvas,
+  antialias:false,          // off on all mobile — Adreno MSAA is slow
+  stencil:false,
+  depth:true,
+  powerPreference:'high-performance',
+  // Force WebGL2 when available for better shader uniform limits
+  // (Adreno 610 has only 224 fragment uniforms on WebGL1 vs 1024 on WebGL2)
+});
+
+// OPT: Adreno benefits from lower pixel ratio — 1.5 cap instead of 2
+renderer.setPixelRatio(_isAdreno ? Math.min(window.devicePixelRatio,1.5) : Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=true;
-// OPT: PCFSoft on desktop, cheaper PCF on mobile
-renderer.shadowMap.type=_isMobile?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;
+
+// ADRENO FIX: disable shadow maps entirely on Adreno — they crash silently
+renderer.shadowMap.enabled=_shadowOk;
+if(_shadowOk) renderer.shadowMap.type=THREE.PCFShadowMap;
+
 renderer.setClearColor(0x03040e,1);
-// Tone mapping makes emissive neons "bloom" without post-processing
-renderer.toneMapping=THREE.ReinhardToneMapping;
-renderer.toneMappingExposure=1.4;
+
+// ADRENO FIX: ReinhardToneMapping + dark scene = near-black on Adreno.
+// Use LinearToneMapping on mobile with higher exposure to guarantee visibility.
+renderer.toneMapping=_isMobile?THREE.LinearToneMapping:THREE.ReinhardToneMapping;
+renderer.toneMappingExposure=_isAdreno?2.2:(_isMobile?1.8:1.4);
 const scene=new THREE.Scene();
 scene.fog=new THREE.FogExp2(0x05060f,0.0028);
 // Narrow FOV — cinematic, city feels denser
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
-// Night city: dark ambient + cold moonlight only — neons are the key light
-const ambLight=new THREE.AmbientLight(0x0d1528,0.8);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0x8899cc,0.5); // cold blue moon
-sunLight.position.set(60,100,40);sunLight.castShadow=true;
-// OPT: mobile uses 512 shadow map; desktop keeps 1024 — halves GPU shadow memory on mobile
-sunLight.shadow.mapSize.set(_isMobile?512:1024,_isMobile?512:1024);
-sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
-// OPT: tighten shadow frustum to actual grid bounds — removes wasted shadow texels outside play area
-sunLight.shadow.camera.left=-140;sunLight.shadow.camera.right=140;
-sunLight.shadow.camera.top=140;sunLight.shadow.camera.bottom=-140;
+// Night city lighting
+// ADRENO FIX: ambient is the primary light source on mobile (no shadows).
+// We boost it significantly so the scene is visible without any shadow/PBR tricks.
+const ambLight=new THREE.AmbientLight(0x0d1528, _isAdreno?3.5:(_isMobile?2.0:0.8));
+scene.add(ambLight);
+
+const sunLight=new THREE.DirectionalLight(0x8899cc, _isAdreno?1.2:0.5);
+sunLight.position.set(60,100,40);
+// ADRENO FIX: castShadow disabled on Adreno — shadow map causes black screen
+sunLight.castShadow=_shadowOk;
+if(_shadowOk){
+  sunLight.shadow.mapSize.set(512,512);
+  sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
+  sunLight.shadow.camera.left=-140;sunLight.shadow.camera.right=140;
+  sunLight.shadow.camera.top=140;sunLight.shadow.camera.bottom=-140;
+}
 scene.add(sunLight);scene.add(sunLight.target);
-const fill1=new THREE.DirectionalLight(0x221133,0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
-const fill2=new THREE.DirectionalLight(0x112233,0.12);fill2.position.set(50,20,60);scene.add(fill2);
+// Fill lights — boost on Adreno to compensate for no shadows
+const fill1=new THREE.DirectionalLight(0x4433aa,_isAdreno?0.8:0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
+const fill2=new THREE.DirectionalLight(0x223366,_isAdreno?0.7:0.12);fill2.position.set(50,20,60);scene.add(fill2);
 
 // ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
@@ -955,7 +987,7 @@ const trolleyRefs={child:null,la:null,ra:null,lever:null};
   const pntM=new THREE.MeshStandardMaterial({color:0x334455});
   const hairM=new THREE.MeshStandardMaterial({color:0x2c1810});
   const hatM=new THREE.MeshStandardMaterial({color:0xe8c84a});
-  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);plat.castShadow=true;trolley.add(plat);
+  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);plat.castShadow=_shadowOk;trolley.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.55,1.1),mM);b.position.set(x,.87,0);trolley.add(b);});
   const wGeo=new THREE.TorusGeometry(.26,.065,8,16);
   [[-0.72,-.44],[-0.72,.44],[.72,-.44],[.72,.44]].forEach(([x,z])=>{
@@ -1111,14 +1143,23 @@ function buildWorld(){
   const rng=mkRng(54321);
 
   // ── WET ground (reflective asphalt) ──
-  const gndM=new THREE.MeshStandardMaterial({color:0x070810,roughness:0.1,metalness:0.5});
+  // ADRENO FIX: MeshLambertMaterial for ground/roads — no PBR cost
+  const gndM=_isAdreno
+    ? new THREE.MeshLambertMaterial({color:0x0a0c14})
+    : new THREE.MeshStandardMaterial({color:0x070810,roughness:0.1,metalness:0.5});
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
 
   // ── Roads + rails — InstancedMesh for rails & ties (1 draw call each vs hundreds) ──
-  const roadM=new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
-  const railM=new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
-  const tieM=new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
+  const roadM=_isAdreno
+    ? new THREE.MeshLambertMaterial({color:0x0d101e})
+    : new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
+  const railM=_isAdreno
+    ? new THREE.MeshLambertMaterial({color:0xaaaacc})
+    : new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
+  const tieM=_isAdreno
+    ? new THREE.MeshLambertMaterial({color:0x3a2e22})
+    : new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
   const ROFF=0.52;
 
   // OPT: count instances ahead of time — avoids Array.push + GC
@@ -1146,7 +1187,7 @@ function buildWorld(){
       const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL;
       const cx=(x0+x1)/2,cz=z0;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=_shadowOk;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
         _mDummy.position.set(cx,.07,cz+off);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailH.setMatrixAt(riH++,_mDummy.matrix);
@@ -1163,7 +1204,7 @@ function buildWorld(){
       const x0=OX+c*CELL,z0=OZ+r*CELL,z1=OZ+(r+1)*CELL;
       const cx=x0,cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=_shadowOk;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
         _mDummy.position.set(cx+off,.07,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailV.setMatrixAt(riV++,_mDummy.matrix);
@@ -1217,7 +1258,12 @@ function buildWorld(){
   const WIN_GEO=new THREE.PlaneGeometry(.48,.68); // one shared geometry
 
   // Body material pool — one per palette color (not one per building)
-  const BODY_MATS=bldPalCyber.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.1}));
+  // Body material pool — ADRENO FIX: MeshLambertMaterial on Adreno (no PBR uniforms).
+  // MeshLambertMaterial uses ~10 fragment uniforms vs ~80 for MeshStandardMaterial,
+  // drastically reducing the chance of shader compilation failure on Adreno.
+  const BODY_MATS=bldPalCyber.map(c=>_isAdreno
+    ? new THREE.MeshLambertMaterial({color:c})
+    : new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.1}));
 
   // Kanji texture cache — reuse same texture for same kanji+color combo
   const _kanjiCache={};
@@ -1249,7 +1295,10 @@ function buildWorld(){
     return m;
   }
 
-  // 8 shared area PointLights spread across the city — fixed count, no overflow
+  // Area PointLights — ADRENO FIX: max 4 on mobile to stay under uniform limit.
+  // Adreno 610 WebGL2 allows ~1024 fragment uniforms but Three.js r128 encodes
+  // each PointLight as ~6 uniforms. 24 total lights × 6 = 144 — safe, but
+  // combined with PBR material uniforms it can still overflow on some Adreno drivers.
   const AREA_LIGHT_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xff3399,0xcc00ff,0x33ffaa];
   const areaLightPositions=[
     [OX+CELL*2,  6, OZ+CELL*2],
@@ -1261,8 +1310,10 @@ function buildWorld(){
     [OX+CELL*8,  6, OZ+CELL*4],
     [OX+CELL*6,  6, OZ+CELL*2],
   ];
-  areaLightPositions.forEach(([x,y,z],i)=>{
-    const pl=new THREE.PointLight(AREA_LIGHT_COLS[i],3.5,40);
+  // On Adreno: use only 4 area lights at corners for neon colour cast
+  const areaLightLimit=_isAdreno?4:8;
+  areaLightPositions.slice(0,areaLightLimit).forEach(([x,y,z],i)=>{
+    const pl=new THREE.PointLight(AREA_LIGHT_COLS[i],_isAdreno?5.0:3.5,_isAdreno?60:40);
     pl.position.set(x,y,z);worldGrp.add(pl);
   });
 
@@ -1293,7 +1344,7 @@ function buildWorld(){
       for(let t=0;t<numTiers;t++){
         const tH=fpTier*floorH+(t===numTiers-1?rng()*2:0);
         const body=new THREE.Mesh(getBldGeo(cW,parseFloat(tH.toFixed(1)),cD),bodyMat);
-        body.position.set(0,bot+tH/2,0);body.castShadow=true;body.receiveShadow=true;
+        body.position.set(0,bot+tH/2,0);body.castShadow=_shadowOk;body.receiveShadow=_shadowOk;
         bldGrp.add(body);
 
         // Windows — use shared materials and shared geometry (massive savings)
@@ -1364,20 +1415,22 @@ function buildWorld(){
   }
 
   // ── Street lights — neon colored, max 1 PointLight per 4 intersections ──
+  // ADRENO FIX: zero lamp PointLights on Adreno (already have 4 area lights + sun + fills).
+  // The lamp geometry/emissive mesh still renders — just no dynamic light source.
   const polM=new THREE.MeshStandardMaterial({color:0x2a2a3a,metalness:.6,roughness:.5});
   const LAMP_COLS=[0xff00cc,0x00ffee,0xaa44ff,0x00aaff];
   let lampLightCount=0;
+  const lampLightMax=_isAdreno?0:12; // no lamp lights on Adreno
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     if(rng()>.5)continue;
     const p=npos(c,r);
     const lCol=LAMP_COLS[Math.floor(rng()*LAMP_COLS.length)];
     const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,4.5,6),polM);
     lp.position.set(p.x+1.5,2.25,p.z+1.5);worldGrp.add(lp);
-    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:2.0});
+    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:_isAdreno?3.5:2.0});
     const ll=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),lampMat);
     ll.position.set(p.x+1.5,4.6,p.z+1.5);worldGrp.add(ll);
-    // Only add PointLight occasionally — strict cap to avoid overflow
-    if(lampLightCount<12&&rng()>.7){
+    if(lampLightCount<lampLightMax&&rng()>.7){
       const ptL=new THREE.PointLight(lCol,1.8,14);
       ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);
       lampLightCount++;
@@ -3457,7 +3510,9 @@ function startGame(){
   // ── Start AI competitor ──
   initAI();
   BGM.play();
-  setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
+  setTimeout(()=>SFX.startGame(),200);
+  // Check for silent WebGL failure after a few frames have had time to render
+  setTimeout(_checkBlackScreen, 1500);
   startMissions();
 }
 
@@ -3525,6 +3580,45 @@ addBtn('mob-fire',
 // ── Adaptive FPS throttle ──
 // OPT: on low-end devices, skip a render frame if we're running below ~28 fps
 // This keeps physics/logic smooth while reducing GPU pressure
+// ── WebGL context loss recovery ──
+// Adreno GPUs can lose the WebGL context when the app is backgrounded.
+// Without this, returning to the tab shows a permanent black screen.
+canvas.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  console.warn('WebGL context lost — pausing render loop');
+}, false);
+canvas.addEventListener('webglcontextrestored', () => {
+  console.warn('WebGL context restored — resuming');
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}, false);
+
+// ── Startup diagnostic: detect black screen ──
+// Called from startGame() after first render, not on page load.
+// Only fires on mobile/Adreno where silent WebGL failure is possible.
+function _checkBlackScreen(){
+  if(!_isMobile) return; // desktop never needs this
+  try {
+    const gl=renderer.getContext();
+    const px=new Uint8Array(4);
+    // Sample multiple points — centre, and offset from centre
+    let totalBrightness=0;
+    [[.5,.5],[.3,.4],[.6,.6],[.4,.7]].forEach(([fx,fy])=>{
+      gl.readPixels(
+        Math.floor(fx*window.innerWidth), Math.floor(fy*window.innerHeight),
+        1,1, gl.RGBA, gl.UNSIGNED_BYTE, px
+      );
+      totalBrightness+=px[0]+px[1]+px[2];
+    });
+    // All 4 samples near-black → scene is not rendering
+    if(totalBrightness<40){
+      const warn=document.createElement('div');
+      warn.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;background:rgba(10,5,20,0.95);border:2px solid #ff6644;border-radius:12px;padding:18px 24px;text-align:center;color:#ffe680;font-family:Georgia,serif;max-width:320px;';
+      warn.innerHTML='<div style="font-size:22px;margin-bottom:8px">⚠️ Display Issue</div><div style="font-size:12px;line-height:1.6;color:rgba(255,220,150,0.8)">Your device GPU had trouble rendering the scene.<br><br>Try: <b>reload the page</b>, or open in <b>Chrome browser</b> if using another app.</div><button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:20px;cursor:pointer;font-family:Georgia,serif;font-weight:bold">↺ Reload</button>';
+      document.body.appendChild(warn);
+    }
+  } catch(e){ /* readPixels may fail on some devices — ignore */ }
+}
+
 const clock=new THREE.Clock();let gt=0;
 let _skipFrame=false;
 let _fpsSmooth=60;

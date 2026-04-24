@@ -113,6 +113,20 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
 .overlay p{color:rgba(255,220,150,0.78);font-size:13px;margin-bottom:5px;text-align:center;max-width:420px;line-height:1.6;}
 .btn{margin-top:13px;padding:11px 34px;font-size:13px;letter-spacing:2px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:40px;cursor:pointer;font-family:'Georgia',serif;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 0 16px rgba(255,150,50,0.45);}
+/* ── End-screen global leaderboard ── */
+#end-lb-wrap{width:100%;max-width:360px;margin:10px 0 4px;}
+#end-lb-title{font-size:9px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;text-align:center;margin-bottom:6px;}
+#end-lb-table{width:100%;border-collapse:collapse;}
+#end-lb-table th{font-size:9px;letter-spacing:1px;color:rgba(255,200,80,0.4);text-transform:uppercase;padding:2px 6px;text-align:left;border-bottom:1px solid rgba(255,200,80,0.12);}
+#end-lb-table th:last-child,#end-lb-table td:last-child{text-align:right;}
+#end-lb-table td{font-size:11px;color:rgba(255,220,150,0.75);padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.04);}
+#end-lb-table tr.me td{color:#ffe680;font-weight:bold;}
+#end-lb-table tr.me td:first-child::before{content:'▶ ';}
+#end-lb-table .rank{color:rgba(255,200,80,0.5);width:22px;}
+#end-lb-table .lb-score-val{color:#ffe680;}
+#end-lb-table .lb-time-val{color:rgba(180,220,255,0.7);font-size:10px;}
+#end-lb-loading{font-size:11px;color:rgba(255,200,80,0.35);text-align:center;padding:8px 0;}
+
 /* ── Mode selection buttons ── */
 #mode-wrap{display:flex;gap:12px;margin-top:16px;justify-content:center;flex-wrap:wrap;}
 .mode-btn{padding:14px 22px;border:2px solid rgba(255,200,80,0.4);border-radius:12px;background:rgba(255,255,255,0.04);color:#ffe680;font-family:'Georgia',serif;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;min-width:130px;}
@@ -189,9 +203,10 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 @media(max-width:1024px),(pointer:coarse){#mob-pump,#mob-brake,#mob-left,#mob-right{display:flex;}}
 #settings-btn{position:fixed;top:12px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s,transform .2s;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
-#quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
+#quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:25;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
-#mute-btn{position:fixed;top:211px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
+/* lb-panel shifted down so quit-btn stays visible */
+#lb-panel{position:fixed;top:112px;right:12px;z-index:20;background:rgba(4,6,18,0.88);border:1px solid rgba(255,200,80,0.22);border-radius:10px;padding:7px 12px;min-width:148px;max-width:180px;display:none;backdrop-filter:blur(8px);}#mute-btn{position:fixed;top:211px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #mute-btn:hover{background:rgba(255,200,80,0.12);}
 
 /* ── Bidding Dialog ── */
@@ -565,11 +580,25 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div class="win-banner">🏆 YOU WIN!</div>
   <h1 style="color:#ffe680;font-size:clamp(18px,4vw,32px)">First to 1,000,000!</h1>
   <div id="score-final-rw" style="font-size:42px;color:#ffe680;text-shadow:0 0 20px rgba(255,200,80,1);margin:6px 0">0</div>
-  <div style="margin:10px 0">
+  <div style="margin:8px 0 4px">
     <div class="res-row"><span>Your final score</span><span id="rw-pscore">0</span></div>
-    <div class="res-row"><span>CPU score</span><span id="rw-aiscore" style="color:#cc88ff">0</span></div>
+    <div class="res-row"><span>Opponent score</span><span id="rw-aiscore" style="color:#cc88ff">0</span></div>
     <div class="res-row"><span>Total Deliveries</span><span id="rw-del">0</span></div>
     <div class="res-row"><span>Best streak</span><span id="rw-str">0×</span></div>
+    <div class="res-row"><span>Finish time</span><span id="rw-time" style="color:#aaddff">—</span></div>
+  </div>
+  <div id="end-lb-wrap">
+    <div id="end-lb-title">🏆 Global Leaderboard</div>
+    <div id="end-lb-loading">Loading...</div>
+    <table id="end-lb-table" style="display:none">
+      <thead><tr>
+        <th class="rank">#</th>
+        <th>Name</th>
+        <th>Score</th>
+        <th>Time</th>
+      </tr></thead>
+      <tbody id="end-lb-body"></tbody>
+    </table>
   </div>
   <button class="btn" onclick="startGame()">🔄 Race Again</button>
   <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
@@ -580,18 +609,31 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   <div class="win-banner" style="font-size:clamp(22px,5vw,48px)">🤖 CPU WINS!</div>
   <h1 style="color:#cc88ff;font-size:clamp(16px,3vw,26px)">CPU reached 1,000,000 first!</h1>
   <div id="score-final-rl" style="font-size:36px;color:#ffe680;text-shadow:0 0 16px rgba(255,200,80,0.8);margin:6px 0">0</div>
-  <div style="margin:10px 0">
+  <div style="margin:8px 0 4px">
     <div class="res-row"><span>Your score</span><span id="rl-pscore">0</span></div>
-    <div class="res-row"><span>CPU score</span><span id="rl-aiscore" style="color:#cc88ff">1,000,000 🤖</span></div>
+    <div class="res-row"><span>Opponent score</span><span id="rl-aiscore" style="color:#cc88ff">1,000,000</span></div>
     <div class="res-row"><span>Total Deliveries</span><span id="rl-del">0</span></div>
+    <div class="res-row"><span>Your time</span><span id="rl-time" style="color:#aaddff">—</span></div>
   </div>
   <p style="font-size:11px;color:rgba(255,180,100,0.55)" id="rl-tip"></p>
+  <div id="end-lb-wrap-lose">
+    <div id="end-lb-title-lose" style="font-size:9px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;text-align:center;margin-bottom:6px;">🏆 Global Leaderboard</div>
+    <div id="end-lb-loading-lose">Loading...</div>
+    <table id="end-lb-table-lose" style="display:none;width:100%;max-width:360px;border-collapse:collapse;">
+      <thead><tr>
+        <th class="rank" style="font-size:9px;color:rgba(255,200,80,0.4);padding:2px 6px;">#</th>
+        <th style="font-size:9px;color:rgba(255,200,80,0.4);">Name</th>
+        <th style="font-size:9px;color:rgba(255,200,80,0.4);text-align:right;">Score</th>
+        <th style="font-size:9px;color:rgba(255,200,80,0.4);text-align:right;">Time</th>
+      </tr></thead>
+      <tbody id="end-lb-body-lose"></tbody>
+    </table>
+  </div>
   <button class="btn" onclick="startGame()">🔄 Rematch</button>
   <button class="btn btn-ghost" onclick="showScr('scr-start')">Menu</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script async src="https://vibejam.cc/2026/widget.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -2884,35 +2926,48 @@ function raceOver(winner) {
   if (AI.labelEl) AI.labelEl.style.display = 'none';
   if (AI.exclamEl) { AI.exclamEl.style.display = 'none'; AI.exclamEl.style.opacity = '0'; }
 
-  // Determine opponent name for result screens
+  const timeMs  = Date.now() - (_gameStartTime || Date.now());
+  const timeStr = _formatTime(timeMs);
   const oppName = (_gameMode === 'online' && _lobbyOpponent)
     ? (_lobbyOpponent.username || 'Opponent')
     : '🤖 CPU';
 
+  // Submit to global leaderboard (only winners get submitted with full score,
+  // losers also submit their score so partial scores are tracked)
+  _lbSubmit(GS.score, timeMs);
+
   if (winner === 'player') {
     document.getElementById('score-final-rw').textContent = GS.score.toLocaleString();
-    document.getElementById('rw-pscore').textContent = GS.score.toLocaleString();
+    document.getElementById('rw-pscore').textContent  = GS.score.toLocaleString();
     document.getElementById('rw-aiscore').textContent = (_gameMode==='online'
       ? ((_remotePlayers[_lobbyOpponent?.id]?.score||0).toLocaleString()+' ('+oppName+')')
       : AI.score.toLocaleString());
-    document.getElementById('rw-del').textContent = MS.delivsDone;
-    document.getElementById('rw-str').textContent = MS.bestStreak + '×';
+    document.getElementById('rw-del').textContent  = MS.delivsDone;
+    document.getElementById('rw-str').textContent  = MS.bestStreak + '×';
+    document.getElementById('rw-time').textContent = timeStr;
+    // Reset leaderboard loading state
+    const lbLoad = document.getElementById('end-lb-loading');
+    const lbTbl  = document.getElementById('end-lb-table');
+    if (lbLoad) { lbLoad.style.display='block'; lbLoad.textContent='Loading...'; }
+    if (lbTbl)  { lbTbl.style.display='none'; }
     ['scr-start','scr-fail','scr-win','scr-keys','scr-race-lose','scr-lobby'].forEach(s=>{
       const el=document.getElementById(s);if(el)el.style.display='none';
     });
     document.getElementById('scr-race-win').style.display = 'flex';
     SFX.deliver(); setTimeout(()=>SFX.deliver(),200); setTimeout(()=>SFX.deliver(),400);
     showNotif('🏆 YOU WIN THE RACE!','#ffd700');
+    // Load leaderboard after a brief delay (let submit finish first)
+    setTimeout(()=>_lbLoad('end-lb-body','end-lb-loading','end-lb-table', GS.score), 800);
 
   } else {
-    // Loser — either 'ai' or 'online_opponent'
     const isOnlineLoss = winner === 'online_opponent';
     document.getElementById('score-final-rl').textContent = GS.score.toLocaleString();
-    document.getElementById('rl-pscore').textContent = GS.score.toLocaleString();
+    document.getElementById('rl-pscore').textContent  = GS.score.toLocaleString();
     document.getElementById('rl-aiscore').textContent = isOnlineLoss
       ? (oppName + ' reached 1,000,000! 🎉')
       : '1,000,000 🤖';
-    document.getElementById('rl-del').textContent = MS.delivsDone;
+    document.getElementById('rl-del').textContent  = MS.delivsDone;
+    document.getElementById('rl-time').textContent = timeStr;
     const tips = [
       '💡 Prioritise VIP packages — they score way more!',
       '💡 Keep your streak alive — 3× multiplier is huge!',
@@ -2920,17 +2975,22 @@ function raceOver(winner) {
       '💡 Avoid Grandma lanes — glue costs precious seconds!',
     ];
     document.getElementById('rl-tip').textContent = tips[Math.floor(Math.random()*tips.length)];
+    // Reset leaderboard loading state
+    const lbLoadL = document.getElementById('end-lb-loading-lose');
+    const lbTblL  = document.getElementById('end-lb-table-lose');
+    if (lbLoadL) { lbLoadL.style.display='block'; lbLoadL.textContent='Loading...'; }
+    if (lbTblL)  { lbTblL.style.display='none'; }
     ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win','scr-lobby'].forEach(s=>{
       const el=document.getElementById(s);if(el)el.style.display='none';
     });
     document.getElementById('scr-race-lose').style.display = 'flex';
-    // Update lose screen banner for online loss
     if (isOnlineLoss) {
       document.querySelector('#scr-race-lose .win-banner').textContent = '👤 ' + oppName + ' wins!';
     } else {
       document.querySelector('#scr-race-lose .win-banner').textContent = '🤖 CPU WINS!';
     }
     SFX.failGame();
+    setTimeout(()=>_lbLoad('end-lb-body-lose','end-lb-loading-lose','end-lb-table-lose', GS.score), 800);
   }
 }
 
@@ -3099,17 +3159,21 @@ function missionFailed(){
 function levelComplete(){
   gameRunning=false;MS.choosing=false;
   BGM.fadeOut(1500);
+  if(_mpActive) mpStop();
   clearChoiceMarkers();
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('arrow').style.opacity='0';
   document.getElementById('streak-hud').style.display='none';
   document.getElementById('map-hint').style.display='none';
+  document.getElementById('race-bar').style.display='none';
   document.getElementById('score-final').textContent=GS.score;
   document.getElementById('r-del').textContent=MS.delivsDone;
   document.getElementById('r-vip').textContent=MS.vipDone+' ★';
   document.getElementById('r-str').textContent=MS.bestStreak+'×';
   document.getElementById('r-coins').textContent=GS.coins+' 🪙';
   document.getElementById('r-time').textContent=`+${Math.floor(MS.timeSaved*10)}`;
+  const timeMs = Date.now() - (_gameStartTime || Date.now());
+  _lbSubmit(GS.score, timeMs);
   showScr('scr-win');
 }
 
@@ -3793,6 +3857,7 @@ function startGame(){
   }
   BGM.play();
   setTimeout(()=>SFX.startGame(),200);
+  _gameStartTime = Date.now(); // start timer for leaderboard
   if(_mpActive) mpStop(); // stop previous session if restarting
   mpStart(); // join multiplayer session
   startMissions();
@@ -4158,6 +4223,85 @@ firebase.initializeApp(firebaseConfig);
 const _db          = firebase.firestore();
 const _playersCol  = _db.collection('players');
 const _lobbiesCol  = _db.collection('lobbies');
+const _lbCol       = _db.collection('leaderboard'); // global leaderboard
+
+// ── Game session timer ──
+let _gameStartTime = 0; // Date.now() when game started
+
+function _formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}m ${s.toString().padStart(2,'0')}s`;
+}
+
+// ── Submit score to leaderboard ──
+async function _lbSubmit(score, timeMs) {
+  if (!score || score <= 0) return;
+  try {
+    // Use player ID as doc ID — overwrites if score is better
+    const existing = await _lbCol.doc(_myId).get();
+    const prev = existing.exists ? existing.data() : null;
+    // Only update if: no previous entry, OR better score, OR same score with faster time
+    if (!prev || score > prev.score || (score === prev.score && timeMs < prev.timeMs)) {
+      await _lbCol.doc(_myId).set({
+        username: _mpUsername,
+        score,
+        timeMs,
+        timeStr: _formatTime(timeMs),
+        updatedAt: Date.now(),
+      });
+    }
+  } catch(e) { console.warn('LB submit failed:', e); }
+}
+
+// ── Load and render leaderboard into end screen ──
+async function _lbLoad(bodyId, loadingId, tableId, myScore) {
+  const loadingEl = document.getElementById(loadingId);
+  const tableEl   = document.getElementById(tableId);
+  const bodyEl    = document.getElementById(bodyId);
+  if (!bodyEl) return;
+  if (loadingEl) loadingEl.textContent = 'Loading...';
+  try {
+    // Order by score desc, then timeMs asc (faster time wins on tie)
+    // Firestore can't do two-field sort without composite index on free tier,
+    // so we fetch top 50 by score and sort client-side
+    const snap = await _lbCol
+      .orderBy('score', 'desc')
+      .limit(50)
+      .get();
+
+    let rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Client-side tiebreak: same score → lower timeMs first
+    rows.sort((a,b) => b.score !== a.score ? b.score - a.score : (a.timeMs||999999) - (b.timeMs||999999));
+    rows = rows.slice(0, 20); // show top 20
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (tableEl)   tableEl.style.display   = 'table';
+
+    bodyEl.innerHTML = rows.map((r, i) => {
+      const isMe = r.id === _myId;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
+      return `<tr class="${isMe?'me':''}">
+        <td class="rank">${medal}</td>
+        <td>${_escHtml(r.username||'?')}</td>
+        <td class="lb-score-val" style="text-align:right">${(r.score||0).toLocaleString()}</td>
+        <td class="lb-time-val" style="text-align:right">${r.timeStr||'—'}</td>
+      </tr>`;
+    }).join('');
+
+    if (rows.length === 0) {
+      bodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center;color:rgba(255,200,80,0.3);padding:8px">No entries yet</td></tr>`;
+    }
+  } catch(e) {
+    if (loadingEl) loadingEl.textContent = 'Could not load leaderboard';
+    console.warn('LB load failed:', e);
+  }
+}
+
+function _escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 // ── Local player identity ──
 let _myId = sessionStorage.getItem('mp_id');
@@ -4189,7 +4333,7 @@ let _lobbyRole     = null;      // 'player1' | 'player2'
 let _lobbyOpponent = null;      // { id, username } of opponent
 let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
 let _lobbyTimer    = null;      // setInterval for countdown
-let _lobbySeconds  = 30;       // 30 sec countdown
+let _lobbySeconds  = 120;       // 2 min countdown
 let _mpActive      = false;
 let _mpUnsubscribe = null;
 let _mpWriteTimer  = 0;

@@ -761,10 +761,9 @@ const nid=(c,r)=>r*NX+c;
 // ALL FLAT — elevation = 0 everywhere
 const nodeY=new Float32Array(NX*NZ); // all zeros
 
-// Pre-computed node positions — avoids new THREE.Vector3 allocation on every npos() call
-// Flat city (Y=0), so we just store x and z, return a reused scratch vector
-const _nodePosX=new Float32Array(NX*NZ);
-const _nodePosZ=new Float32Array(NX*NZ);
+// Pre-computed node positions — size +2 for the two virtual portal nodes
+const _nodePosX=new Float32Array(NX*NZ+2);
+const _nodePosZ=new Float32Array(NX*NZ+2);
 for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
   _nodePosX[r*NX+c]=OX+c*CELL;
   _nodePosZ[r*NX+c]=OZ+r*CELL;
@@ -1779,12 +1778,55 @@ function collectPU(pu){
 //  NAVIGATION
 // ═══════════════════════════════════════════
 const DIR_VEC=[[1,0],[0,1],[-1,0],[0,-1]];
+
+// ── Virtual portal nodes — IDs outside the normal grid range ──
+// Normal nodes: 0 .. NX*NZ-1  (0..168 for 13×13)
+// Portal nodes use IDs above that range so they never clash.
+const NODE_EXIT_PORTAL  = NX*NZ;      // south stub endpoint — col 6 below row GH
+const NODE_START_PORTAL = NX*NZ + 1;  // north stub endpoint — col 6 above row 0
+
+// Portal node entry points on the real grid edge
+const PORTAL_EXIT_ENTRY_COL  = 6, PORTAL_EXIT_ENTRY_ROW  = GH; // south edge, col 6
+const PORTAL_START_ENTRY_COL = 6, PORTAL_START_ENTRY_ROW = 0;  // north edge, col 6
+
+// dir index from grid-edge node toward portal node
+// south (dir 1 = [0,+1]) for exit, north (dir 3 = [0,-1]) for start
+const DIR_SOUTH = 1, DIR_NORTH = 3;
+
+// _nodePosX/Z for virtual nodes — set after OX/OZ known
+_nodePosX[NODE_EXIT_PORTAL]  = OX + PORTAL_EXIT_ENTRY_COL  * CELL;
+_nodePosZ[NODE_EXIT_PORTAL]  = OZ + (GH + 2) * CELL;        // 2 cells south of grid
+_nodePosX[NODE_START_PORTAL] = OX + PORTAL_START_ENTRY_COL * CELL;
+_nodePosZ[NODE_START_PORTAL] = OZ + (-2) * CELL;             // 2 cells north of grid
+
 function getNeighbors(col,row,excl){
-  return DIR_VEC.map(([dc,dr],d)=>{
+  const results = DIR_VEC.map(([dc,dr],d)=>{
     const nc=col+dc,nr=row+dr;
-    if(d===excl||nc<0||nc>GW||nr<0||nr>GH)return null;
-    return{dir:d,nodeId:nid(nc,nr),col:nc,row:nr};
+    if(d===excl)return null;
+    // Normal grid bounds
+    if(nc>=0&&nc<=GW&&nr>=0&&nr<=GH) return{dir:d,nodeId:nid(nc,nr),col:nc,row:nr};
+    return null;
   }).filter(Boolean);
+
+  // ── Virtual portal node connections ──
+  // South edge col 6 → exit portal node (going south, dir 1)
+  if(col===PORTAL_EXIT_ENTRY_COL && row===PORTAL_EXIT_ENTRY_ROW && excl!==DIR_SOUTH){
+    results.push({dir:DIR_SOUTH, nodeId:NODE_EXIT_PORTAL, col:col, row:row+1});
+  }
+  // North edge col 6 → start portal node (going north, dir 3)
+  if(col===PORTAL_START_ENTRY_COL && row===PORTAL_START_ENTRY_ROW && excl!==DIR_NORTH){
+    results.push({dir:DIR_NORTH, nodeId:NODE_START_PORTAL, col:col, row:row-1});
+  }
+  // From exit portal node → back to grid (going north, dir 3)
+  if(col===PORTAL_EXIT_ENTRY_COL && row===GH+1 && excl!==DIR_NORTH){
+    results.push({dir:DIR_NORTH, nodeId:nid(PORTAL_EXIT_ENTRY_COL,PORTAL_EXIT_ENTRY_ROW), col:PORTAL_EXIT_ENTRY_COL, row:PORTAL_EXIT_ENTRY_ROW});
+  }
+  // From start portal node → back to grid (going south, dir 1)
+  if(col===PORTAL_START_ENTRY_COL && row===-1 && excl!==DIR_SOUTH){
+    results.push({dir:DIR_SOUTH, nodeId:nid(PORTAL_START_ENTRY_COL,PORTAL_START_ENTRY_ROW), col:PORTAL_START_ENTRY_COL, row:PORTAL_START_ENTRY_ROW});
+  }
+
+  return results;
 }
 function chooseDir(facing,choice,nbrs){
   const left=(facing+3)%4,right=(facing+1)%4;
@@ -3020,20 +3062,60 @@ function physics(dt){
   tEdgeT=Math.min(tEdgeT+advance,1.0);
 
   if(tEdgeT>.6&&jCool<=0){
-    const nc=tNextNode%NX,nr=Math.floor(tNextNode/NX);
-    const back=(tFacing+2)%4;
-    if(getNeighbors(nc,nr,back).length>1)updateSwitchHUD(true);
-    else updateSwitchHUD(false);
+    // Only show switch HUD if next node is a real grid node
+    if(tNextNode < NX*NZ){
+      const nc=tNextNode%NX,nr=Math.floor(tNextNode/NX);
+      const back=(tFacing+2)%4;
+      if(getNeighbors(nc,nr,back).length>1)updateSwitchHUD(true);
+      else updateSwitchHUD(false);
+    } else {
+      updateSwitchHUD(false); // portal node — no switch needed
+    }
   }else if(tEdgeT<=.6)updateSwitchHUD(false);
 
   if(tEdgeT>=1.0){
     tNode=tNextNode;jCool=.45;updateSwitchHUD(false);
+
+    // ── Virtual portal node arrival — trigger portal immediately ──
+    if(tNode===NODE_EXIT_PORTAL){
+      if(!_portalTriggered){
+        showNotif('🌀 Entering Vibe Jam Portal!','#00ff00');
+        _portalEnter(_buildPortalOutUrl(PORTAL_URL));
+      }
+      // While waiting for redirect, bounce back
+      tNode=nid(PORTAL_EXIT_ENTRY_COL,PORTAL_EXIT_ENTRY_ROW);
+      tNextNode=nid(PORTAL_EXIT_ENTRY_COL,PORTAL_EXIT_ENTRY_ROW-1);
+      tFacing=DIR_NORTH; tEdgeT=0; setSW(0); return;
+    }
+    if(tNode===NODE_START_PORTAL){
+      if(!_portalTriggered && _refUrl){
+        showNotif('↩ Returning to previous game!','#ff4444');
+        const currentParams=new URLSearchParams(location.search);
+        const returnParams=new URLSearchParams();
+        returnParams.set('portal','true');returnParams.set('ref',MY_URL);
+        returnParams.set('username',_inUsername||'player');
+        returnParams.set('color',_inColor||'00ccff');
+        returnParams.set('speed',(Math.round(GS.speed*10)/10).toString());
+        for(const[k,v]of currentParams)if(k!=='ref')returnParams.set(k,v);
+        let retUrl=_refUrl;
+        if(!retUrl.startsWith('http://') && !retUrl.startsWith('https://')) retUrl='https://'+retUrl;
+        _portalEnter(retUrl+'?'+returnParams.toString());
+      }
+      tNode=nid(PORTAL_START_ENTRY_COL,PORTAL_START_ENTRY_ROW);
+      tNextNode=nid(PORTAL_START_ENTRY_COL,PORTAL_START_ENTRY_ROW+1);
+      tFacing=DIR_SOUTH; tEdgeT=0; setSW(0); return;
+    }
+
     const nc=tNode%NX,nr=Math.floor(tNode/NX);
     const back=(tFacing+2)%4;
     const nbrs=getNeighbors(nc,nr,back);
     const chosen=chooseDir(tFacing,swChoice,nbrs);
-    if(!chosen){tNextNode=nid(Math.max(0,Math.min(GW,nc-DIR_VEC[tFacing][0])),Math.max(0,Math.min(GH,nr-DIR_VEC[tFacing][1])));tFacing=(tFacing+2)%4;}
-    else{tNextNode=chosen.nodeId;tFacing=chosen.dir;}
+    if(!chosen){
+      tNextNode=nid(Math.max(0,Math.min(GW,nc-DIR_VEC[tFacing][0])),Math.max(0,Math.min(GH,nr-DIR_VEC[tFacing][1])));
+      tFacing=(tFacing+2)%4;
+    } else {
+      tNextNode=chosen.nodeId;tFacing=chosen.dir;
+    }
     tEdgeT=0;setSW(0);
     checkArrival(nc,nr);
     checkPickups(nc,nr);
@@ -3044,17 +3126,14 @@ function physics(dt){
 //  RENDERING
 // ═══════════════════════════════════════════
 function moveTrolley(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  // Use lookup table directly — avoids scratch vector aliasing and new Vector3 alloc
-  const x0=_nodePosX[nr*NX+nc], z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc], z1=_nodePosZ[nnr*NX+nnc];
+  // Use nodeId directly into lookup arrays — works for both normal and virtual portal nodes
+  const x0=_nodePosX[tNode],     z0=_nodePosZ[tNode];
+  const x1=_nodePosX[tNextNode], z1=_nodePosZ[tNextNode];
   const px=x0+(x1-x0)*tEdgeT;
   const pz=z0+(z1-z0)*tEdgeT;
 
   trolley.position.set(px,.35,pz);
   trolley.rotation.x=0;trolley.rotation.z=0;
-
   const dx=x1-x0,dz=z1-z0;
   const hlen=Math.sqrt(dx*dx+dz*dz);
   if(hlen>0.01)trolley.rotation.y=Math.atan2(dx,dz);
@@ -3086,10 +3165,8 @@ function toggleView(){
 }
 
 function moveCam(){
-  const nc=tNode%NX,nr=Math.floor(tNode/NX);
-  const nnc=tNextNode%NX,nnr=Math.floor(tNextNode/NX);
-  const x0=_nodePosX[nr*NX+nc],  z0=_nodePosZ[nr*NX+nc];
-  const x1=_nodePosX[nnr*NX+nnc],z1=_nodePosZ[nnr*NX+nnc];
+  const x0=_nodePosX[tNode],     z0=_nodePosZ[tNode];
+  const x1=_nodePosX[tNextNode], z1=_nodePosZ[tNextNode];
   const px=x0+(x1-x0)*tEdgeT;
   const pz=z0+(z1-z0)*tEdgeT;
   const dx=x1-x0,dz=z1-z0;

@@ -109,25 +109,24 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #pu-fill{height:100%;background:linear-gradient(90deg,#44ff88,#88ffcc);border-radius:2px;width:100%;transition:width .1s;}
 
 /* ── Overlays ── */
-.overlay{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(3,5,14,0.94);z-index:100;backdrop-filter:blur(8px);}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;background:rgba(3,5,14,0.94);z-index:100;backdrop-filter:blur(8px);overflow-y:auto;padding:24px 16px 32px;}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
 .overlay p{color:rgba(255,220,150,0.78);font-size:13px;margin-bottom:5px;text-align:center;max-width:420px;line-height:1.6;}
 .btn{margin-top:13px;padding:11px 34px;font-size:13px;letter-spacing:2px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:40px;cursor:pointer;font-family:'Georgia',serif;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 0 16px rgba(255,150,50,0.45);}
 /* ── End-screen global leaderboard ── */
-#end-lb-wrap{width:100%;max-width:360px;margin:10px 0 4px;}
-#end-lb-title{font-size:9px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;text-align:center;margin-bottom:6px;}
-#end-lb-table{width:100%;border-collapse:collapse;}
-#end-lb-table th{font-size:9px;letter-spacing:1px;color:rgba(255,200,80,0.4);text-transform:uppercase;padding:2px 6px;text-align:left;border-bottom:1px solid rgba(255,200,80,0.12);}
-#end-lb-table th:last-child,#end-lb-table td:last-child{text-align:right;}
-#end-lb-table td{font-size:11px;color:rgba(255,220,150,0.75);padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.04);}
-#end-lb-table tr.me td{color:#ffe680;font-weight:bold;}
-#end-lb-table tr.me td:first-child::before{content:'▶ ';}
-#end-lb-table .rank{color:rgba(255,200,80,0.5);width:22px;}
-#end-lb-table .lb-score-val{color:#ffe680;}
-#end-lb-table .lb-time-val{color:rgba(180,220,255,0.7);font-size:10px;}
-#end-lb-loading{font-size:11px;color:rgba(255,200,80,0.35);text-align:center;padding:8px 0;}
-
-/* ── Mode selection buttons ── */
+#end-lb-wrap,#end-lb-wrap-lose{width:100%;max-width:380px;margin:12px 0 6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,200,80,0.14);border-radius:10px;padding:10px 12px;}
+#end-lb-title,#end-lb-title-lose{font-size:9px;letter-spacing:2px;color:rgba(255,220,120,0.55);text-transform:uppercase;text-align:center;margin-bottom:8px;}
+#end-lb-table,#end-lb-table-lose{width:100%;border-collapse:collapse;}
+#end-lb-table th,#end-lb-table-lose th{font-size:9px;letter-spacing:1px;color:rgba(255,200,80,0.45);text-transform:uppercase;padding:3px 6px;text-align:left;border-bottom:1px solid rgba(255,200,80,0.14);}
+#end-lb-table th:nth-child(n+3),#end-lb-table-lose th:nth-child(n+3){text-align:right;}
+#end-lb-table td,#end-lb-table-lose td{font-size:11px;color:rgba(255,220,150,0.78);padding:5px 6px;border-bottom:1px solid rgba(255,255,255,0.04);}
+#end-lb-table tr.me td,#end-lb-table-lose tr.me td{color:#ffe680;font-weight:bold;background:rgba(255,200,80,0.06);}
+#end-lb-table .rank,#end-lb-table-lose .rank{color:rgba(255,200,80,0.55);width:26px;font-size:13px;}
+.lb-score-val{color:#ffe680;text-align:right;}
+.lb-time-val{color:rgba(180,220,255,0.75);font-size:10px;text-align:right;}
+#end-lb-loading,#end-lb-loading-lose{font-size:11px;color:rgba(255,200,80,0.4);text-align:center;padding:10px 0;}
+/* End-screen overlays: center when content fits, scroll when it doesn't */
+#scr-race-win,#scr-race-lose,#scr-win,#scr-fail{justify-content:flex-start;padding-top:max(20px,env(safe-area-inset-top,20px));}
 #mode-wrap{display:flex;gap:12px;margin-top:16px;justify-content:center;flex-wrap:wrap;}
 .mode-btn{padding:14px 22px;border:2px solid rgba(255,200,80,0.4);border-radius:12px;background:rgba(255,255,255,0.04);color:#ffe680;font-family:'Georgia',serif;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;min-width:130px;}
 .mode-btn:hover{background:rgba(255,200,80,0.12);border-color:rgba(255,200,80,0.8);}
@@ -4262,40 +4261,36 @@ async function _lbLoad(bodyId, loadingId, tableId, myScore) {
   const tableEl   = document.getElementById(tableId);
   const bodyEl    = document.getElementById(bodyId);
   if (!bodyEl) return;
-  if (loadingEl) loadingEl.textContent = 'Loading...';
+  if (loadingEl) { loadingEl.style.display='block'; loadingEl.textContent = 'Loading...'; }
+  if (tableEl)   tableEl.style.display = 'none';
   try {
-    // Order by score desc, then timeMs asc (faster time wins on tie)
-    // Firestore can't do two-field sort without composite index on free tier,
-    // so we fetch top 50 by score and sort client-side
-    const snap = await _lbCol
-      .orderBy('score', 'desc')
-      .limit(50)
-      .get();
-
+    // Fetch all entries — sort client-side (no composite index needed)
+    const snap = await _lbCol.limit(200).get();
     let rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Client-side tiebreak: same score → lower timeMs first
+    // Sort: score desc, then timeMs asc on tie
     rows.sort((a,b) => b.score !== a.score ? b.score - a.score : (a.timeMs||999999) - (b.timeMs||999999));
-    rows = rows.slice(0, 20); // show top 20
+    rows = rows.slice(0, 20);
 
     if (loadingEl) loadingEl.style.display = 'none';
     if (tableEl)   tableEl.style.display   = 'table';
 
+    if (rows.length === 0) {
+      bodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center;color:rgba(255,200,80,0.3);padding:10px">No entries yet — be the first!</td></tr>`;
+      return;
+    }
+
     bodyEl.innerHTML = rows.map((r, i) => {
-      const isMe = r.id === _myId;
+      const isMe  = r.id === _myId;
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
       return `<tr class="${isMe?'me':''}">
         <td class="rank">${medal}</td>
         <td>${_escHtml(r.username||'?')}</td>
-        <td class="lb-score-val" style="text-align:right">${(r.score||0).toLocaleString()}</td>
-        <td class="lb-time-val" style="text-align:right">${r.timeStr||'—'}</td>
+        <td class="lb-score-val">${(r.score||0).toLocaleString()}</td>
+        <td class="lb-time-val">${r.timeStr||'—'}</td>
       </tr>`;
     }).join('');
-
-    if (rows.length === 0) {
-      bodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center;color:rgba(255,200,80,0.3);padding:8px">No entries yet</td></tr>`;
-    }
   } catch(e) {
-    if (loadingEl) loadingEl.textContent = 'Could not load leaderboard';
+    if (loadingEl) { loadingEl.style.display='block'; loadingEl.textContent = 'Could not load — check connection'; }
     console.warn('LB load failed:', e);
   }
 }

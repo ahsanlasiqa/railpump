@@ -113,13 +113,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
 .overlay p{color:rgba(255,220,150,0.78);font-size:13px;margin-bottom:5px;text-align:center;max-width:420px;line-height:1.6;}
 .btn{margin-top:13px;padding:11px 34px;font-size:13px;letter-spacing:2px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:40px;cursor:pointer;font-family:'Georgia',serif;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 0 16px rgba(255,150,50,0.45);}
-/* ── Portal styles ── */
-#portal-label{position:fixed;pointer-events:none;z-index:25;display:none;text-align:center;transform:translateX(-50%);}
-#portal-label .pl-title{font-size:13px;font-weight:bold;color:#fff;text-shadow:0 0 12px rgba(100,200,255,1);letter-spacing:1px;}
-#portal-label .pl-sub{font-size:9px;color:rgba(150,220,255,0.7);letter-spacing:2px;text-transform:uppercase;}
-#ref-portal-label{position:fixed;pointer-events:none;z-index:25;display:none;text-align:center;transform:translateX(-50%);}
-#ref-portal-label .pl-title{font-size:13px;font-weight:bold;color:#ffcc44;text-shadow:0 0 12px rgba(255,200,80,1);letter-spacing:1px;}
-#ref-portal-label .pl-sub{font-size:9px;color:rgba(255,220,120,0.7);letter-spacing:2px;text-transform:uppercase;}
 .btn:hover{transform:scale(1.05);box-shadow:0 0 26px rgba(255,150,50,0.75);}
 .btn-ghost{background:transparent;color:#ffe680;margin-top:7px;border:1px solid rgba(255,200,80,0.38);padding:7px 24px;font-size:12px;}
 .btn-ghost:hover{background:rgba(255,200,80,0.07);box-shadow:none;transform:none;}
@@ -328,16 +321,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
   </div>
 </div>
 
-<!-- Portal floating labels -->
-<div id="portal-label">
-  <div class="pl-title">🌀 Vibe Jam Portal</div>
-  <div class="pl-sub">Drive in to enter</div>
-</div>
-<div id="ref-portal-label">
-  <div class="pl-title" id="ref-portal-title">↩ Return Portal</div>
-  <div class="pl-sub" id="ref-portal-sub">Drive in to go back</div>
-</div>
-
 <!-- Mobile fire button -->
 <button id="mob-fire" onclick="fireRocket()">🚀</button>
 
@@ -410,7 +393,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="pump-wrap">
   <div id="pump-lbl">⚡ Pump Energy</div>
   <div id="pump-bg"><div id="pump-fill"></div></div>
-  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch</div>
+  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch &nbsp;·&nbsp;[ <span id="f-pump">F</span> ] Fire Rocket </div>
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
@@ -439,6 +422,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
   <p>Ride the rail to pick up packages and deliver them on time!</p>
+  <p>Who ever reaches $1 Million first wins! Race against the robot!</p>
   <ul class="ctrl-list">
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
@@ -3439,22 +3423,6 @@ function drawMM(){
     mmCtx2.font='bold 7px sans-serif';mmCtx2.fillStyle='rgba(0,220,255,0.85)';
     mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
   }
-
-  // ── Portal dots on minimap ──
-  if(_exitPortalGroup){
-    const{x:epx,y:epy}=mmPf(_exitPortalNode.c,_exitPortalNode.r);
-    mmCtx2.beginPath();mmCtx2.arc(epx,epy,4.5,0,Math.PI*2);
-    mmCtx2.fillStyle='rgba(0,255,0,0.9)';mmCtx2.fill();
-    mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(100,255,100,0.9)';
-    mmCtx2.textAlign='center';mmCtx2.fillText('🌀',epx,epy-6);
-  }
-  if(_startPortalGroup&&_refUrl){
-    const{x:rpx,y:rpy}=mmPf(_startPortalNode.c,_startPortalNode.r);
-    mmCtx2.beginPath();mmCtx2.arc(rpx,rpy,4.5,0,Math.PI*2);
-    mmCtx2.fillStyle='rgba(255,60,60,0.9)';mmCtx2.fill();
-    mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(255,120,120,0.9)';
-    mmCtx2.textAlign='center';mmCtx2.fillText('↩',rpx,rpy-6);
-  }
 }
 
 // ═══════════════════════════════════════════
@@ -3484,8 +3452,6 @@ function startGame(){
   tNode=nid(6,6);tNextNode=nid(7,6);tEdgeT=0;tFacing=0;
   const sp=npos(6,6);trolley.position.set(sp.x,.35,sp.z);
   buildWorld();
-  _buildPortals();   // VibeJam portals
-  _portalTriggered = false;
   gameRunning=true;
   initNpcTrolleys();
   updNpcCountHUD();
@@ -3560,299 +3526,6 @@ addBtn('mob-fire',
 // ── Adaptive FPS throttle ──
 // OPT: on low-end devices, skip a render frame if we're running below ~28 fps
 // This keeps physics/logic smooth while reducing GPU pressure
-// ═══════════════════════════════════════════
-//  VIBEJAM PORTAL SYSTEM (based on official sample code)
-// ═══════════════════════════════════════════
-// Exit portal  : green, always present — bottom-right corner (node 11,11)
-// Start portal : red,   only when ?portal=true — top-left corner (node 1,1)
-// Spec: https://vibejam.cc/portal/2026
-
-const PORTAL_URL = 'https://vibejam.cc/portal/2026';
-const MY_URL     = location.href.split('?')[0];
-
-// ── Parse incoming URL params ──
-const _urlParams  = new URLSearchParams(location.search);
-const _fromPortal = _urlParams.get('portal') === 'true';
-const _refUrl     = _urlParams.get('ref')    || '';
-const _inUsername = _urlParams.get('username')|| '';
-const _inColor    = _urlParams.get('color')  || '';
-const _inSpeed    = parseFloat(_urlParams.get('speed') || '0') || 0;
-
-// Portal node positions on the grid
-const _exitPortalNode   = { c: 11, r: 11 }; // SE corner — green exit
-const _startPortalNode  = { c: 1,  r: 1  }; // NW corner — red return/start
-
-// Portal meshes & Box3 colliders (set in _buildPortals)
-let _exitPortalGroup    = null;
-let _exitPortalBox      = null;
-let _startPortalGroup   = null;
-let _startPortalBox     = null;
-
-// Portal particle geometries (kept for per-frame animation)
-let _exitPortalParticles  = null;
-let _startPortalParticles = null;
-
-// Prevent double-trigger
-let _portalTriggered = false;
-
-// ── Canvas texture helper (used for the "VIBEVERSE PORTAL" label) ──
-function _makePortalLabelTexture(text, color) {
-  const cv = document.createElement('canvas');
-  cv.width = 512; cv.height = 64;
-  const ctx = cv.getContext('2d');
-  ctx.fillStyle = color;
-  ctx.font = 'bold 32px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(text, 256, 40);
-  return new THREE.CanvasTexture(cv);
-}
-
-// ── Generic portal builder (matches reference code structure) ──
-// color   : hex number for ring + particles
-// isStart : true = start/return portal, false = exit portal
-function _makePortalGroup(color, colorName, isStart) {
-  const grp = new THREE.Group();
-  // The portal stands upright relative to the trolley — tilt slightly toward camera
-  grp.rotation.x = 0.18;
-
-  // Torus ring
-  const ringGeo = new THREE.TorusGeometry(3.2, 0.28, 16, 100);
-  const ringMat = new THREE.MeshPhongMaterial({
-    color: color, emissive: color, transparent: true, opacity: 0.8
-  });
-  grp.add(new THREE.Mesh(ringGeo, ringMat));
-
-  // Inner disc
-  const discGeo = new THREE.CircleGeometry(3.0, 32);
-  const discMat = new THREE.MeshBasicMaterial({
-    color: color, transparent: true, opacity: 0.5, side: THREE.DoubleSide
-  });
-  grp.add(new THREE.Mesh(discGeo, discMat));
-
-  // Canvas label above portal
-  const labelTex = _makePortalLabelTexture(isStart ? '↩ RETURN PORTAL' : 'VIBEVERSE PORTAL', colorName);
-  const labelGeo = new THREE.PlaneGeometry(5.5, 0.9);
-  const labelMat = new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, side: THREE.DoubleSide });
-  const labelMesh = new THREE.Mesh(labelGeo, labelMat);
-  labelMesh.position.y = 4.2;
-  grp.add(labelMesh);
-
-  // Particle ring (1000 particles — matches reference)
-  const count = 1000;
-  const positions = new Float32Array(count * 3);
-  const colors    = new Float32Array(count * 3);
-  // Decode color channel values from hex
-  const cr = ((color >> 16) & 0xff) / 255;
-  const cg = ((color >>  8) & 0xff) / 255;
-  const cb = ( color        & 0xff) / 255;
-  for (let i = 0; i < count * 3; i += 3) {
-    const angle  = Math.random() * Math.PI * 2;
-    const radius = 3.2 + (Math.random() - 0.5) * 0.8;
-    positions[i]     = Math.cos(angle) * radius;
-    positions[i + 1] = Math.sin(angle) * radius;
-    positions[i + 2] = (Math.random() - 0.5) * 0.8;
-    colors[i]     = cr * (0.8 + Math.random() * 0.2);
-    colors[i + 1] = cg * (0.8 + Math.random() * 0.2);
-    colors[i + 2] = cb * (0.8 + Math.random() * 0.2);
-  }
-  const pGeo = new THREE.BufferGeometry();
-  pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  pGeo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
-  const pMat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.7 });
-  const particles = new THREE.Points(pGeo, pMat);
-  grp.add(particles);
-
-  // Glow point light
-  const ptL = new THREE.PointLight(color, 6, 22);
-  grp.add(ptL);
-
-  return { grp, particles: pGeo };
-}
-
-// ── Build / rebuild both portals (called from startGame) ──
-function _buildPortals() {
-  // Clean up old meshes
-  if (_exitPortalGroup)  { scene.remove(_exitPortalGroup);  _exitPortalGroup  = null; }
-  if (_startPortalGroup) { scene.remove(_startPortalGroup); _startPortalGroup = null; }
-  _exitPortalParticles  = null;
-  _startPortalParticles = null;
-  _portalTriggered      = false;
-
-  // ── Exit portal — GREEN — always present ──
-  const ep  = npos(_exitPortalNode.c, _exitPortalNode.r);
-  const { grp: exGrp, particles: exPart } = _makePortalGroup(0x00ff00, '#00ff00', false);
-  exGrp.position.set(ep.x, ep.y + 3.5, ep.z);
-  scene.add(exGrp);
-  _exitPortalGroup    = exGrp;
-  _exitPortalParticles = exPart;
-  _exitPortalBox      = new THREE.Box3().setFromObject(exGrp);
-
-  // ── Start / return portal — RED — only when arriving via ?portal=true ──
-  if (_fromPortal && _refUrl) {
-    const sp  = npos(_startPortalNode.c, _startPortalNode.r);
-    const { grp: stGrp, particles: stPart } = _makePortalGroup(0xff0000, '#ff0000', true);
-    stGrp.position.set(sp.x, sp.y + 3.5, sp.z);
-    scene.add(stGrp);
-    _startPortalGroup    = stGrp;
-    _startPortalParticles = stPart;
-    _startPortalBox      = new THREE.Box3().setFromObject(stGrp);
-    // Update label sub-text
-    const refLabelEl = document.getElementById('ref-portal-label');
-    if (refLabelEl) {
-      refLabelEl.style.display = 'block';
-      try {
-        document.getElementById('ref-portal-title').textContent = '↩ ' + new URL(_refUrl).hostname;
-      } catch(e) {}
-    }
-  }
-  document.getElementById('portal-label').style.display = 'block';
-}
-
-// ── Animate particles — called from main loop ──
-function _animatePortalParticles(pGeo, dt) {
-  if (!pGeo) return;
-  const pos = pGeo.attributes.position.array;
-  const now = Date.now() * 0.001;
-  for (let i = 0; i < pos.length; i += 3) {
-    pos[i + 1] += 0.018 * Math.sin(now + i); // gentle sin wave (matches reference)
-  }
-  pGeo.attributes.position.needsUpdate = true;
-}
-
-// ── Preload iframe (reference code technique) ──
-let _preloadStarted = false;
-function _preloadPortalDest(url) {
-  if (_preloadStarted || document.getElementById('_vj_preload')) return;
-  _preloadStarted = true;
-  const iframe = document.createElement('iframe');
-  iframe.id = '_vj_preload';
-  iframe.style.display = 'none';
-  iframe.src = url;
-  document.body.appendChild(iframe);
-}
-
-// ── Build outbound URL with player state params ──
-function _buildPortalOutUrl(destBase, extraParams) {
-  const params = new URLSearchParams({
-    portal:   'true',
-    ref:      MY_URL,
-    username: _inUsername || 'player',
-    color:    '00ccff',
-    speed:    (Math.round(GS.speed * 10) / 10).toString(),
-  });
-  if (extraParams) Object.entries(extraParams).forEach(([k,v]) => params.set(k, v));
-  return destBase + '?' + params.toString();
-}
-
-// ── Flash + redirect helper ──
-function _portalEnter(url) {
-  _portalTriggered = true;
-  // Flash cyan
-  const fl = document.createElement('div');
-  fl.style.cssText = 'position:fixed;inset:0;z-index:500;pointer-events:none;background:#00ff44;opacity:0;transition:opacity .1s;';
-  document.body.appendChild(fl);
-  let step = 0;
-  const frames = [0, 0.8, 0.3, 0.9, 0.1, 1.0, 0];
-  const tick = () => {
-    fl.style.opacity = frames[step] || 0;
-    step++;
-    if (step < frames.length) requestAnimationFrame(tick);
-    else window.location.href = url;
-  };
-  requestAnimationFrame(tick);
-}
-
-// ── updatePortals — call from main loop every frame ──
-function updatePortals(dt) {
-  if (!gameRunning) return;
-
-  // Animate particles
-  _animatePortalParticles(_exitPortalParticles, dt);
-  _animatePortalParticles(_startPortalParticles, dt);
-
-  // Slowly rotate portal groups
-  if (_exitPortalGroup)  _exitPortalGroup.rotation.y  += dt * 0.4;
-  if (_startPortalGroup) _startPortalGroup.rotation.y -= dt * 0.3;
-
-  if (_portalTriggered) return;
-
-  const tp = trolley.position;
-  const trolleyBox = new THREE.Box3().setFromCenterAndSize(tp, new THREE.Vector3(2, 2, 2));
-
-  // ── Exit portal check (reference: intersectsBox + preload on approach) ──
-  if (_exitPortalBox) {
-    // Refresh box to follow any world offset
-    _exitPortalBox.setFromObject(_exitPortalGroup);
-    const dist = tp.distanceTo(_exitPortalGroup.position);
-
-    // Preload when approaching (< 12 units)
-    if (dist < 12) {
-      const outUrl = _buildPortalOutUrl(PORTAL_URL);
-      _preloadPortalDest(outUrl);
-    }
-
-    // Enter when intersecting
-    if (dist < 4.5) {
-      showNotif('🌀 Entering Vibe Jam Portal!', '#00ff00');
-      _portalEnter(_buildPortalOutUrl(PORTAL_URL));
-    }
-  }
-
-  // ── Start/return portal check ──
-  if (_startPortalBox && _refUrl) {
-    _startPortalBox.setFromObject(_startPortalGroup);
-    const dist = tp.distanceTo(_startPortalGroup.position);
-    if (dist < 4.5) {
-      showNotif('↩ Returning to previous game!', '#ff4444');
-      // Build return URL — pass all current params back (reference code approach)
-      const currentParams = new URLSearchParams(location.search);
-      const returnParams = new URLSearchParams();
-      returnParams.set('portal', 'true');
-      returnParams.set('ref', MY_URL);
-      returnParams.set('username', _inUsername || 'player');
-      returnParams.set('color', _inColor || '00ccff');
-      returnParams.set('speed', (Math.round(GS.speed * 10) / 10).toString());
-      // Forward all original params (except ref which we override)
-      for (const [k, v] of currentParams) {
-        if (k !== 'ref') returnParams.set(k, v);
-      }
-      let retUrl = _refUrl;
-      if (!retUrl.startsWith('http://') && !retUrl.startsWith('https://')) retUrl = 'https://' + retUrl;
-      _portalEnter(retUrl + '?' + returnParams.toString());
-    }
-  }
-
-  // ── Project portal positions to screen for HUD labels ──
-  _projectPortalLabel(_exitPortalGroup, document.getElementById('portal-label'));
-  if (_startPortalGroup) _projectPortalLabel(_startPortalGroup, document.getElementById('ref-portal-label'));
-}
-
-function _projectPortalLabel(grp, el) {
-  if (!grp || !el) return;
-  const wp = grp.position.clone();
-  wp.y += 5;
-  wp.project(camera);
-  const sx = (wp.x * .5 + .5) * window.innerWidth;
-  const sy = (-wp.y * .5 + .5) * window.innerHeight;
-  if (wp.z < 1 && sx > 20 && sx < window.innerWidth-20 && sy > 40 && sy < window.innerHeight-40) {
-    el.style.display = 'block';
-    el.style.left    = sx + 'px';
-    el.style.top     = sy + 'px';
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-// ── Auto-start if arriving via portal (spec: no loading screens) ──
-if (_fromPortal) {
-  document.addEventListener('DOMContentLoaded', () => {
-    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win','scr-race-lose'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.style.display = 'none';
-    });
-    setTimeout(() => startGame(), 300);
-  });
-}
-// ═══════════════════════════════════════════
 const clock=new THREE.Clock();let gt=0;
 let _skipFrame=false;
 let _fpsSmooth=60;
@@ -3869,7 +3542,7 @@ let _fpsSmooth=60;
     physics(dt);moveTrolley();animTrolley(dt);updHUD();
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
     updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
-    updateBoost(dt);updateGlue(dt);updateAI(dt,gt);updatePortals(dt);
+    updateBoost(dt);updateGlue(dt);updateAI(dt,gt);
     if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
   if(_skipFrame)return; // OPT: skip GPU work on low-end mobile

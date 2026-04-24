@@ -1,0 +1,9 @@
+# Tidak perlu ignore apapun karena keys ada di Vercel env variables
+# File config.js di frontend tidak berisi keys
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vercel local dev
+.vercel

@@ -634,6 +634,8 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script async src="https://vibejam.cc/2026/widget.js"></script>
+<!-- Config: load env dari /api/config via config.js (jangan hardcode keys di sini) -->
+<script src="/config.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -4208,22 +4210,42 @@ if (_fromPortal) {
   });
 }
 // ═══════════════════════════════════════════
-// ═══════════════════════════════════════════
 //  FIREBASE MULTIPLAYER + LOBBY SYSTEM
 // ═══════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyCsP9wIE5WjyGdGG9tRv5uGL2VPs9G1OXk",
-  authDomain: "city-rail-pumper-a9942.firebaseapp.com",
-  projectId: "city-rail-pumper-a9942",
-  storageBucket: "city-rail-pumper-a9942.firebasestorage.app",
-  messagingSenderId: "1035530442966",
-  appId: "1:1035530442966:web:13211fd9cbacbfbcb31177"
-};
-firebase.initializeApp(firebaseConfig);
-const _db          = firebase.firestore();
-const _playersCol  = _db.collection('players');
-const _lobbiesCol  = _db.collection('lobbies');
-const _lbCol       = _db.collection('leaderboard'); // global leaderboard
+
+// Firebase collections — diisi setelah async init selesai
+let _db          = null;
+let _playersCol  = null;
+let _lobbiesCol  = null;
+let _lbCol       = null;
+let _firebaseReady = false;
+
+async function _initFirebase() {
+  // Tunggu window.ENV terisi oleh config.js (fetch dari /api/config)
+  await new Promise(resolve => {
+    const check = () => {
+      if (window.ENV && window.ENV.FIREBASE_API_KEY) resolve();
+      else setTimeout(check, 50);
+    };
+    check();
+  });
+
+  firebase.initializeApp({
+    apiKey:            window.ENV.FIREBASE_API_KEY,
+    authDomain:        window.ENV.FIREBASE_AUTH_DOMAIN,
+    projectId:         window.ENV.FIREBASE_PROJECT_ID,
+    storageBucket:     window.ENV.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: window.ENV.FIREBASE_MESSAGING_ID,
+    appId:             window.ENV.FIREBASE_APP_ID
+  });
+
+  _db         = firebase.firestore();
+  _playersCol = _db.collection('players');
+  _lobbiesCol = _db.collection('lobbies');
+  _lbCol      = _db.collection('leaderboard');
+  _firebaseReady = true;
+}
+_initFirebase();
 
 // ── Game session timer ──
 let _gameStartTime = 0; // Date.now() when game started
@@ -4238,6 +4260,7 @@ function _formatTime(ms) {
 // ── Submit score to leaderboard ──
 async function _lbSubmit(score, timeMs) {
   if (!score || score <= 0) return;
+  if (!_firebaseReady) return;
   try {
     // Use player ID as doc ID — overwrites if score is better
     const existing = await _lbCol.doc(_myId).get();
@@ -4257,6 +4280,7 @@ async function _lbSubmit(score, timeMs) {
 
 // ── Load and render leaderboard into end screen ──
 async function _lbLoad(bodyId, loadingId, tableId, myScore) {
+  if (!_firebaseReady) return;
   const loadingEl = document.getElementById(loadingId);
   const tableEl   = document.getElementById(tableId);
   const bodyEl    = document.getElementById(bodyId);
@@ -4363,6 +4387,7 @@ function chooseModeVsPlayer() {
 // ════════════════════════════
 
 async function _lobbyFind() {
+  if (!_firebaseReady) return;
   document.getElementById('lobby-status').textContent = 'Looking for a game...';
 
   try {
@@ -4485,6 +4510,7 @@ function _lobbyFallbackCPU(msg) {
 }
 
 function _lobbyStartOnline() {
+  if (!_firebaseReady) return;
   _lobbyStopCountdown();
   if (_lobbyUnsub) { _lobbyUnsub(); _lobbyUnsub = null; }
   showScr('');

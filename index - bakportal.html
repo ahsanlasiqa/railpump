@@ -523,6 +523,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script async src="https://vibejam.cc/2026/widget.js"></script>
 <script>
 'use strict';
 // ═══════════════════════════════════════════
@@ -704,7 +705,7 @@ const BGM=(()=>{
     if(audio)return;
     audio=new Audio('viacheslavstarostin-action.mp3');
     audio.loop=true;
-    audio.volume=0.01;
+    audio.volume=0.02;
     audio.preload='auto';
   }
 
@@ -1594,11 +1595,6 @@ function buildWorld(){
   scene.add(worldGrp);
   mmStaticDirty=true; // rebake minimap grid+stations after world rebuild
 
-  // ── Portal stub tracks — short extensions OUTSIDE the main grid ──
-  // Each stub is 2 CELL lengths long, centred on column 6, extending beyond the grid edge.
-  // They use the same road/rail materials as the main grid so they look consistent.
-  _buildPortalStubs(worldGrp);
-
   // Stations
   ST_POS.forEach(([col,row],idx)=>buildStation(idx,col,row));
 
@@ -1627,88 +1623,6 @@ function buildWorld(){
     grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
-}
-
-// ── Portal stub track builder ──
-// Creates a short road+rail spur extending outside the main grid.
-// The portal mesh sits at the far end of the stub.
-function _buildPortalStubs(grp){
-  const roadM  = new THREE.MeshStandardMaterial({color:0x090b16,roughness:.12,metalness:.45});
-  const railM  = new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
-  const tieM   = new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
-  const signM  = new THREE.MeshStandardMaterial({color:0x003322,emissive:new THREE.Color(0x00ff44),emissiveIntensity:1.2,roughness:.6});
-  const signMR = new THREE.MeshStandardMaterial({color:0x220000,emissive:new THREE.Color(0xff2200),emissiveIntensity:1.2,roughness:.6});
-  const ROFF   = 0.52;
-  const STUB_CELLS = 2; // how many cells the stub extends outside the grid
-
-  // Helper — build one stub segment going in direction dz (+1=south, -1=north)
-  function buildStub(centreX, startZ, dz, isExit){
-    for(let s=0;s<STUB_CELLS;s++){
-      const z0 = startZ + s*CELL*dz;
-      const z1 = z0 + CELL*dz;
-      const cz = (z0+z1)/2;
-
-      // Road slab
-      const rd = new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
-      rd.position.set(centreX,.03,cz); grp.add(rd);
-
-      // Rails
-      [-ROFF,ROFF].forEach(off=>{
-        const rl = new THREE.Mesh(new THREE.BoxGeometry(.1,.07,CELL),railM);
-        rl.position.set(centreX+off,.07,cz); grp.add(rl);
-      });
-
-      // Ties
-      for(let t=1;t<4;t++){
-        const tz = z0+(z1-z0)*(t/4);
-        const tie = new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.12),tieM);
-        tie.position.set(centreX,.06,tz); grp.add(tie);
-      }
-    }
-
-    // Portal platform at stub end — flat square pad
-    const endZ = startZ + STUB_CELLS*CELL*dz;
-    const pad = new THREE.Mesh(new THREE.BoxGeometry(7,.12,7),
-      new THREE.MeshStandardMaterial({color:0x0a1020,roughness:.8,emissive:new THREE.Color(isExit?0x003311:0x110000),emissiveIntensity:.4}));
-    pad.position.set(centreX,.06,endZ); grp.add(pad);
-
-    // Portal sign poles + board
-    [-2.5,2.5].forEach(ox=>{
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,4,6),
-        new THREE.MeshStandardMaterial({color:0x223344,metalness:.7,roughness:.3}));
-      pole.position.set(centreX+ox,2,endZ+dz*1.0); grp.add(pole);
-    });
-    const board = new THREE.Mesh(new THREE.BoxGeometry(5.5,.5,.1), isExit?signM:signMR);
-    board.position.set(centreX,3.8,endZ+dz*1.0); grp.add(board);
-
-    // Canvas texture sign label
-    const cv = document.createElement('canvas'); cv.width=256; cv.height=40;
-    const ctx2 = cv.getContext('2d');
-    ctx2.fillStyle = isExit ? '#00ff88' : '#ff4422';
-    ctx2.font = 'bold 18px monospace';
-    ctx2.textAlign = 'center';
-    ctx2.fillText(isExit ? '🌀 VIBE JAM PORTAL' : '↩ RETURN PORTAL', 128, 26);
-    const signTex = new THREE.CanvasTexture(cv);
-    const signPlane = new THREE.Mesh(new THREE.PlaneGeometry(5.4,.45),
-      new THREE.MeshBasicMaterial({map:signTex,transparent:true,side:THREE.DoubleSide}));
-    signPlane.position.set(centreX,3.85,endZ+dz*1.05); grp.add(signPlane);
-
-    // Glowing edge lights on the pad
-    const padLight = new THREE.PointLight(isExit?0x00ff44:0xff2200, 4, 18);
-    padLight.position.set(centreX,2,endZ); grp.add(padLight);
-
-    // Return the world-space centre of the portal platform
-    return new THREE.Vector3(centreX, 0, endZ);
-  }
-
-  // Exit stub — south of grid (row GH=12, south edge Z = OZ + GH*CELL)
-  const exitCentreX   = OX + 6*CELL;          // column 6
-  const exitStartZ    = OZ + GH*CELL;         // south edge of grid
-  _exitPortalWorldPos = buildStub(exitCentreX, exitStartZ, +1, true);
-
-  // Start stub — north of grid (row 0, north edge Z = OZ)
-  const startStartZ    = OZ;                  // north edge of grid
-  _startPortalWorldPos = buildStub(exitCentreX, startStartZ, -1, false);
 }
 
 function buildStation(idx,col,row){
@@ -3526,30 +3440,20 @@ function drawMM(){
     mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
   }
 
-  // ── Portal dots on minimap — project world positions, not grid nodes ──
-  function mmPfWorld(wx, wz) {
-    // Convert world X/Z to minimap pixel (same formula as mmPf but takes raw coords)
-    const fc = (wx - OX) / CELL;
-    const fr = (wz - OZ) / CELL;
-    return mmPf(fc, fr);
+  // ── Portal dots on minimap ──
+  if(_exitPortalGroup){
+    const{x:epx,y:epy}=mmPf(_exitPortalNode.c,_exitPortalNode.r);
+    mmCtx2.beginPath();mmCtx2.arc(epx,epy,4.5,0,Math.PI*2);
+    mmCtx2.fillStyle='rgba(0,255,0,0.9)';mmCtx2.fill();
+    mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(100,255,100,0.9)';
+    mmCtx2.textAlign='center';mmCtx2.fillText('🌀',epx,epy-6);
   }
-  if(_exitPortalGroup && _exitPortalWorldPos){
-    const{x:epx,y:epy}=mmPfWorld(_exitPortalWorldPos.x, _exitPortalWorldPos.z);
-    if(epx>0&&epx<MM&&epy>0&&epy<MM){
-      mmCtx2.beginPath();mmCtx2.arc(epx,epy,4.5,0,Math.PI*2);
-      mmCtx2.fillStyle='rgba(0,255,0,0.9)';mmCtx2.fill();
-      mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(100,255,100,0.9)';
-      mmCtx2.textAlign='center';mmCtx2.fillText('🌀',epx,epy-6);
-    }
-  }
-  if(_startPortalGroup && _startPortalWorldPos && _refUrl){
-    const{x:rpx,y:rpy}=mmPfWorld(_startPortalWorldPos.x, _startPortalWorldPos.z);
-    if(rpx>0&&rpx<MM&&rpy>0&&rpy<MM){
-      mmCtx2.beginPath();mmCtx2.arc(rpx,rpy,4.5,0,Math.PI*2);
-      mmCtx2.fillStyle='rgba(255,60,60,0.9)';mmCtx2.fill();
-      mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(255,120,120,0.9)';
-      mmCtx2.textAlign='center';mmCtx2.fillText('↩',rpx,rpy-6);
-    }
+  if(_startPortalGroup&&_refUrl){
+    const{x:rpx,y:rpy}=mmPf(_startPortalNode.c,_startPortalNode.r);
+    mmCtx2.beginPath();mmCtx2.arc(rpx,rpy,4.5,0,Math.PI*2);
+    mmCtx2.fillStyle='rgba(255,60,60,0.9)';mmCtx2.fill();
+    mmCtx2.font='9px sans-serif';mmCtx2.fillStyle='rgba(255,120,120,0.9)';
+    mmCtx2.textAlign='center';mmCtx2.fillText('↩',rpx,rpy-6);
   }
 }
 
@@ -3674,16 +3578,9 @@ const _inUsername = _urlParams.get('username')|| '';
 const _inColor    = _urlParams.get('color')  || '';
 const _inSpeed    = parseFloat(_urlParams.get('speed') || '0') || 0;
 
-// Portal node positions — portals sit OUTSIDE the main grid on stub tracks
-// Exit  portal stub: extends 2 cells SOUTH from node (6, GH=12) → world pos below grid
-// Start portal stub: extends 2 cells NORTH from node (6, 0)     → world pos above grid
-const _exitPortalNode   = { c: 6, r: 11 }; // anchor on south edge of grid
-const _startPortalNode  = { c: 6, r: 0  }; // anchor on north edge of grid
-
-// World-space positions of the stub portal platforms (computed after OX/OZ known)
-// These are set in _buildPortals() after buildWorld() runs
-let _exitPortalWorldPos  = null; // THREE.Vector3 — 2 cells south of (6,12)
-let _startPortalWorldPos = null; // THREE.Vector3 — 2 cells north of (6,0)
+// Portal node positions on the grid
+const _exitPortalNode   = { c: 11, r: 11 }; // SE corner — green exit
+const _startPortalNode  = { c: 1,  r: 1  }; // NW corner — red return/start
 
 // Portal meshes & Box3 colliders (set in _buildPortals)
 let _exitPortalGroup    = null;
@@ -3774,32 +3671,38 @@ function _makePortalGroup(color, colorName, isStart) {
 
 // ── Build / rebuild both portals (called from startGame) ──
 function _buildPortals() {
+  // Clean up old meshes
   if (_exitPortalGroup)  { scene.remove(_exitPortalGroup);  _exitPortalGroup  = null; }
   if (_startPortalGroup) { scene.remove(_startPortalGroup); _startPortalGroup = null; }
-  _exitPortalParticles = null; _startPortalParticles = null; _portalTriggered = false;
+  _exitPortalParticles  = null;
+  _startPortalParticles = null;
+  _portalTriggered      = false;
 
-  // Use stub platform positions (set by _buildPortalStubs in buildWorld)
-  const exitPos  = _exitPortalWorldPos  || new THREE.Vector3(OX+6*CELL, 0, OZ+GH*CELL+2*CELL);
-  const startPos = _startPortalWorldPos || new THREE.Vector3(OX+6*CELL, 0, OZ-2*CELL);
-
-  // Exit portal — GREEN — south stub
+  // ── Exit portal — GREEN — always present ──
+  const ep  = npos(_exitPortalNode.c, _exitPortalNode.r);
   const { grp: exGrp, particles: exPart } = _makePortalGroup(0x00ff00, '#00ff00', false);
-  exGrp.position.set(exitPos.x, exitPos.y + 3.5, exitPos.z);
+  exGrp.position.set(ep.x, ep.y + 3.5, ep.z);
   scene.add(exGrp);
-  _exitPortalGroup = exGrp; _exitPortalParticles = exPart;
-  _exitPortalBox   = new THREE.Box3().setFromObject(exGrp);
+  _exitPortalGroup    = exGrp;
+  _exitPortalParticles = exPart;
+  _exitPortalBox      = new THREE.Box3().setFromObject(exGrp);
 
-  // Start / return portal — RED — north stub — only when ?portal=true
+  // ── Start / return portal — RED — only when arriving via ?portal=true ──
   if (_fromPortal && _refUrl) {
+    const sp  = npos(_startPortalNode.c, _startPortalNode.r);
     const { grp: stGrp, particles: stPart } = _makePortalGroup(0xff0000, '#ff0000', true);
-    stGrp.position.set(startPos.x, startPos.y + 3.5, startPos.z);
+    stGrp.position.set(sp.x, sp.y + 3.5, sp.z);
     scene.add(stGrp);
-    _startPortalGroup = stGrp; _startPortalParticles = stPart;
-    _startPortalBox   = new THREE.Box3().setFromObject(stGrp);
+    _startPortalGroup    = stGrp;
+    _startPortalParticles = stPart;
+    _startPortalBox      = new THREE.Box3().setFromObject(stGrp);
+    // Update label sub-text
     const refLabelEl = document.getElementById('ref-portal-label');
     if (refLabelEl) {
       refLabelEl.style.display = 'block';
-      try { document.getElementById('ref-portal-title').textContent = '↩ ' + new URL(_refUrl).hostname; } catch(e) {}
+      try {
+        document.getElementById('ref-portal-title').textContent = '↩ ' + new URL(_refUrl).hostname;
+      } catch(e) {}
     }
   }
   document.getElementById('portal-label').style.display = 'block';
@@ -3876,33 +3779,46 @@ function updatePortals(dt) {
   const tp = trolley.position;
   const trolleyBox = new THREE.Box3().setFromCenterAndSize(tp, new THREE.Vector3(2, 2, 2));
 
-  // ── Exit portal check ──
-  if (_exitPortalBox && _exitPortalWorldPos) {
+  // ── Exit portal check (reference: intersectsBox + preload on approach) ──
+  if (_exitPortalBox) {
+    // Refresh box to follow any world offset
     _exitPortalBox.setFromObject(_exitPortalGroup);
-    const dist = tp.distanceTo(_exitPortalWorldPos);
-    if (dist < 12) { const outUrl = _buildPortalOutUrl(PORTAL_URL); _preloadPortalDest(outUrl); }
-    if (dist < 5.0) {
+    const dist = tp.distanceTo(_exitPortalGroup.position);
+
+    // Preload when approaching (< 12 units)
+    if (dist < 12) {
+      const outUrl = _buildPortalOutUrl(PORTAL_URL);
+      _preloadPortalDest(outUrl);
+    }
+
+    // Enter when intersecting
+    if (dist < 4.5) {
       showNotif('🌀 Entering Vibe Jam Portal!', '#00ff00');
       _portalEnter(_buildPortalOutUrl(PORTAL_URL));
     }
   }
 
   // ── Start/return portal check ──
-  if (_startPortalBox && _refUrl && _startPortalWorldPos) {
+  if (_startPortalBox && _refUrl) {
     _startPortalBox.setFromObject(_startPortalGroup);
-    const dist = tp.distanceTo(_startPortalWorldPos);
-    if (dist < 5.0) {
+    const dist = tp.distanceTo(_startPortalGroup.position);
+    if (dist < 4.5) {
       showNotif('↩ Returning to previous game!', '#ff4444');
+      // Build return URL — pass all current params back (reference code approach)
       const currentParams = new URLSearchParams(location.search);
       const returnParams = new URLSearchParams();
-      returnParams.set('portal','true'); returnParams.set('ref',MY_URL);
-      returnParams.set('username',_inUsername||'player');
-      returnParams.set('color',_inColor||'00ccff');
-      returnParams.set('speed',(Math.round(GS.speed*10)/10).toString());
-      for(const[k,v]of currentParams) if(k!=='ref') returnParams.set(k,v);
-      let retUrl=_refUrl;
-      if(!retUrl.startsWith('http://') && !retUrl.startsWith('https://')) retUrl='https://'+retUrl;
-      _portalEnter(retUrl+'?'+returnParams.toString());
+      returnParams.set('portal', 'true');
+      returnParams.set('ref', MY_URL);
+      returnParams.set('username', _inUsername || 'player');
+      returnParams.set('color', _inColor || '00ccff');
+      returnParams.set('speed', (Math.round(GS.speed * 10) / 10).toString());
+      // Forward all original params (except ref which we override)
+      for (const [k, v] of currentParams) {
+        if (k !== 'ref') returnParams.set(k, v);
+      }
+      let retUrl = _refUrl;
+      if (!retUrl.startsWith('http://') && !retUrl.startsWith('https://')) retUrl = 'https://' + retUrl;
+      _portalEnter(retUrl + '?' + returnParams.toString());
     }
   }
 

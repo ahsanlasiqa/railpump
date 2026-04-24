@@ -113,7 +113,22 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
 .overlay p{color:rgba(255,220,150,0.78);font-size:13px;margin-bottom:5px;text-align:center;max-width:420px;line-height:1.6;}
 .btn{margin-top:13px;padding:11px 34px;font-size:13px;letter-spacing:2px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:40px;cursor:pointer;font-family:'Georgia',serif;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 0 16px rgba(255,150,50,0.45);}
-/* ── Portal styles ── */
+/* ── Multiplayer: username input on start screen ── */
+#username-wrap{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+#username-input{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,200,80,0.35);border-radius:8px;padding:8px 16px;color:#ffe680;font-family:'Georgia',serif;font-size:14px;text-align:center;outline:none;width:200px;letter-spacing:1px;}
+#username-input::placeholder{color:rgba(255,200,80,0.3);}
+#username-input:focus{border-color:rgba(255,200,80,0.7);}
+#username-lbl{font-size:10px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;}
+/* ── Leaderboard panel ── */
+#lb-panel{position:fixed;top:58px;right:12px;z-index:20;background:rgba(4,6,18,0.88);border:1px solid rgba(255,200,80,0.22);border-radius:10px;padding:7px 12px;min-width:148px;max-width:180px;display:none;backdrop-filter:blur(8px);}
+#lb-title{font-size:8px;letter-spacing:2px;color:rgba(255,220,120,0.45);text-transform:uppercase;margin-bottom:5px;text-align:center;}
+.lb-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.lb-row:last-child{border-bottom:none;}
+.lb-name{color:#ffe680;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-name.is-me{color:#00ccff;}
+.lb-score{color:rgba(255,220,120,0.6);font-size:10px;}
+/* ── Online player floating labels ── */
+.mp-label{position:fixed;pointer-events:none;z-index:18;font-size:10px;font-weight:bold;letter-spacing:1px;text-shadow:0 0 8px currentColor;transform:translateX(-50%);display:none;}
 #portal-label{position:fixed;pointer-events:none;z-index:25;display:none;text-align:center;transform:translateX(-50%);}
 #portal-label .pl-title{font-size:13px;font-weight:bold;color:#fff;text-shadow:0 0 12px rgba(100,200,255,1);letter-spacing:1px;}
 #portal-label .pl-sub{font-size:9px;color:rgba(150,220,255,0.7);letter-spacing:2px;text-transform:uppercase;}
@@ -439,6 +454,10 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
   <p>Ride the rail to pick up packages and deliver them on time!</p>
+  <div id="username-wrap">
+    <div id="username-lbl">Your name</div>
+    <input id="username-input" type="text" maxlength="16" placeholder="Enter username..." autocomplete="off" spellcheck="false"/>
+  </div>
   <ul class="ctrl-list">
     <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
     <li><span class="key" id="s-brake-key">B</span> Brake</li>
@@ -447,9 +466,16 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <li><span class="key">F</span> Fire rocket 🚀</li>
     <li><span class="key">R</span> Open rocket shop</li>
   </ul>
-  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">Enjoy the beautiful Japanese sky night· Beware of Granny wandering the city·</p> <p>You get to rocket them in time!</p>
+  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">Enjoy the beautiful Japanese sky night· Beware of Granny wandering the city·</p>
+  <p>You get to rocket them in time!</p>
   <button class="btn" onclick="startGame()">START GAME</button>
   <button class="btn btn-ghost" onclick="showScr('scr-keys')">⚙ Controls</button>
+</div>
+
+<!-- Leaderboard panel -->
+<div id="lb-panel">
+  <div id="lb-title">🏆 Online Players</div>
+  <div id="lb-rows"></div>
 </div>
 
 <!-- KEY BINDINGS -->
@@ -524,6 +550,9 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script async src="https://vibejam.cc/2026/widget.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 'use strict';
 // ═══════════════════════════════════════════
@@ -2787,6 +2816,7 @@ function updateRaceBar() {
 function raceOver(winner) {
   gameRunning = false;
   BGM.fadeOut(1500);
+  if(_mpActive) mpStop(); // clean up Firestore presence
   clearChoiceMarkers();
   document.getElementById('mission-panel').style.display = 'none';
   document.getElementById('arrow').style.opacity = '0';
@@ -3604,7 +3634,16 @@ function drawMM(){
     mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
   }
 
-  // ── Portal dots on minimap — project world positions, not grid nodes ──
+  // ── Remote player dots on minimap ──
+  Object.values(_remotePlayers).forEach(rp=>{
+    if(!rp.mesh.visible) return;
+    const fc=(rp.x-OX)/CELL, fr=(rp.z-OZ)/CELL;
+    const{x:rx,y:ry2}=mmPf(fc,fr);
+    if(rx<mmPad||rx>MM-mmPad||ry2<mmPad||ry2>MM-mmPad) return;
+    // Coloured dot
+    mmCtx2.beginPath();mmCtx2.arc(rx,ry2,3.5,0,Math.PI*2);
+    mmCtx2.fillStyle=rp.colorStr||'#aaffee';mmCtx2.fill();
+  });
   function mmPfWorld(wx, wz) {
     // Convert world X/Z to minimap pixel (same formula as mmPf but takes raw coords)
     const fc = (wx - OX) / CELL;
@@ -3666,7 +3705,9 @@ function startGame(){
   // ── Start AI competitor ──
   initAI();
   BGM.play();
-  setTimeout(()=>SFX.startGame(),200); // slight delay so audio ctx is fully unlocked
+  setTimeout(()=>SFX.startGame(),200);
+  if(_mpActive) mpStop(); // stop previous session if restarting
+  mpStart(); // ← join multiplayer session
   startMissions();
 }
 
@@ -4015,6 +4056,232 @@ if (_fromPortal) {
   });
 }
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  FIREBASE MULTIPLAYER
+// ═══════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCsP9wIE5WjyGdGG9tRv5uGL2VPs9G1OXk",
+  authDomain: "city-rail-pumper-a9942.firebaseapp.com",
+  projectId: "city-rail-pumper-a9942",
+  storageBucket: "city-rail-pumper-a9942.firebasestorage.app",
+  messagingSenderId: "1035530442966",
+  appId: "1:1035530442966:web:13211fd9cbacbfbcb31177"
+};
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.firestore();
+const _playersCol = _db.collection('players');
+
+// ── Local player identity ──
+// Generate a unique session ID — persisted in sessionStorage so refresh = same ID
+let _myId = sessionStorage.getItem('mp_id');
+if (!_myId) { _myId = 'p_' + Math.random().toString(36).slice(2,10); sessionStorage.setItem('mp_id', _myId); }
+
+// Username — read from input field, fallback to portal param or random
+function _getUsername() {
+  const inp = document.getElementById('username-input');
+  const typed = inp ? inp.value.trim() : '';
+  if (typed) return typed;
+  if (_inUsername) return _inUsername;
+  return 'Rail' + Math.floor(Math.random()*999);
+}
+
+// Assign a consistent color per player (hue from ID hash)
+function _idToColor(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
+  // Avoid dark colors — force high saturation, mid-high lightness
+  const hue = (h % 360);
+  return `hsl(${hue},90%,65%)`;
+}
+function _idToHex(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
+  return 0x100000 + (h % 0xefffff); // keep it bright
+}
+
+// ── Remote players: map of id → { mesh, labelEl, data } ──
+const _remotePlayers = {};
+let _mpUsername = 'Player';
+let _mpActive   = false;
+let _mpUnsubscribe = null;
+let _mpWriteTimer  = 0;
+const MP_WRITE_INTERVAL = 0.25; // write to Firestore every 250ms
+
+// ── Build a simple remote trolley mesh ──
+function _makeRemoteTrolley(color) {
+  const grp = new THREE.Group();
+  const bM = new THREE.MeshStandardMaterial({ color, emissive: new THREE.Color(color), emissiveIntensity: .4, metalness: .3, roughness: .6 });
+  const wM = new THREE.MeshStandardMaterial({ color: 0x223344, roughness: .9 });
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1), wM);
+  platform.position.y = .5; grp.add(platform);
+  // Pump handle
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.7,6), bM);
+  pole.position.set(0,.88,0); grp.add(pole);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6), bM);
+  bar.rotation.z = Math.PI/2; bar.position.set(0,1.2,0); grp.add(bar);
+  // Wheels
+  const wGeo = new THREE.TorusGeometry(.22,.055,6,12);
+  [[-0.7,-.4],[-.7,.4],[.7,-.4],[.7,.4]].forEach(([x,z])=>{
+    const w = new THREE.Mesh(wGeo, wM); w.position.set(x,.26,z); w.rotation.y=Math.PI/2; grp.add(w);
+  });
+  // Glow beacon
+  const bec = new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),
+    new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.85 }));
+  bec.position.set(0,1.6,0); grp.add(bec);
+  grp.visible = false;
+  scene.add(grp);
+  return grp;
+}
+
+// ── Create floating HTML label for a remote player ──
+function _makeRemoteLabel(username, colorStr) {
+  const el = document.createElement('div');
+  el.className = 'mp-label';
+  el.style.color = colorStr;
+  el.textContent = '🚃 ' + username;
+  document.body.appendChild(el);
+  return el;
+}
+
+// ── Start multiplayer: subscribe to Firestore + write own presence ──
+function mpStart() {
+  _mpUsername = _getUsername();
+  _mpActive = true;
+
+  // Show leaderboard
+  document.getElementById('lb-panel').style.display = 'block';
+
+  // Write initial presence
+  _mpWriteSelf();
+
+  // Subscribe to all players
+  _mpUnsubscribe = _playersCol.onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const id  = change.doc.id;
+      const dat = change.doc.data();
+      if (id === _myId) return; // skip self
+
+      if (change.type === 'removed') {
+        _mpRemovePlayer(id); return;
+      }
+      // Stale check — remove players inactive > 10s
+      if (dat.ts && (Date.now() - dat.ts) > 10000) { _mpRemovePlayer(id); return; }
+
+      if (!_remotePlayers[id]) {
+        // New player — build mesh + label
+        const hex = _idToHex(id);
+        const colorStr = _idToColor(id);
+        const mesh  = _makeRemoteTrolley(hex);
+        const label = _makeRemoteLabel(dat.username || 'Player', colorStr);
+        _remotePlayers[id] = { mesh, label, colorStr, x:0, y:0.35, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0 };
+      }
+      // Update data
+      const rp = _remotePlayers[id];
+      rp.targetX  = dat.x  || 0;
+      rp.targetZ  = dat.z  || 0;
+      rp.targetRy = dat.ry || 0;
+      rp.score    = dat.score || 0;
+      rp.username = dat.username || 'Player';
+      rp.mesh.visible = true;
+    });
+    _mpUpdateLeaderboard();
+  });
+}
+
+// ── Write own position + score to Firestore ──
+function _mpWriteSelf() {
+  if (!_mpActive) return;
+  _playersCol.doc(_myId).set({
+    username: _mpUsername,
+    x:     trolley.position.x,
+    y:     trolley.position.y,
+    z:     trolley.position.z,
+    ry:    trolley.rotation.y,
+    score: GS.score,
+    ts:    Date.now(),
+  }).catch(()=>{}); // silent fail — offline ok
+}
+
+// ── Remove a remote player ──
+function _mpRemovePlayer(id) {
+  const rp = _remotePlayers[id];
+  if (!rp) return;
+  scene.remove(rp.mesh);
+  rp.mesh.geometry && rp.mesh.geometry.dispose && rp.mesh.children.forEach(c=>{ if(c.geometry) c.geometry.dispose(); });
+  if (rp.label && rp.label.parentNode) rp.label.parentNode.removeChild(rp.label);
+  delete _remotePlayers[id];
+  _mpUpdateLeaderboard();
+}
+
+// ── Stop multiplayer (on game over / page unload) ──
+function mpStop() {
+  _mpActive = false;
+  if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
+  _playersCol.doc(_myId).delete().catch(()=>{});
+  Object.keys(_remotePlayers).forEach(_mpRemovePlayer);
+  document.getElementById('lb-panel').style.display = 'none';
+}
+
+// ── Leaderboard update ──
+function _mpUpdateLeaderboard() {
+  const rows = document.getElementById('lb-rows');
+  if (!rows) return;
+  // Build array: self + remotes
+  const all = [{ id: _myId, username: _mpUsername, score: GS.score, isMe: true }];
+  Object.entries(_remotePlayers).forEach(([id,rp])=>all.push({ id, username: rp.username||'Player', score: rp.score||0, isMe:false }));
+  all.sort((a,b)=>b.score - a.score);
+  rows.innerHTML = all.slice(0,8).map((p,i)=>
+    `<div class="lb-row">
+      <span class="lb-name ${p.isMe?'is-me':''}">${i+1}. ${p.username}</span>
+      <span class="lb-score">${p.score.toLocaleString()}</span>
+    </div>`
+  ).join('');
+}
+
+// ── Per-frame multiplayer update ──
+function updateMultiplayer(dt) {
+  if (!_mpActive) return;
+
+  // Write own state periodically
+  _mpWriteTimer += dt;
+  if (_mpWriteTimer >= MP_WRITE_INTERVAL) {
+    _mpWriteTimer = 0;
+    _mpWriteSelf();
+    // Also update self score in leaderboard
+    _mpUpdateLeaderboard();
+  }
+
+  // Interpolate remote trolleys toward their last known position (smooth movement)
+  Object.values(_remotePlayers).forEach(rp => {
+    if (!rp.mesh.visible) return;
+    rp.x  += (rp.targetX  - rp.x)  * 0.2;
+    rp.z  += (rp.targetZ  - rp.z)  * 0.2;
+    rp.mesh.position.set(rp.x, 0.35, rp.z);
+    // Smooth rotation
+    let dRy = rp.targetRy - (rp.ry||0);
+    if (dRy >  Math.PI) dRy -= Math.PI*2;
+    if (dRy < -Math.PI) dRy += Math.PI*2;
+    rp.ry = (rp.ry||0) + dRy * 0.2;
+    rp.mesh.rotation.y = rp.ry;
+
+    // Project label to screen
+    const sp = new THREE.Vector3(rp.x, 2.2, rp.z).project(camera);
+    const sx = (sp.x*.5+.5)*window.innerWidth;
+    const sy = (-sp.y*.5+.5)*window.innerHeight;
+    if (sp.z < 1 && sx>0 && sx<window.innerWidth && sy>0 && sy<window.innerHeight) {
+      rp.label.style.display = 'block';
+      rp.label.style.left = sx+'px';
+      rp.label.style.top  = sy+'px';
+    } else {
+      rp.label.style.display = 'none';
+    }
+  });
+}
+
+// ── Cleanup on page unload ──
+window.addEventListener('beforeunload', ()=>{ if(_mpActive) mpStop(); });
+
+// ═══════════════════════════════════════════
 const clock=new THREE.Clock();let gt=0;
 let _skipFrame=false;
 let _fpsSmooth=60;
@@ -4032,6 +4299,7 @@ let _fpsSmooth=60;
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
     updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
     updateBoost(dt);updateGlue(dt);updateAI(dt,gt);updatePortals(dt);
+    updateMultiplayer(dt);
     if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
   if(_skipFrame)return; // OPT: skip GPU work on low-end mobile

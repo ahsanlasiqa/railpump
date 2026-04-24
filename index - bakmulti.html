@@ -113,27 +113,6 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 .overlay h1{font-size:clamp(22px,5vw,46px);color:#ffe680;text-shadow:0 0 26px rgba(255,200,80,0.8);margin-bottom:9px;text-align:center;}
 .overlay p{color:rgba(255,220,150,0.78);font-size:13px;margin-bottom:5px;text-align:center;max-width:420px;line-height:1.6;}
 .btn{margin-top:13px;padding:11px 34px;font-size:13px;letter-spacing:2px;background:linear-gradient(135deg,#ff6b35,#ffe680);color:#080810;border:none;border-radius:40px;cursor:pointer;font-family:'Georgia',serif;font-weight:bold;transition:transform .15s,box-shadow .15s;box-shadow:0 0 16px rgba(255,150,50,0.45);}
-/* ── Mode selection buttons ── */
-#mode-wrap{display:flex;gap:12px;margin-top:16px;justify-content:center;flex-wrap:wrap;}
-.mode-btn{padding:14px 22px;border:2px solid rgba(255,200,80,0.4);border-radius:12px;background:rgba(255,255,255,0.04);color:#ffe680;font-family:'Georgia',serif;font-size:13px;cursor:pointer;text-align:center;transition:all .2s;min-width:130px;}
-.mode-btn:hover{background:rgba(255,200,80,0.12);border-color:rgba(255,200,80,0.8);}
-.mode-btn .mode-icon{font-size:28px;display:block;margin-bottom:6px;}
-.mode-btn .mode-lbl{font-size:12px;letter-spacing:1px;}
-.mode-btn .mode-sub{font-size:9px;color:rgba(255,200,80,0.45);margin-top:2px;}
-/* ── Lobby screen ── */
-#scr-lobby{z-index:110;}
-#lobby-status{font-size:16px;color:#ffe680;margin:10px 0 4px;text-align:center;}
-#lobby-timer{font-size:28px;font-weight:bold;color:#ffe680;text-shadow:0 0 20px rgba(255,200,80,0.8);font-family:'Georgia',serif;margin:4px 0;}
-#lobby-sub{font-size:11px;color:rgba(255,220,120,0.45);letter-spacing:1px;margin-bottom:14px;text-align:center;}
-#lobby-players{display:flex;gap:18px;justify-content:center;margin:10px 0;}
-.lobby-slot{width:110px;height:90px;border:2px solid rgba(255,200,80,0.25);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:rgba(255,255,255,0.03);}
-.lobby-slot.filled{border-color:rgba(80,220,120,0.6);background:rgba(80,220,120,0.06);}
-.lobby-slot.waiting{border-color:rgba(255,200,80,0.2);animation:lobbyPulse 1.4s ease-in-out infinite;}
-@keyframes lobbyPulse{0%,100%{border-color:rgba(255,200,80,0.2);}50%{border-color:rgba(255,200,80,0.55);}}
-.lobby-avatar{font-size:26px;}
-.lobby-name{font-size:11px;color:#ffe680;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.lobby-name.dim{color:rgba(255,200,80,0.3);font-style:italic;}
-#lobby-cancel{margin-top:6px;}
 /* ── Multiplayer: username input on start screen ── */
 #username-wrap{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 #username-input{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,200,80,0.35);border-radius:8px;padding:8px 16px;color:#ffe680;font-family:'Georgia',serif;font-size:14px;text-align:center;outline:none;width:200px;letter-spacing:1px;}
@@ -474,44 +453,23 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <!-- START -->
 <div class="overlay" id="scr-start">
   <h1>🚃 City Rail Pumper</h1>
-  <p>Race to 1,000,000 points first!</p>
+  <p>Ride the rail to pick up packages and deliver them on time!</p>
   <div id="username-wrap">
     <div id="username-lbl">Your name</div>
     <input id="username-input" type="text" maxlength="16" placeholder="Enter username..." autocomplete="off" spellcheck="false"/>
   </div>
-  <div id="mode-wrap">
-    <button class="mode-btn" onclick="chooseModeVsCPU()">
-      <span class="mode-icon">🤖</span>
-      <span class="mode-lbl">VS CPU</span>
-      <span class="mode-sub">Play instantly</span>
-    </button>
-    <button class="mode-btn" onclick="chooseModeVsPlayer()">
-      <span class="mode-icon">👥</span>
-      <span class="mode-lbl">VS Player</span>
-      <span class="mode-sub">Wait for opponent</span>
-    </button>
-  </div>
-  <button class="btn btn-ghost" style="margin-top:10px" onclick="showScr('scr-keys')">⚙ Controls</button>
-</div>
-
-<!-- LOBBY SCREEN -->
-<div class="overlay" id="scr-lobby" style="display:none">
-  <h1 style="font-size:clamp(18px,4vw,28px)">🚉 Waiting for Opponent</h1>
-  <div id="lobby-status">Looking for a player...</div>
-  <div id="lobby-timer">2:00</div>
-  <div id="lobby-sub">Auto-starts vs CPU if no one joins</div>
-  <div id="lobby-players">
-    <div class="lobby-slot filled" id="lobby-slot-1">
-      <span class="lobby-avatar">🚃</span>
-      <span class="lobby-name" id="lobby-name-1">You</span>
-    </div>
-    <div style="font-size:22px;color:rgba(255,200,80,0.3);align-self:center">VS</div>
-    <div class="lobby-slot waiting" id="lobby-slot-2">
-      <span class="lobby-avatar">⏳</span>
-      <span class="lobby-name dim" id="lobby-name-2">Waiting...</span>
-    </div>
-  </div>
-  <button class="btn btn-ghost" id="lobby-cancel" onclick="cancelLobby()">✕ Cancel</button>
+  <ul class="ctrl-list">
+    <li><span class="key" id="s-pump-key">SPACE</span> Pump forward</li>
+    <li><span class="key" id="s-brake-key">B</span> Brake</li>
+    <li><span class="key">← →</span> Switch at junctions</li>
+    <li><span class="key">V</span> Toggle 1st/3rd person</li>
+    <li><span class="key">F</span> Fire rocket 🚀</li>
+    <li><span class="key">R</span> Open rocket shop</li>
+  </ul>
+  <p style="margin-top:6px;font-size:11px;color:rgba(255,200,100,0.5)">Enjoy the beautiful Japanese sky night· Beware of Granny wandering the city·</p>
+  <p>You get to rocket them in time!</p>
+  <button class="btn" onclick="startGame()">START GAME</button>
+  <button class="btn btn-ghost" onclick="showScr('scr-keys')">⚙ Controls</button>
 </div>
 
 <!-- Leaderboard panel -->
@@ -917,12 +875,7 @@ function syncKBL(){for(const[k,v]of Object.entries(KB)){const el=document.getEle
 function syncHints(){const p=KB.pump.label+(KB.pump2?' / '+KB.pump2.label:'');const br=KB.brake.label+(KB.brake2?' / '+KB.brake2.label:'');['h-pump','s-pump-key'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=p;});['h-brake','s-brake-key'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=br;});}
 function resetKB(){KB=cln(DEFAULTS);saveKB();syncKBL();syncHints();}
 function closeKB(){stopListen(true);document.getElementById('scr-keys').style.display='none';syncHints();if(gameRunning){BGM.resume();}else{document.getElementById('scr-start').style.display='flex';}}
-function showScr(id){
-  ['scr-start','scr-keys','scr-win','scr-fail','scr-lobby','scr-race-win','scr-race-lose'].forEach(s=>{
-    const el=document.getElementById(s); if(el) el.style.display='none';
-  });
-  if(id){ const el=document.getElementById(id); if(el) el.style.display='flex'; }
-}
+function showScr(id){['scr-start','scr-keys','scr-win','scr-fail'].forEach(s=>document.getElementById(s).style.display='none');document.getElementById(id).style.display='flex';}
 document.getElementById('settings-btn').addEventListener('click',()=>{if(!gameRunning)return;gameRunning=false;BGM.pause();showScr('scr-keys');});
 window.addEventListener('keydown',e=>{
   if(listening){e.preventDefault();if(e.code==='Escape'){stopListen(true);return;}KB[listening]={code:e.code,label:k2l(e)};saveKB();stopListen(false);syncKBL();syncHints();return;}
@@ -2663,8 +2616,6 @@ function initAI() {
 //   STOPPED  — distance < 3 units after braking                      → AI stops 1-2s, beeps
 //   REROUTING— stopped >1s or same node blocked                      → BFS detour via side node
 function updateAI(dt, gt) {
-  // In online mode, there is no AI — opponent is a real player tracked via Firestore
-  if (_gameMode === 'online') return;
   if (!AI.mesh || AI.phase === 'idle') return;
 
   // Cooldown tick
@@ -2845,25 +2796,16 @@ function _aiRender(nc, nr, nnc, nnr, dt, gt) {
 // ── Race bar updater ──
 function updateRaceBar() {
   const pPct = Math.min(100, (GS.score / RACE_TARGET) * 100).toFixed(1);
+  const aPct = Math.min(100, (AI.score / RACE_TARGET) * 100).toFixed(1);
   document.getElementById('rs-player-val').textContent = GS.score.toLocaleString();
+  document.getElementById('rs-ai-val').textContent = AI.score.toLocaleString();
   document.getElementById('rp-player').style.width = pPct + '%';
-
-  // Opponent score — AI in CPU mode, remote player in online mode
-  let oppScore = 0;
-  if (_gameMode === 'online' && _lobbyOpponent) {
-    const rp = _remotePlayers[_lobbyOpponent.id];
-    oppScore = rp ? (rp.score || 0) : 0;
-  } else {
-    oppScore = AI.score;
-  }
-  const aPct = Math.min(100, (oppScore / RACE_TARGET) * 100).toFixed(1);
-  document.getElementById('rs-ai-val').textContent = oppScore.toLocaleString();
   document.getElementById('rp-ai').style.width = aPct + '%';
-
+  // Urgent flash when either is close
   const bar = document.getElementById('race-bar');
-  if (parseFloat(pPct) > 80 || parseFloat(aPct) > 80) {
+  if (pPct > 80 || aPct > 80) {
     bar.style.borderColor = 'rgba(255,80,80,0.8)';
-  } else if (parseFloat(pPct) > 50 || parseFloat(aPct) > 50) {
+  } else if (pPct > 50 || aPct > 50) {
     bar.style.borderColor = 'rgba(255,200,0,0.7)';
   } else {
     bar.style.borderColor = 'rgba(180,80,255,0.5)';
@@ -2874,7 +2816,7 @@ function updateRaceBar() {
 function raceOver(winner) {
   gameRunning = false;
   BGM.fadeOut(1500);
-  if(_mpActive) mpStop();
+  if(_mpActive) mpStop(); // clean up Firestore presence
   clearChoiceMarkers();
   document.getElementById('mission-panel').style.display = 'none';
   document.getElementById('arrow').style.opacity = '0';
@@ -2884,34 +2826,21 @@ function raceOver(winner) {
   if (AI.labelEl) AI.labelEl.style.display = 'none';
   if (AI.exclamEl) { AI.exclamEl.style.display = 'none'; AI.exclamEl.style.opacity = '0'; }
 
-  // Determine opponent name for result screens
-  const oppName = (_gameMode === 'online' && _lobbyOpponent)
-    ? (_lobbyOpponent.username || 'Opponent')
-    : '🤖 CPU';
-
   if (winner === 'player') {
     document.getElementById('score-final-rw').textContent = GS.score.toLocaleString();
     document.getElementById('rw-pscore').textContent = GS.score.toLocaleString();
-    document.getElementById('rw-aiscore').textContent = (_gameMode==='online'
-      ? ((_remotePlayers[_lobbyOpponent?.id]?.score||0).toLocaleString()+' ('+oppName+')')
-      : AI.score.toLocaleString());
+    document.getElementById('rw-aiscore').textContent = AI.score.toLocaleString();
     document.getElementById('rw-del').textContent = MS.delivsDone;
     document.getElementById('rw-str').textContent = MS.bestStreak + '×';
-    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-lose','scr-lobby'].forEach(s=>{
-      const el=document.getElementById(s);if(el)el.style.display='none';
+    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-lose'].forEach(s => {
+      const el = document.getElementById(s); if (el) el.style.display = 'none';
     });
     document.getElementById('scr-race-win').style.display = 'flex';
-    SFX.deliver(); setTimeout(()=>SFX.deliver(),200); setTimeout(()=>SFX.deliver(),400);
-    showNotif('🏆 YOU WIN THE RACE!','#ffd700');
-
+    SFX.deliver(); setTimeout(() => SFX.deliver(), 200); setTimeout(() => SFX.deliver(), 400);
+    showNotif('🏆 YOU WIN THE RACE!', '#ffd700');
   } else {
-    // Loser — either 'ai' or 'online_opponent'
-    const isOnlineLoss = winner === 'online_opponent';
     document.getElementById('score-final-rl').textContent = GS.score.toLocaleString();
     document.getElementById('rl-pscore').textContent = GS.score.toLocaleString();
-    document.getElementById('rl-aiscore').textContent = isOnlineLoss
-      ? (oppName + ' reached 1,000,000! 🎉')
-      : '1,000,000 🤖';
     document.getElementById('rl-del').textContent = MS.delivsDone;
     const tips = [
       '💡 Prioritise VIP packages — they score way more!',
@@ -2919,17 +2848,11 @@ function raceOver(winner) {
       '💡 Use ⚡ Boost on long straight routes!',
       '💡 Avoid Grandma lanes — glue costs precious seconds!',
     ];
-    document.getElementById('rl-tip').textContent = tips[Math.floor(Math.random()*tips.length)];
-    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win','scr-lobby'].forEach(s=>{
-      const el=document.getElementById(s);if(el)el.style.display='none';
+    document.getElementById('rl-tip').textContent = tips[Math.floor(Math.random() * tips.length)];
+    ['scr-start','scr-fail','scr-win','scr-keys','scr-race-win'].forEach(s => {
+      const el = document.getElementById(s); if (el) el.style.display = 'none';
     });
     document.getElementById('scr-race-lose').style.display = 'flex';
-    // Update lose screen banner for online loss
-    if (isOnlineLoss) {
-      document.querySelector('#scr-race-lose .win-banner').textContent = '👤 ' + oppName + ' wins!';
-    } else {
-      document.querySelector('#scr-race-lose .win-banner').textContent = '🤖 CPU WINS!';
-    }
     SFX.failGame();
   }
 }
@@ -3779,22 +3702,12 @@ function startGame(){
   gameRunning=true;
   initNpcTrolleys();
   updNpcCountHUD();
-  // ── AI competitor: only in CPU mode ──
-  if (_gameMode === 'cpu') {
-    initAI();
-    document.getElementById('race-bar').style.display = 'flex';
-  } else {
-    // Online mode — hide AI, show race bar with opponent name
-    if (AI.mesh) { scene.remove(AI.mesh); AI.mesh = null; }
-    document.getElementById('race-bar').style.display = 'flex';
-    // Update race bar label to show opponent username
-    const aiLbl = document.querySelector('#rs-ai .rs-lbl');
-    if (aiLbl && _lobbyOpponent) aiLbl.textContent = '👤 ' + (_lobbyOpponent.username || 'Opponent');
-  }
+  // ── Start AI competitor ──
+  initAI();
   BGM.play();
   setTimeout(()=>SFX.startGame(),200);
   if(_mpActive) mpStop(); // stop previous session if restarting
-  mpStart(); // join multiplayer session
+  mpStart(); // ← join multiplayer session
   startMissions();
 }
 
@@ -4144,7 +4057,7 @@ if (_fromPortal) {
 }
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
-//  FIREBASE MULTIPLAYER + LOBBY SYSTEM
+//  FIREBASE MULTIPLAYER
 // ═══════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyCsP9wIE5WjyGdGG9tRv5uGL2VPs9G1OXk",
@@ -4155,407 +4068,217 @@ const firebaseConfig = {
   appId: "1:1035530442966:web:13211fd9cbacbfbcb31177"
 };
 firebase.initializeApp(firebaseConfig);
-const _db          = firebase.firestore();
-const _playersCol  = _db.collection('players');
-const _lobbiesCol  = _db.collection('lobbies');
+const _db = firebase.firestore();
+const _playersCol = _db.collection('players');
 
 // ── Local player identity ──
+// Generate a unique session ID — persisted in sessionStorage so refresh = same ID
 let _myId = sessionStorage.getItem('mp_id');
 if (!_myId) { _myId = 'p_' + Math.random().toString(36).slice(2,10); sessionStorage.setItem('mp_id', _myId); }
 
+// Username — read from input field, fallback to portal param or random
 function _getUsername() {
   const inp = document.getElementById('username-input');
-  const v = inp ? inp.value.trim() : '';
-  return v || _inUsername || ('Rail' + Math.floor(Math.random()*999));
+  const typed = inp ? inp.value.trim() : '';
+  if (typed) return typed;
+  if (_inUsername) return _inUsername;
+  return 'Rail' + Math.floor(Math.random()*999);
 }
 
+// Assign a consistent color per player (hue from ID hash)
 function _idToColor(id) {
   let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h*31 + id.charCodeAt(i)) & 0xffffff;
-  return `hsl(${h % 360},90%,65%)`;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
+  // Avoid dark colors — force high saturation, mid-high lightness
+  const hue = (h % 360);
+  return `hsl(${hue},90%,65%)`;
 }
 function _idToHex(id) {
   let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h*31 + id.charCodeAt(i)) & 0xffffff;
-  return 0x100000 + (h % 0xefffff);
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffff;
+  return 0x100000 + (h % 0xefffff); // keep it bright
 }
 
-// ── Game mode state ──
-// 'cpu'    → vs AI (no online opponent)
-// 'online' → vs real player found in lobby
-let _gameMode      = 'cpu';
-let _lobbyId       = null;      // Firestore lobby doc ID
-let _lobbyRole     = null;      // 'player1' | 'player2'
-let _lobbyOpponent = null;      // { id, username } of opponent
-let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
-let _lobbyTimer    = null;      // setInterval for countdown
-let _lobbySeconds  = 120;       // 2 min countdown
-let _mpActive      = false;
-let _mpUnsubscribe = null;
-let _mpWriteTimer  = 0;
-const MP_WRITE_INTERVAL = 0.25;
-
-// ── Remote players map ──
+// ── Remote players: map of id → { mesh, labelEl, data } ──
 const _remotePlayers = {};
 let _mpUsername = 'Player';
+let _mpActive   = false;
+let _mpUnsubscribe = null;
+let _mpWriteTimer  = 0;
+const MP_WRITE_INTERVAL = 0.25; // write to Firestore every 250ms
 
-// ════════════════════════════
-//  MODE SELECTION HANDLERS
-// ════════════════════════════
-
-function chooseModeVsCPU() {
-  _mpUsername = _getUsername();
-  _gameMode = 'cpu';
-  showScr(''); // hide all overlays
-  startGame();
-}
-
-function chooseModeVsPlayer() {
-  _mpUsername = _getUsername();
-  _gameMode = 'online';
-  showScr('scr-lobby');
-  document.getElementById('lobby-name-1').textContent = _mpUsername;
-  _lobbyFind();
-}
-
-// ════════════════════════════
-//  LOBBY SYSTEM
-// ════════════════════════════
-
-async function _lobbyFind() {
-  document.getElementById('lobby-status').textContent = 'Looking for a game...';
-
-  try {
-    // Look for an open lobby (status='waiting')
-    // Simple single-field query — no composite index needed
-    const snap = await _lobbiesCol
-      .where('status','==','waiting')
-      .limit(10)
-      .get();
-
-    // Filter client-side: not our own lobby, not stale (> 3 min old)
-    const cutoff = Date.now() - 180000;
-    const available = snap.docs.filter(d => {
-      const dat = d.data();
-      return dat.player1Id !== _myId
-        && !dat.player2Id
-        && (dat.createdAt || 0) > cutoff;
-    });
-
-    if (available.length > 0) {
-      // Join existing lobby as player2
-      const lobbyDoc = available[0];
-      _lobbyId   = lobbyDoc.id;
-      _lobbyRole = 'player2';
-      const dat  = lobbyDoc.data();
-      _lobbyOpponent = { id: dat.player1Id, username: dat.player1Name };
-
-      await _lobbiesCol.doc(_lobbyId).update({
-        player2Id:   _myId,
-        player2Name: _mpUsername,
-        status:      'playing',
-        startedAt:   Date.now(),
-      });
-      _lobbyShowOpponent(dat.player1Name, true);
-      // Brief "found!" delay then start
-      document.getElementById('lobby-status').textContent = '✅ Opponent found!';
-      setTimeout(() => _lobbyStartOnline(), 1200);
-    } else {
-      // Create new lobby as player1, wait for someone
-      const ref = await _lobbiesCol.add({
-        player1Id:   _myId,
-        player1Name: _mpUsername,
-        player2Id:   null,
-        player2Name: null,
-        status:      'waiting',
-        createdAt:   Date.now(),
-      });
-      _lobbyId   = ref.id;
-      _lobbyRole = 'player1';
-      document.getElementById('lobby-status').textContent = 'Waiting for opponent...';
-      _lobbyListenForJoin();
-      _lobbyStartCountdown();
-    }
-  } catch(e) {
-    console.warn('Lobby error:', e);
-    // Firestore unreachable — fall back to CPU
-    _lobbyFallbackCPU('Connection error — starting vs CPU');
-  }
-}
-
-function _lobbyListenForJoin() {
-  if (_lobbyUnsub) _lobbyUnsub();
-  _lobbyUnsub = _lobbiesCol.doc(_lobbyId).onSnapshot(snap => {
-    if (!snap.exists) return;
-    const dat = snap.data();
-    if (dat.status === 'playing' && dat.player2Id && dat.player2Id !== _myId) {
-      // Someone joined!
-      _lobbyOpponent = { id: dat.player2Id, username: dat.player2Name };
-      _lobbyShowOpponent(dat.player2Name, true);
-      document.getElementById('lobby-status').textContent = '✅ Opponent found!';
-      _lobbyStopCountdown();
-      if (_lobbyUnsub) { _lobbyUnsub(); _lobbyUnsub = null; }
-      setTimeout(() => _lobbyStartOnline(), 1200);
-    }
-  });
-}
-
-function _lobbyShowOpponent(name, ready) {
-  const slot = document.getElementById('lobby-slot-2');
-  const lbl  = document.getElementById('lobby-name-2');
-  slot.className = 'lobby-slot ' + (ready ? 'filled' : 'waiting');
-  document.getElementById('lobby-slot-2').querySelector('.lobby-avatar').textContent = ready ? '🚃' : '⏳';
-  lbl.className  = 'lobby-name' + (ready ? '' : ' dim');
-  lbl.textContent = ready ? name : 'Waiting...';
-}
-
-function _lobbyStartCountdown() {
-  _lobbySeconds = 120;
-  _lobbyUpdateTimer();
-  _lobbyTimer = setInterval(() => {
-    _lobbySeconds--;
-    _lobbyUpdateTimer();
-    if (_lobbySeconds <= 0) {
-      _lobbyStopCountdown();
-      _lobbyFallbackCPU('No opponent found — starting vs CPU 🤖');
-    }
-  }, 1000);
-}
-
-function _lobbyStopCountdown() {
-  if (_lobbyTimer) { clearInterval(_lobbyTimer); _lobbyTimer = null; }
-}
-
-function _lobbyUpdateTimer() {
-  const m = Math.floor(_lobbySeconds / 60);
-  const s = _lobbySeconds % 60;
-  document.getElementById('lobby-timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-}
-
-function _lobbyFallbackCPU(msg) {
-  document.getElementById('lobby-status').textContent = msg;
-  document.getElementById('lobby-timer').textContent = '';
-  // Clean up orphan lobby doc
-  if (_lobbyId) { _lobbiesCol.doc(_lobbyId).delete().catch(()=>{}); _lobbyId = null; }
-  _gameMode = 'cpu';
-  setTimeout(() => {
-    showScr('');
-    startGame();
-  }, 1800);
-}
-
-function _lobbyStartOnline() {
-  _lobbyStopCountdown();
-  if (_lobbyUnsub) { _lobbyUnsub(); _lobbyUnsub = null; }
-  showScr('');
-  startGame(); // startGame reads _gameMode and _lobbyOpponent
-}
-
-function cancelLobby() {
-  _lobbyStopCountdown();
-  if (_lobbyUnsub) { _lobbyUnsub(); _lobbyUnsub = null; }
-  if (_lobbyId) { _lobbiesCol.doc(_lobbyId).delete().catch(()=>{}); _lobbyId = null; }
-  _gameMode = 'cpu';
-  showScr('scr-start');
-}
-
-// ════════════════════════════
-//  IN-GAME MULTIPLAYER
-// ════════════════════════════
-
+// ── Build a simple remote trolley mesh ──
 function _makeRemoteTrolley(color) {
   const grp = new THREE.Group();
-  const bM = new THREE.MeshStandardMaterial({color,emissive:new THREE.Color(color),emissiveIntensity:.4,metalness:.3,roughness:.6});
-  const wM = new THREE.MeshStandardMaterial({color:0x223344,roughness:.9});
-  const platform = new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);
-  platform.position.y=.5; grp.add(platform);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.7,6),bM);
+  const bM = new THREE.MeshStandardMaterial({ color, emissive: new THREE.Color(color), emissiveIntensity: .4, metalness: .3, roughness: .6 });
+  const wM = new THREE.MeshStandardMaterial({ color: 0x223344, roughness: .9 });
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1), wM);
+  platform.position.y = .5; grp.add(platform);
+  // Pump handle
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.7,6), bM);
   pole.position.set(0,.88,0); grp.add(pole);
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6),bM);
-  bar.rotation.z=Math.PI/2; bar.position.set(0,1.2,0); grp.add(bar);
-  const wGeo=new THREE.TorusGeometry(.22,.055,6,12);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6), bM);
+  bar.rotation.z = Math.PI/2; bar.position.set(0,1.2,0); grp.add(bar);
+  // Wheels
+  const wGeo = new THREE.TorusGeometry(.22,.055,6,12);
   [[-0.7,-.4],[-.7,.4],[.7,-.4],[.7,.4]].forEach(([x,z])=>{
-    const w=new THREE.Mesh(wGeo,wM); w.position.set(x,.26,z); w.rotation.y=Math.PI/2; grp.add(w);
+    const w = new THREE.Mesh(wGeo, wM); w.position.set(x,.26,z); w.rotation.y=Math.PI/2; grp.add(w);
   });
-  const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),
-    new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85}));
+  // Glow beacon
+  const bec = new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),
+    new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.85 }));
   bec.position.set(0,1.6,0); grp.add(bec);
-  grp.visible=false;
+  grp.visible = false;
   scene.add(grp);
   return grp;
 }
 
+// ── Create floating HTML label for a remote player ──
 function _makeRemoteLabel(username, colorStr) {
-  const el=document.createElement('div');
-  el.className='mp-label';
-  el.style.color=colorStr;
-  el.textContent='🚃 '+username;
+  const el = document.createElement('div');
+  el.className = 'mp-label';
+  el.style.color = colorStr;
+  el.textContent = '🚃 ' + username;
   document.body.appendChild(el);
   return el;
 }
 
-// ── mpStart: called from startGame() ──
+// ── Start multiplayer: subscribe to Firestore + write own presence ──
 function mpStart() {
   _mpUsername = _getUsername();
-  _mpActive   = true;
+  _mpActive = true;
+
+  // Show leaderboard
   document.getElementById('lb-panel').style.display = 'block';
+
+  // Write initial presence
   _mpWriteSelf();
 
-  if (_gameMode === 'online' && _lobbyOpponent) {
-    // Online mode: only track the one opponent from the lobby
-    // We listen specifically for their player doc
-    _mpUnsubscribe = _playersCol.doc(_lobbyOpponent.id).onSnapshot(snap => {
-      if (!snap.exists) {
-        // Opponent left mid-game
-        showNotif('👋 Opponent disconnected!', '#ff8844');
-        _mpRemovePlayer(_lobbyOpponent.id);
-        return;
+  // Subscribe to all players
+  _mpUnsubscribe = _playersCol.onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const id  = change.doc.id;
+      const dat = change.doc.data();
+      if (id === _myId) return; // skip self
+
+      if (change.type === 'removed') {
+        _mpRemovePlayer(id); return;
       }
-      const dat = snap.data();
-      // Stale check
-      if (dat.ts && (Date.now() - dat.ts) > 12000) {
-        showNotif('👋 Opponent timed out!', '#ff8844');
-        _mpRemovePlayer(_lobbyOpponent.id);
-        return;
-      }
-      const id = _lobbyOpponent.id;
+      // Stale check — remove players inactive > 10s
+      if (dat.ts && (Date.now() - dat.ts) > 10000) { _mpRemovePlayer(id); return; }
+
       if (!_remotePlayers[id]) {
-        const hex      = _idToHex(id);
+        // New player — build mesh + label
+        const hex = _idToHex(id);
         const colorStr = _idToColor(id);
-        const mesh     = _makeRemoteTrolley(hex);
-        const label    = _makeRemoteLabel(dat.username || _lobbyOpponent.username, colorStr);
-        _remotePlayers[id] = { mesh, label, colorStr, x:0, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0, username: dat.username };
+        const mesh  = _makeRemoteTrolley(hex);
+        const label = _makeRemoteLabel(dat.username || 'Player', colorStr);
+        _remotePlayers[id] = { mesh, label, colorStr, x:0, y:0.35, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0 };
       }
-      const rp       = _remotePlayers[id];
-      rp.targetX     = dat.x   || 0;
-      rp.targetZ     = dat.z   || 0;
-      rp.targetRy    = dat.ry  || 0;
-      rp.score       = dat.score || 0;
-      rp.username    = dat.username || _lobbyOpponent.username;
+      // Update data
+      const rp = _remotePlayers[id];
+      rp.targetX  = dat.x  || 0;
+      rp.targetZ  = dat.z  || 0;
+      rp.targetRy = dat.ry || 0;
+      rp.score    = dat.score || 0;
+      rp.username = dat.username || 'Player';
       rp.mesh.visible = true;
-
-      // Check if online opponent won the race
-      if (rp.score >= RACE_TARGET && gameRunning) {
-        raceOver('online_opponent');
-      }
-      _mpUpdateLeaderboard();
     });
-
-    // Also listen for lobby doc — if opponent cancels/closes, lobby status changes
-    _lobbiesCol.doc(_lobbyId).onSnapshot(snap => {
-      if (!snap.exists && gameRunning) {
-        showNotif('👋 Opponent left the game', '#ff8844');
-      }
-    });
-
-  } else {
-    // CPU mode: subscribe to all players (casual, no restriction)
-    _mpUnsubscribe = _playersCol.onSnapshot(snapshot => {
-      snapshot.docChanges().forEach(change => {
-        const id  = change.doc.id;
-        if (id === _myId) return;
-        if (change.type === 'removed') { _mpRemovePlayer(id); return; }
-        const dat = change.doc.data();
-        if (dat.ts && (Date.now() - dat.ts) > 10000) { _mpRemovePlayer(id); return; }
-        if (!_remotePlayers[id]) {
-          const hex = _idToHex(id);
-          const colorStr = _idToColor(id);
-          _remotePlayers[id] = {
-            mesh:    _makeRemoteTrolley(hex),
-            label:   _makeRemoteLabel(dat.username||'Player', colorStr),
-            colorStr, x:0, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0,
-            username: dat.username
-          };
-        }
-        const rp = _remotePlayers[id];
-        rp.targetX  = dat.x   || 0;
-        rp.targetZ  = dat.z   || 0;
-        rp.targetRy = dat.ry  || 0;
-        rp.score    = dat.score || 0;
-        rp.username = dat.username || 'Player';
-        rp.mesh.visible = true;
-      });
-      _mpUpdateLeaderboard();
-    });
-  }
+    _mpUpdateLeaderboard();
+  });
 }
 
+// ── Write own position + score to Firestore ──
 function _mpWriteSelf() {
   if (!_mpActive) return;
   _playersCol.doc(_myId).set({
     username: _mpUsername,
-    x:        trolley.position.x,
-    y:        trolley.position.y,
-    z:        trolley.position.z,
-    ry:       trolley.rotation.y,
-    score:    GS.score,
-    lobbyId:  _lobbyId || '',
-    ts:       Date.now(),
-  }).catch(()=>{});
+    x:     trolley.position.x,
+    y:     trolley.position.y,
+    z:     trolley.position.z,
+    ry:    trolley.rotation.y,
+    score: GS.score,
+    ts:    Date.now(),
+  }).catch(()=>{}); // silent fail — offline ok
 }
 
+// ── Remove a remote player ──
 function _mpRemovePlayer(id) {
   const rp = _remotePlayers[id];
   if (!rp) return;
   scene.remove(rp.mesh);
+  rp.mesh.geometry && rp.mesh.geometry.dispose && rp.mesh.children.forEach(c=>{ if(c.geometry) c.geometry.dispose(); });
   if (rp.label && rp.label.parentNode) rp.label.parentNode.removeChild(rp.label);
   delete _remotePlayers[id];
   _mpUpdateLeaderboard();
 }
 
+// ── Stop multiplayer (on game over / page unload) ──
 function mpStop() {
   _mpActive = false;
   if (_mpUnsubscribe) { _mpUnsubscribe(); _mpUnsubscribe = null; }
   _playersCol.doc(_myId).delete().catch(()=>{});
-  // Clean up lobby doc if we were player1 (creator)
-  if (_lobbyId && _lobbyRole === 'player1') {
-    _lobbiesCol.doc(_lobbyId).delete().catch(()=>{});
-  }
   Object.keys(_remotePlayers).forEach(_mpRemovePlayer);
   document.getElementById('lb-panel').style.display = 'none';
 }
 
+// ── Leaderboard update ──
 function _mpUpdateLeaderboard() {
   const rows = document.getElementById('lb-rows');
   if (!rows) return;
-  const all = [{ id:_myId, username:_mpUsername, score:GS.score, isMe:true }];
-  Object.entries(_remotePlayers).forEach(([id,rp])=>all.push({id,username:rp.username||'Player',score:rp.score||0,isMe:false}));
-  all.sort((a,b)=>b.score-a.score);
+  // Build array: self + remotes
+  const all = [{ id: _myId, username: _mpUsername, score: GS.score, isMe: true }];
+  Object.entries(_remotePlayers).forEach(([id,rp])=>all.push({ id, username: rp.username||'Player', score: rp.score||0, isMe:false }));
+  all.sort((a,b)=>b.score - a.score);
   rows.innerHTML = all.slice(0,8).map((p,i)=>
-    `<div class="lb-row"><span class="lb-name ${p.isMe?'is-me':''}">${i+1}. ${p.username}</span><span class="lb-score">${p.score.toLocaleString()}</span></div>`
+    `<div class="lb-row">
+      <span class="lb-name ${p.isMe?'is-me':''}">${i+1}. ${p.username}</span>
+      <span class="lb-score">${p.score.toLocaleString()}</span>
+    </div>`
   ).join('');
 }
 
+// ── Per-frame multiplayer update ──
 function updateMultiplayer(dt) {
   if (!_mpActive) return;
+
+  // Write own state periodically
   _mpWriteTimer += dt;
   if (_mpWriteTimer >= MP_WRITE_INTERVAL) {
     _mpWriteTimer = 0;
     _mpWriteSelf();
+    // Also update self score in leaderboard
     _mpUpdateLeaderboard();
   }
+
+  // Interpolate remote trolleys toward their last known position (smooth movement)
   Object.values(_remotePlayers).forEach(rp => {
     if (!rp.mesh.visible) return;
-    rp.x  += (rp.targetX - rp.x)  * 0.2;
-    rp.z  += (rp.targetZ - rp.z)  * 0.2;
+    rp.x  += (rp.targetX  - rp.x)  * 0.2;
+    rp.z  += (rp.targetZ  - rp.z)  * 0.2;
     rp.mesh.position.set(rp.x, 0.35, rp.z);
+    // Smooth rotation
     let dRy = rp.targetRy - (rp.ry||0);
     if (dRy >  Math.PI) dRy -= Math.PI*2;
     if (dRy < -Math.PI) dRy += Math.PI*2;
-    rp.ry = (rp.ry||0) + dRy*0.2;
+    rp.ry = (rp.ry||0) + dRy * 0.2;
     rp.mesh.rotation.y = rp.ry;
-    // Floating label
-    const sp = new THREE.Vector3(rp.x,2.2,rp.z).project(camera);
+
+    // Project label to screen
+    const sp = new THREE.Vector3(rp.x, 2.2, rp.z).project(camera);
     const sx = (sp.x*.5+.5)*window.innerWidth;
     const sy = (-sp.y*.5+.5)*window.innerHeight;
-    if (sp.z<1&&sx>0&&sx<window.innerWidth&&sy>0&&sy<window.innerHeight) {
-      rp.label.style.display='block';
-      rp.label.style.left=sx+'px';
-      rp.label.style.top=sy+'px';
-    } else { rp.label.style.display='none'; }
+    if (sp.z < 1 && sx>0 && sx<window.innerWidth && sy>0 && sy<window.innerHeight) {
+      rp.label.style.display = 'block';
+      rp.label.style.left = sx+'px';
+      rp.label.style.top  = sy+'px';
+    } else {
+      rp.label.style.display = 'none';
+    }
   });
 }
 
+// ── Cleanup on page unload ──
 window.addEventListener('beforeunload', ()=>{ if(_mpActive) mpStop(); });
 
 // ═══════════════════════════════════════════

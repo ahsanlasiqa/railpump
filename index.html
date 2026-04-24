@@ -634,8 +634,20 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script async src="https://vibejam.cc/2026/widget.js"></script>
-<!-- Config: load env dari /api/config via config.js (jangan hardcode keys di sini) -->
-<script src="/config.js"></script>
+<!-- Config: coba load dari /api/config, fallback graceful jika gagal -->
+<script>
+window.ENV = {};
+// Async fetch dari serverless function — tidak blocking, Firebase init akan tunggu
+(async () => {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) window.ENV = await res.json();
+    else console.warn('[config] /api/config returned', res.status);
+  } catch(e) {
+    console.warn('[config] fetch failed, Firebase features disabled:', e.message);
+  }
+})();
+</script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>

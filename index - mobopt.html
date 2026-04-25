@@ -1437,9 +1437,6 @@ function buildWorld(){
     return m;
   }
 
-  // Corner block accent colors — used by both corner lights and corner billboards
-  const BILLBOARD_COLS = [0xff0066, 0x00ffcc, 0xffee00, 0xaa44ff];
-
   // 8 shared area PointLights spread across the city — fixed count, no overflow
   // OPT: mobile uses only 4 to stay under uniform limits
   const AREA_LIGHT_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xff3399,0xcc00ff,0x33ffaa];
@@ -1459,15 +1456,6 @@ function buildWorld(){
     pl.position.set(x,y,z);worldGrp.add(pl);
   });
 
-  // ── 4 corner accent lights (mobile-safe: low intensity, short range) ──
-  // These illuminate the corner billboards and towers without overflowing uniforms
-  if(_isMobile){
-    [[OX,OZ],[OX+GW*CELL,OZ],[OX,OZ+GH*CELL],[OX+GW*CELL,OZ+GH*CELL]].forEach(([lx,lz],i)=>{
-      const cl=new THREE.PointLight(BILLBOARD_COLS[i]||0xff0066, 3.5, 30);
-      cl.position.set(lx, 6, lz); worldGrp.add(cl);
-    });
-  }
-
   // OPT: building body geometry cache — shared across ALL buildings (not just per-building)
   // Key = rounded W_H_D to avoid float precision mismatches
   const _bGeoCache={};
@@ -1482,9 +1470,6 @@ function buildWorld(){
       const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
       const bldGrp=new THREE.Group();
       bldGrp.position.set(bx,0,bz);worldGrp.add(bldGrp);
-
-      // Edge block: front row/col of grid — most visible, gets extra detail on mobile
-      const isEdgeBlock=(r===0||r===GH-1||c===0||c===GW-1);
 
       const bW=CELL-5.5, bD=CELL-5.5;
       const totalFloors=3+Math.floor(rng()*7);
@@ -1501,41 +1486,28 @@ function buildWorld(){
         body.position.set(0,bot+tH/2,0);body.castShadow=_shadowEnabled;body.receiveShadow=_shadowEnabled;
         bldGrp.add(body);
 
-        // Windows — use shared materials and shared geometry
-        // OPT: on mobile, only draw windows for EDGE buildings (row 0, GH-1, col 0, GW-1)
-        // with reduced count — gives life to visible facades without 4000+ Mesh objects
-        const doWindows = !_isMobile || isEdgeBlock;
-        if(doWindows){
-          // Mobile edge: sparse windows (1 per 2 floors, front face only)
-          // Desktop: full windows all sides
-          const floorStep  = _isMobile ? 2 : 1;
-          const colSkip    = _isMobile ? 0.5 : 0.14; // 50% skip on mobile
-          for(let f=0;f<fpTier;f+=floorStep){
-            const wy=bot+f*floorH+1.5;
-            for(let w=-1;w<=1;w++){
-              if(rng()<colSkip) continue;
-              const mIdx=Math.floor(rng()*WIN_SHARED_MATS.length);
-              const wMat=WIN_SHARED_MATS[mIdx];
-              // Front face always
-              const wf=new THREE.Mesh(WIN_GEO,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
-              if(!_isMobile){
-                // Desktop: all 4 faces
-                const wb=new THREE.Mesh(WIN_GEO,wMat);wb.position.set(w*(cW/3.5),wy,-cD/2-.01);wb.rotation.y=Math.PI;bldGrp.add(wb);
-                const ws=new THREE.Mesh(WIN_GEO,wMat);ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
-                const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
-              }
-            }
+        // Windows — use shared materials and shared geometry (massive savings)
+        // OPT: skip windows on mobile — 144 buildings × ~30 windows = ~4,320 Mesh objects
+        if(!_isMobile){
+        for(let f=0;f<fpTier;f++){
+          const wy=bot+f*floorH+1.5;
+          for(let w=-1;w<=1;w++){
+            if(rng()<0.14)continue;
+            const mIdx=Math.floor(rng()*WIN_SHARED_MATS.length);
+            const wMat=WIN_SHARED_MATS[mIdx];
+            const wf=new THREE.Mesh(WIN_GEO,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
+            const wb=new THREE.Mesh(WIN_GEO,wMat);wb.position.set(w*(cW/3.5),wy,-cD/2-.01);wb.rotation.y=Math.PI;bldGrp.add(wb);
+            const ws=new THREE.Mesh(WIN_GEO,wMat);ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
+            const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
           }
-        } // end windows
+        }
+        } // end desktop windows
         bot+=tH;cW*=0.82;cD*=0.82;
       }
 
-      // ── Neon signs ──
-      // Edge blocks (row 0, row GH-1, col 0, col GW-1) always get signs — even on mobile
-      // These are the most visible buildings approaching from any direction
-      // isEdgeBlock already declared above
-      const nSignProb   = isEdgeBlock ? 0.85 : (_isMobile ? 0 : 0.4);
-      const nSigns      = rng() < nSignProb ? 1 : 0;
+      // ── Neon signs — emissive only, NO PointLight (prevents uniform overflow) ──
+      // OPT: mobile skips neon signs entirely — each sign = 1 CanvasTexture + 1 Mesh
+      const nSigns=(!_isMobile && rng()>.4)?1:0;
       if(nSigns){
         const nCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
         const kanji=KANJI[Math.floor(rng()*KANJI.length)];
@@ -1779,62 +1751,11 @@ function buildWorld(){
   worldGrp.add(new THREE.Points(sDimGeo,new THREE.PointsMaterial({color:0x6688cc,size:0.38,transparent:true,opacity:0.65})));
   } // end desktop stars
 
-  // ── Corner billboards — large neon signs on the 4 corner blocks ──
-  // These are extra-large, double-sided, highly visible from all approach directions
-  // MeshBasicMaterial + CanvasTexture — no lighting cost
-  const CORNER_BLOCKS = [[0,0],[GW-1,0],[0,GH-1],[GW-1,GH-1]];
-  const BILLBOARD_TEXTS = ['ラーメン\nHOUSE','NEON\nCITY','夜市\nNIGHT\nBAZAAR','電気\nELECTRIC'];
-
-  CORNER_BLOCKS.forEach(([bc,br],idx)=>{
-    const bx = OX+bc*CELL+CELL/2;
-    const bz = OZ+br*CELL+CELL/2;
-    const col = BILLBOARD_COLS[idx];
-    const colStr = '#'+col.toString(16).padStart(6,'0');
-
-    // Canvas texture
-    const cv = document.createElement('canvas');
-    cv.width=256; cv.height=256;
-    const ctx2=cv.getContext('2d');
-    ctx2.fillStyle='rgba(0,0,0,0.85)';
-    ctx2.fillRect(0,0,256,256);
-    // Border glow
-    ctx2.strokeStyle=colStr;
-    ctx2.lineWidth=6;
-    ctx2.strokeRect(6,6,244,244);
-    ctx2.fillStyle=colStr;
-    ctx2.shadowColor=colStr;
-    ctx2.shadowBlur=18;
-    const lines=BILLBOARD_TEXTS[idx].split('\n');
-    const fontSize=lines.length>2?40:52;
-    ctx2.font=`bold ${fontSize}px Arial`;
-    ctx2.textAlign='center';
-    lines.forEach((line,li)=>{
-      ctx2.fillText(line, 128, 60+li*(fontSize+8));
-    });
-    const tex=new THREE.CanvasTexture(cv);
-
-    // Large billboard mesh — faces inward toward grid centre
-    const bMat=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:false});
-    const billboard=new THREE.Mesh(new THREE.PlaneGeometry(7,7),bMat);
-    billboard.position.set(bx, 8, bz);
-    // Rotate to face grid centre
-    const toCentreX = (GW/2*CELL+OX) - bx;
-    const toCentreZ = (GH/2*CELL+OZ) - bz;
-    billboard.rotation.y = Math.atan2(toCentreX, toCentreZ);
-    worldGrp.add(billboard);
-
-    // Neon frame around billboard
-    const frameMat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.8});
-    const frame=new THREE.Mesh(
-      new THREE.TorusGeometry(3.8,0.15,4,_isMobile?16:28),
-      frameMat
-    );
-    frame.position.set(bx,8,bz);
-    frame.rotation.x=Math.PI/2;
-    worldGrp.add(frame);
-  });
-
-  // ── General neon enhancements (corner towers, strips, pads) ──
+  // ══════════════════════════════════════════
+  //  NEON VISUAL ENHANCEMENTS (mobile-safe)
+  //  All use MeshBasicMaterial — zero light
+  //  calculation cost, safe on Adreno 610
+  // ══════════════════════════════════════════
   _buildNeonEnhancements(worldGrp);
 
   scene.add(worldGrp);

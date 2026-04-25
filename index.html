@@ -658,7 +658,25 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-'use strict';
+// ── Multiplayer state — declared early so HTML onclick handlers can use them ──
+let _mpUsername = 'Player';
+let _gameMode   = 'cpu';
+let _lobbyId    = null;
+let _lobbyRole  = null;
+let _lobbyOpponent = null;
+// ── Material helper: MeshLambertMaterial on mobile, MeshStandardMaterial on desktop ──
+// MeshLambertMaterial is ~8x cheaper on Adreno 610 (no PBR specular/metalness calc).
+// Parameters: accepts same keys as MeshStandardMaterial, strips unsupported ones for Lambert.
+function _Mat(params) {
+  if (!_isMobile) return new THREE.MeshStandardMaterial(params);
+  const lambertParams = {};
+  ['color','emissive','emissiveIntensity','map','emissiveMap',
+   'transparent','opacity','side','depthWrite','wireframe','vertexColors'].forEach(k=>{
+    if(params[k]!==undefined) lambertParams[k]=params[k];
+  });
+  return new THREE.MeshLambertMaterial(lambertParams);
+}
+
 // ═══════════════════════════════════════════
 //  PERFORMANCE OPTIMIZATIONS APPLIED
 // ═══════════════════════════════════════════
@@ -1064,8 +1082,9 @@ const canvas=document.getElementById('c');
 // OPT: stencil disabled (unused) → frees GPU memory; antialias off on mobile saves ~30% fill cost
 const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:false,stencil:false,depth:true,powerPreference:'high-performance'});
-// OPT: cap pixel ratio — mobile starts at 1.5, may upgrade after FPS check
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 1.5 : 2));
+// OPT: mobile starts at pixelRatio 1.0 (native res) for maximum performance on Adreno 610
+// Adreno 610 has 128 ALU — rendering at 2× pixel ratio means 4× fragment work
+renderer.setPixelRatio(_isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 // Shadow map — wrapped in try-catch: Adreno 610 crashes silently without it
 let _shadowEnabled = false;
@@ -1084,7 +1103,9 @@ renderer.setClearColor(0x03040e,1);
 renderer.toneMapping=THREE.ReinhardToneMapping;
 renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-scene.fog=new THREE.FogExp2(0x05060f,0.0028);
+// OPT: denser fog on mobile — reduces visible scene depth, cutting fill rate significantly
+// Adreno 610 benefits most from reducing fragment count rather than vertex count
+scene.fog=new THREE.FogExp2(0x05060f, _isMobile ? 0.008 : 0.0028);
 // Narrow FOV — cinematic, city feels denser
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
@@ -1110,24 +1131,24 @@ let pumpGrp;
 // Cached refs — avoids getObjectByName() traversal every frame
 const trolleyRefs={child:null,la:null,ra:null,lever:null};
 (()=>{
-  const bM=new THREE.MeshStandardMaterial({color:0xcc2200,metalness:.3,roughness:.6});
-  const mM=new THREE.MeshStandardMaterial({color:0x999999,metalness:.7,roughness:.3});
-  const wM=new THREE.MeshStandardMaterial({color:0x7a5c3a,roughness:.9});
-  const wlM=new THREE.MeshStandardMaterial({color:0x222222,metalness:.6,roughness:.4});
-  const skM=new THREE.MeshStandardMaterial({color:0xf4a261});
-  const shM=new THREE.MeshStandardMaterial({color:0x1155bb});
-  const pntM=new THREE.MeshStandardMaterial({color:0x334455});
-  const hairM=new THREE.MeshStandardMaterial({color:0x2c1810});
-  const hatM=new THREE.MeshStandardMaterial({color:0xe8c84a});
+  const bM=_Mat({color:0xcc2200,metalness:.3,roughness:.6});
+  const mM=_Mat({color:0x999999,metalness:.7,roughness:.3});
+  const wM=_Mat({color:0x7a5c3a,roughness:.9});
+  const wlM=_Mat({color:0x222222,metalness:.6,roughness:.4});
+  const skM=_Mat({color:0xf4a261});
+  const shM=_Mat({color:0x1155bb});
+  const pntM=_Mat({color:0x334455});
+  const hairM=_Mat({color:0x2c1810});
+  const hatM=_Mat({color:0xe8c84a});
   const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);plat.castShadow=_shadowEnabled;trolley.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.55,1.1),mM);b.position.set(x,.87,0);trolley.add(b);});
-  const wGeo=new THREE.TorusGeometry(.26,.065,8,16);
+  const wGeo=new THREE.TorusGeometry(.26,.065,_isMobile?5:8,_isMobile?10:16);
   [[-0.72,-.44],[-0.72,.44],[.72,-.44],[.72,.44]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wlM);w.position.set(x,.26,z);w.rotation.y=Math.PI/2;trolley.add(w);
     const ax=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.0,6),mM);ax.position.set(x,.26,0);ax.rotation.x=Math.PI/2;trolley.add(ax);
   });
   pumpGrp=new THREE.Group();
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.85,8),mM);pole.position.set(0,.58,0);pumpGrp.add(pole);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.85,_isMobile?5:8),mM);pole.position.set(0,.58,0);pumpGrp.add(pole);
   const hbar=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,1.3,8),bM);hbar.rotation.z=Math.PI/2;hbar.position.set(0,1.02,0);pumpGrp.add(hbar);
   [-0.6,.6].forEach(x=>{const g=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.22,8),bM);g.position.set(x,1.02,0);pumpGrp.add(g);});
   pumpGrp.position.set(0,.48,0);trolley.add(pumpGrp);
@@ -1143,8 +1164,8 @@ const trolleyRefs={child:null,la:null,ra:null,lever:null};
   const ra=new THREE.Group();const ram=new THREE.Mesh(aGeo,shM);ram.position.set(0,-.16,0);ra.add(ram);ra.position.set(.26,.52,0);ra.name='ra';ch.add(ra);
   ch.position.set(0,.58,0);ch.name='child';trolley.add(ch);
   const lv=new THREE.Group();
-  const lm2=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.5,metalness:.4});
-  const lvPole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.6,6),new THREE.MeshStandardMaterial({color:0x888888,metalness:.6}));
+  const lm2=_Mat({color:0xffcc00,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.5,metalness:.4});
+  const lvPole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.6,6),_Mat({color:0x888888,metalness:.6}));
   lvPole.position.set(0,.3,0);lv.add(lvPole);
   const lh=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),lm2);lh.position.set(0,.65,0);lv.add(lh);
   lv.name='lever';lv.position.set(.8,.48,.35);trolley.add(lv);
@@ -1152,7 +1173,7 @@ const trolleyRefs={child:null,la:null,ra:null,lever:null};
   trolleyRefs.child=ch; trolleyRefs.la=la; trolleyRefs.ra=ra; trolleyRefs.lever=lv;
 })();
 
-const pkgBox=new THREE.Mesh(new THREE.BoxGeometry(.42,.32,.42),new THREE.MeshStandardMaterial({color:0xcc8833,roughness:.8}));
+const pkgBox=new THREE.Mesh(new THREE.BoxGeometry(.42,.32,.42),_Mat({color:0xcc8833,roughness:.8}));
 pkgBox.position.set(0,1.05,0);pkgBox.visible=false;trolley.add(pkgBox);
 // VIP gold shimmer
 const vipGlow=new THREE.Mesh(new THREE.BoxGeometry(.58,.48,.58),new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:.55,wireframe:true}));
@@ -1275,14 +1296,14 @@ function buildWorld(){
   const rng=mkRng(54321);
 
   // ── WET ground (reflective asphalt) ──
-  const gndM=new THREE.MeshStandardMaterial({color:0x070810,roughness:0.1,metalness:0.5});
+  const gndM=_Mat({color:0x070810,roughness:0.1,metalness:0.5});
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=_shadowEnabled;worldGrp.add(gnd);
 
   // ── Roads + rails — InstancedMesh for rails & ties (1 draw call each vs hundreds) ──
-  const roadM=new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
-  const railM=new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
-  const tieM=new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
+  const roadM=_Mat({color:0x090b16,roughness:0.12,metalness:0.45});
+  const railM=_Mat({color:0xaaaacc,metalness:.9,roughness:.15});
+  const tieM=_Mat({color:0x2a1e12,roughness:.95});
   const ROFF=0.52;
 
   // OPT: count instances ahead of time — avoids Array.push + GC
@@ -1344,11 +1365,11 @@ function buildWorld(){
   worldGrp.add(instRailH);worldGrp.add(instRailV);worldGrp.add(instTieH);worldGrp.add(instTieV);
 
   // ── Intersection plates + lamp posts — posts use InstancedMesh ──
-  const platM=new THREE.MeshStandardMaterial({color:0x141828,roughness:.88});
+  const platM=_Mat({color:0x141828,roughness:.88});
   // OPT: InstancedMesh for lamp posts — replaces (GW+1)*(GH+1) individual meshes
   const _lampPostCount=(GW+1)*(GH+1);
   const instPosts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.05,.05,.7,6),
-    new THREE.MeshStandardMaterial({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.4,metalness:.5}),
+    _Mat({color:0xffcc44,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.4,metalness:.5}),
     _lampPostCount);
   let _pi=0;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
@@ -1381,7 +1402,7 @@ function buildWorld(){
   const WIN_GEO=new THREE.PlaneGeometry(.48,.68); // one shared geometry
 
   // Body material pool — one per palette color (not one per building)
-  const BODY_MATS=bldPalCyber.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.1}));
+  const BODY_MATS=bldPalCyber.map(c=>_Mat({color:c,roughness:.75,metalness:.1}));
 
   // Kanji texture cache — reuse same texture for same kanji+color combo
   const _kanjiCache={};
@@ -1404,7 +1425,7 @@ function buildWorld(){
   const _neonSignMats={};
   function getNeonSignMat(nCol,tex){
     if(_neonSignMats[nCol])return _neonSignMats[nCol];
-    const m=new THREE.MeshStandardMaterial({
+    const m=_Mat({
       map:tex,emissiveMap:tex,
       emissive:new THREE.Color(nCol),emissiveIntensity:2.8,
       color:0x111111,roughness:.9,transparent:true,depthWrite:false
@@ -1463,11 +1484,12 @@ function buildWorld(){
         bldGrp.add(body);
 
         // Windows — use shared materials and shared geometry (massive savings)
+        // OPT: skip windows on mobile — 144 buildings × ~30 windows = ~4,320 Mesh objects
+        if(!_isMobile){
         for(let f=0;f<fpTier;f++){
           const wy=bot+f*floorH+1.5;
           for(let w=-1;w<=1;w++){
             if(rng()<0.14)continue;
-            // Pick a shared material (no new object created)
             const mIdx=Math.floor(rng()*WIN_SHARED_MATS.length);
             const wMat=WIN_SHARED_MATS[mIdx];
             const wf=new THREE.Mesh(WIN_GEO,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
@@ -1476,11 +1498,13 @@ function buildWorld(){
             const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
           }
         }
+        } // end desktop windows
         bot+=tH;cW*=0.82;cD*=0.82;
       }
 
       // ── Neon signs — emissive only, NO PointLight (prevents uniform overflow) ──
-      const nSigns=rng()>.4?1:0; // only 60% of buildings get a sign, max 1
+      // OPT: mobile skips neon signs entirely — each sign = 1 CanvasTexture + 1 Mesh
+      const nSigns=(!_isMobile && rng()>.4)?1:0;
       if(nSigns){
         const nCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
         const kanji=KANJI[Math.floor(rng()*KANJI.length)];
@@ -1502,7 +1526,7 @@ function buildWorld(){
       // Roof glow stripe — emissive only
       if(rng()>.5){
         const rc=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
-        const roofMat=new THREE.MeshStandardMaterial({color:rc,emissive:new THREE.Color(rc),emissiveIntensity:1.8,roughness:.5});
+        const roofMat=_Mat({color:rc,emissive:new THREE.Color(rc),emissiveIntensity:1.8,roughness:.5});
         const roofLine=new THREE.Mesh(new THREE.BoxGeometry(cW*1.05,.25,cD*1.05),roofMat);
         roofLine.position.set(0,bot+.12,0);bldGrp.add(roofLine);
       }
@@ -1530,7 +1554,7 @@ function buildWorld(){
   }
 
   // ── Street lights — neon colored, max 1 PointLight per 4 intersections ──
-  const polM=new THREE.MeshStandardMaterial({color:0x2a2a3a,metalness:.6,roughness:.5});
+  const polM=_Mat({color:0x2a2a3a,metalness:.6,roughness:.5});
   const LAMP_COLS=[0xff00cc,0x00ffee,0xaa44ff,0x00aaff];
   let lampLightCount=0;
   // OPT: no lamp PointLights on mobile — already have 4 area + sun + fills
@@ -1539,10 +1563,10 @@ function buildWorld(){
     if(rng()>.5)continue;
     const p=npos(c,r);
     const lCol=LAMP_COLS[Math.floor(rng()*LAMP_COLS.length)];
-    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,4.5,6),polM);
+    const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,4.5,_isMobile?4:6),polM);
     lp.position.set(p.x+1.5,2.25,p.z+1.5);worldGrp.add(lp);
-    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:_isMobile?3.0:2.0});
-    const ll=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),lampMat);
+    const lampMat=_Mat({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:_isMobile?3.0:2.0});
+    const ll=new THREE.Mesh(new THREE.SphereGeometry(.16,_isMobile?5:8,_isMobile?4:6),lampMat);
     ll.position.set(p.x+1.5,4.6,p.z+1.5);worldGrp.add(ll);
     if(lampLightCount<_lampLightMax&&rng()>.7){
       const ptL=new THREE.PointLight(lCol,1.8,14);
@@ -1638,6 +1662,8 @@ function buildWorld(){
     }
 
     // Lit windows — warm/cool dots scattered on facade
+    // OPT: skip on mobile — 30 silhouettes × ~8 windows = ~240 Mesh objects
+    if(!_isMobile){
     const winCount=Math.floor(silRng()*10)+2;
     for(let w=0;w<winCount;w++){
       const wx=(silRng()-0.5)*bw*0.75;
@@ -1649,12 +1675,12 @@ function buildWorld(){
         new THREE.MeshBasicMaterial({color:litCol})
       );
       litW.position.set(wx,wy,bd/2+0.05); silGrp.add(litW);
-      // Back side windows too (50%)
       if(silRng()>0.5){
         const litW2=litW.clone(); litW2.position.z=-bd/2-0.05;
         litW2.rotation.y=Math.PI; silGrp.add(litW2);
       }
     }
+    } // end desktop silhouette windows
 
     // Rooftop details
     if(silRng()>0.5){
@@ -1734,8 +1760,8 @@ function buildWorld(){
   ST_POS.forEach(([col,row],idx)=>buildStation(idx,col,row));
 
   // Coins
-  const cMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.9,roughness:.1,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.8});
-  const cGeo=new THREE.CylinderGeometry(.2,.2,.07,14);
+  const cMat=_Mat({color:0xffd700,metalness:.9,roughness:.1,emissive:new THREE.Color(0xffaa00),emissiveIntensity:.8});
+  const cGeo=new THREE.CylinderGeometry(.2,.2,.07,_isMobile?8:14);
   for(let i=0;i<50;i++){
     const c=Math.floor(rng()*(GW+1)),r=Math.floor(rng()*(GH+1));
     const isSt=ST_POS.some(([sc,sr])=>sc===c&&sr===r);
@@ -1754,7 +1780,7 @@ function buildWorld(){
     const p=npos(c,r),t=PU_DEFS[i%PU_DEFS.length];
     const grp=new THREE.Group();
     const core=new THREE.Mesh(new THREE.OctahedronGeometry(.35,0),
-      new THREE.MeshStandardMaterial({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:1.0,metalness:.4,roughness:.2}));
+      _Mat({color:t.col,emissive:new THREE.Color(t.col),emissiveIntensity:1.0,metalness:.4,roughness:.2}));
     grp.add(core);grp.position.set(p.x,1.5,p.z);grp.userData={baseY:1.5,phase:rng()*Math.PI*2,c,r,type:t};
     scene.add(grp);puMeshes.push({m:grp,c,r,collected:false,type:t});
   }
@@ -1764,11 +1790,11 @@ function buildWorld(){
 // Creates a short road+rail spur extending outside the main grid.
 // The portal mesh sits at the far end of the stub.
 function _buildPortalStubs(grp){
-  const roadM  = new THREE.MeshStandardMaterial({color:0x090b16,roughness:.12,metalness:.45});
-  const railM  = new THREE.MeshStandardMaterial({color:0xaaaacc,metalness:.9,roughness:.15});
-  const tieM   = new THREE.MeshStandardMaterial({color:0x2a1e12,roughness:.95});
-  const signM  = new THREE.MeshStandardMaterial({color:0x003322,emissive:new THREE.Color(0x00ff44),emissiveIntensity:1.2,roughness:.6});
-  const signMR = new THREE.MeshStandardMaterial({color:0x220000,emissive:new THREE.Color(0xff2200),emissiveIntensity:1.2,roughness:.6});
+  const roadM  = _Mat({color:0x090b16,roughness:.12,metalness:.45});
+  const railM  = _Mat({color:0xaaaacc,metalness:.9,roughness:.15});
+  const tieM   = _Mat({color:0x2a1e12,roughness:.95});
+  const signM  = _Mat({color:0x003322,emissive:new THREE.Color(0x00ff44),emissiveIntensity:1.2,roughness:.6});
+  const signMR = _Mat({color:0x220000,emissive:new THREE.Color(0xff2200),emissiveIntensity:1.2,roughness:.6});
   const ROFF   = 0.52;
   const STUB_CELLS = 2; // how many cells the stub extends outside the grid
 
@@ -1800,13 +1826,13 @@ function _buildPortalStubs(grp){
     // Portal platform at stub end — flat square pad
     const endZ = startZ + STUB_CELLS*CELL*dz;
     const pad = new THREE.Mesh(new THREE.BoxGeometry(7,.12,7),
-      new THREE.MeshStandardMaterial({color:0x0a1020,roughness:.8,emissive:new THREE.Color(isExit?0x003311:0x110000),emissiveIntensity:.4}));
+      _Mat({color:0x0a1020,roughness:.8,emissive:new THREE.Color(isExit?0x003311:0x110000),emissiveIntensity:.4}));
     pad.position.set(centreX,.06,endZ); grp.add(pad);
 
     // Portal sign poles + board
     [-2.5,2.5].forEach(ox=>{
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,4,6),
-        new THREE.MeshStandardMaterial({color:0x223344,metalness:.7,roughness:.3}));
+        _Mat({color:0x223344,metalness:.7,roughness:.3}));
       pole.position.set(centreX+ox,2,endZ+dz*1.0); grp.add(pole);
     });
     const board = new THREE.Mesh(new THREE.BoxGeometry(5.5,.5,.1), isExit?signM:signMR);
@@ -1846,12 +1872,12 @@ function buildStation(idx,col,row){
   const p=npos(col,row);
   const g=new THREE.Group();
   const c=ST_COLS[idx];
-  const platM=new THREE.MeshStandardMaterial({color:c,roughness:.6,metalness:.1});
+  const platM=_Mat({color:c,roughness:.6,metalness:.1});
   const plat=new THREE.Mesh(new THREE.BoxGeometry(4.5,.4,2.8),platM);plat.position.set(0,.22,0);g.add(plat);
-  const pilM=new THREE.MeshStandardMaterial({color:0x444456,roughness:.7});
+  const pilM=_Mat({color:0x444456,roughness:.7});
   [-1.7,1.7].forEach(lx=>{const pi=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,3,8),pilM);pi.position.set(lx,1.5,0);g.add(pi);});
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(4.7,.18,3),new THREE.MeshStandardMaterial({color:0x252035,roughness:.8}));roof.position.set(0,3.1,0);g.add(roof);
-  const ringM=new THREE.MeshStandardMaterial({color:c,emissive:new THREE.Color(c),emissiveIntensity:.5,transparent:true,opacity:.75});
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(4.7,.18,3),_Mat({color:0x252035,roughness:.8}));roof.position.set(0,3.1,0);g.add(roof);
+  const ringM=_Mat({color:c,emissive:new THREE.Color(c),emissiveIntensity:.5,transparent:true,opacity:.75});
   const ring=new THREE.Mesh(new THREE.TorusGeometry(2.0,.12,8,36),ringM);ring.rotation.x=Math.PI/2;ring.position.set(0,.1,0);ring.name='ring';g.add(ring);
   const lc=document.createElement('canvas');lc.width=256;lc.height=56;
   const ctx=lc.getContext('2d');ctx.fillStyle='rgba(6,10,22,0.85)';ctx.fillRect(0,0,256,56);
@@ -2014,7 +2040,7 @@ function spawnChoiceMarkers(choices){
 
     // Core orb
     const orbGeo=new THREE.SphereGeometry(isVip?0.85:0.65,16,12);
-    const orbMat=new THREE.MeshStandardMaterial({
+    const orbMat=_Mat({
       color:col,emissive:new THREE.Color(emCol),
       emissiveIntensity:isVip?2.0:1.2,
       metalness:isVip?.7:.2,roughness:.2,
@@ -2357,16 +2383,16 @@ function doDeliver(){
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
 const NPC_COUNT=3;
-const NPC_MAX=10;
+const NPC_MAX=_isMobile?5:10;
 const NPC_COLORS=[0x9944cc,0x44cc99,0xcc4499,0xff6633,0x33aaff,0xffcc00,0x55dd55,0xff44aa,0x00cccc,0xffaa33];
 const npcTrolleys=[];
 
 function buildNpcTrolley(colorHex){
   const grp=new THREE.Group();
-  const bM=new THREE.MeshStandardMaterial({color:colorHex,metalness:.3,roughness:.6});
-  const mM=new THREE.MeshStandardMaterial({color:0x888888,metalness:.6,roughness:.4});
-  const wM=new THREE.MeshStandardMaterial({color:0x6a4c2a,roughness:.9});
-  const wlM=new THREE.MeshStandardMaterial({color:0x333333,metalness:.5,roughness:.5});
+  const bM=_Mat({color:colorHex,metalness:.3,roughness:.6});
+  const mM=_Mat({color:0x888888,metalness:.6,roughness:.4});
+  const wM=_Mat({color:0x6a4c2a,roughness:.9});
+  const wlM=_Mat({color:0x333333,metalness:.5,roughness:.5});
   // Platform
   const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);grp.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,1.1),mM);b.position.set(x,.8,0);grp.add(b);});
@@ -2379,12 +2405,12 @@ function buildNpcTrolley(colorHex){
   const ph=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.75,7),mM);ph.position.set(0,.9,0);grp.add(ph);
   const hb=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,7),bM);hb.rotation.z=Math.PI/2;hb.position.set(0,1.28,0);grp.add(hb);
   // Grandma figure (purple shawl)
-  const bodyM=new THREE.MeshStandardMaterial({color:0x884488,roughness:.8});
-  const headM=new THREE.MeshStandardMaterial({color:0xf0d0b0});
+  const bodyM=_Mat({color:0x884488,roughness:.8});
+  const headM=_Mat({color:0xf0d0b0});
   const body=new THREE.Mesh(new THREE.BoxGeometry(.34,.48,.24),bodyM);body.position.set(0,.84,0);grp.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),headM);head.position.set(0,1.18,0);grp.add(head);
   // Hair bun
-  const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshStandardMaterial({color:0xdddddd}));
+  const bun=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),_Mat({color:0xdddddd}));
   bun.position.set(0,1.32,.02);bun.scale.set(1,.7,1);grp.add(bun);
   // Beacon (colored)
   const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:colorHex}));
@@ -2613,13 +2639,13 @@ function aiGetFacing(fromNode, toNode) {
 // ── Build AI trolley mesh (cyan/teal coloured, distinct from player and grandmas) ──
 function buildAiTrolley() {
   const grp = new THREE.Group();
-  const bM = new THREE.MeshStandardMaterial({ color: 0x00ccff, metalness: .4, roughness: .5,
+  const bM = _Mat({ color: 0x00ccff, metalness: .4, roughness: .5,
     emissive: new THREE.Color(0x0088bb), emissiveIntensity: .3 });
-  const mM = new THREE.MeshStandardMaterial({ color: 0x888899, metalness: .7, roughness: .3 });
-  const wM = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: .9 });
-  const wlM = new THREE.MeshStandardMaterial({ color: 0x112233, metalness: .6, roughness: .4 });
-  const skM = new THREE.MeshStandardMaterial({ color: 0x99ccee });
-  const shM = new THREE.MeshStandardMaterial({ color: 0x005577 });
+  const mM = _Mat({ color: 0x888899, metalness: .7, roughness: .3 });
+  const wM = _Mat({ color: 0x334455, roughness: .9 });
+  const wlM = _Mat({ color: 0x112233, metalness: .6, roughness: .4 });
+  const skM = _Mat({ color: 0x99ccee });
+  const shM = _Mat({ color: 0x005577 });
   // Platform
   const plat = new THREE.Mesh(new THREE.BoxGeometry(2, .18, 1.1), wM);
   plat.position.set(0, .5, 0); plat.castShadow = true; grp.add(plat);
@@ -2648,7 +2674,7 @@ function buildAiTrolley() {
   const body = new THREE.Mesh(new THREE.BoxGeometry(.38, .52, .26), shM);
   body.position.set(0, .84, 0); grp.add(body);
   const head = new THREE.Mesh(new THREE.BoxGeometry(.28, .24, .24),
-    new THREE.MeshStandardMaterial({ color: 0x003344, metalness: .8, roughness: .2 }));
+    _Mat({ color: 0x003344, metalness: .8, roughness: .2 }));
   head.position.set(0, 1.22, 0); grp.add(head);
   // Eye visor
   const visor = new THREE.Mesh(new THREE.BoxGeometry(.22, .08, .02),
@@ -2661,7 +2687,7 @@ function buildAiTrolley() {
     new THREE.MeshBasicMaterial({ color: 0xff4488 }));
   antTip.position.set(.1, 1.58, 0); grp.add(antTip);
   // Glow beacon
-  const bec = new THREE.Mesh(new THREE.SphereGeometry(.2, 8, 6),
+  const bec = new THREE.Mesh(new THREE.SphereGeometry(.2,_isMobile?5:8,_isMobile?4:6),
     new THREE.MeshBasicMaterial({ color: 0x00ccff, transparent: true, opacity: .8 }));
   bec.position.set(0, 1.65, 0); grp.add(bec);
   // Point light carried by AI trolley
@@ -3012,7 +3038,7 @@ function raceOver(winner) {
 // ═══════════════════════════════════════════
 
 // ── Glue puddle object pool — avoids new THREE.Group/Mesh allocation on every drop ──
-const GLUE_POOL_SIZE=8;
+const GLUE_POOL_SIZE=_isMobile?4:8;
 const _gluePuddlePool=[];
 (function buildGluePuddlePool(){
   const discGeo=new THREE.CylinderGeometry(2.2,2.2,.08,16);
@@ -3020,7 +3046,7 @@ const _gluePuddlePool=[];
   const ringGeo2=new THREE.TorusGeometry(1.9,.06,6,20);
   for(let i=0;i<GLUE_POOL_SIZE;i++){
     const grp=new THREE.Group();
-    const disc=new THREE.Mesh(discGeo,new THREE.MeshStandardMaterial({
+    const disc=new THREE.Mesh(discGeo,_Mat({
       color:0xcc9900,emissive:new THREE.Color(0xaa7700),emissiveIntensity:.6,
       roughness:.3,metalness:.2,transparent:true,opacity:.85
     }));
@@ -3444,11 +3470,11 @@ function updRocketHUD(){
 
 // Build a rocket mesh (small elongated cylinder with glow)
 // ── Pre-created rocket mesh pool (avoid GC on fire) ──
-const ROCKET_POOL_SIZE=5;
+const ROCKET_POOL_SIZE=_isMobile?3:5;
 const _rocketPool=[];
 (function buildRocketPool(){
   const bGeo=new THREE.CylinderGeometry(.1,.1,.8,8);
-  const bMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3});
+  const bMat=_Mat({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3});
   const fGeo=new THREE.ConeGeometry(.12,.5,8);
   const fMat=new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:.85});
   for(let i=0;i<ROCKET_POOL_SIZE;i++){
@@ -3466,7 +3492,7 @@ function acquireRocketMesh(){
   for(const r of _rocketPool){if(!r.inUse){r.inUse=true;r.grp.visible=true;return r.grp;}}
   // Fallback: create new if pool exhausted (rare)
   const grp=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.8,8),new THREE.MeshStandardMaterial({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3}));
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.8,8),_Mat({color:0xff4400,emissive:new THREE.Color(0xff2200),emissiveIntensity:2,metalness:.6,roughness:.3}));
   body.rotation.x=Math.PI/2;grp.add(body);
   scene.add(grp);
   return grp;
@@ -3500,7 +3526,7 @@ function fireRocket(){
 }
 
 // ── Pre-created explosion pool (avoid GC on hit) ──
-const EXPL_POOL_SIZE=4;
+const EXPL_POOL_SIZE=_isMobile?2:4;
 const _explPool=[];
 (function buildExplPool(){
   const fbGeo=new THREE.SphereGeometry(.8,8,6);
@@ -4009,14 +4035,14 @@ function _makePortalGroup(color, colorName, isStart) {
   grp.rotation.x = 0.18;
 
   // Torus ring
-  const ringGeo = new THREE.TorusGeometry(3.2, 0.28, 16, 100);
+  const ringGeo = new THREE.TorusGeometry(3.2, 0.28, _isMobile?8:16, _isMobile?40:100);
   const ringMat = new THREE.MeshPhongMaterial({
     color: color, emissive: color, transparent: true, opacity: 0.8
   });
   grp.add(new THREE.Mesh(ringGeo, ringMat));
 
   // Inner disc
-  const discGeo = new THREE.CircleGeometry(3.0, 32);
+  const discGeo = new THREE.CircleGeometry(3.0,_isMobile?16:32);
   const discMat = new THREE.MeshBasicMaterial({
     color: color, transparent: true, opacity: 0.5, side: THREE.DoubleSide
   });
@@ -4358,10 +4384,10 @@ function _idToHex(id) {
 // ── Game mode state ──
 // 'cpu'    → vs AI (no online opponent)
 // 'online' → vs real player found in lobby
-let _gameMode      = 'cpu';
-let _lobbyId       = null;      // Firestore lobby doc ID
-let _lobbyRole     = null;      // 'player1' | 'player2'
-let _lobbyOpponent = null;      // { id, username } of opponent
+// (declared above) let _gameMode      = 'cpu';
+// (declared above) let _lobbyId       = null;      // Firestore lobby doc ID
+// (declared above) let _lobbyRole     = null;      // 'player1' | 'player2'
+// (declared above) let _lobbyOpponent = null;      // { id, username } of opponent
 let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
 let _lobbyTimer    = null;      // setInterval for countdown
 let _lobbySeconds  = 120;       // 2 min countdown
@@ -4372,7 +4398,7 @@ const MP_WRITE_INTERVAL = 0.25;
 
 // ── Remote players map ──
 const _remotePlayers = {};
-let _mpUsername = 'Player';
+// (declared above) let _mpUsername = 'Player';
 
 // ════════════════════════════
 //  MODE SELECTION HANDLERS
@@ -4542,19 +4568,19 @@ function cancelLobby() {
 
 function _makeRemoteTrolley(color) {
   const grp = new THREE.Group();
-  const bM = new THREE.MeshStandardMaterial({color,emissive:new THREE.Color(color),emissiveIntensity:.4,metalness:.3,roughness:.6});
-  const wM = new THREE.MeshStandardMaterial({color:0x223344,roughness:.9});
+  const bM = _Mat({color,emissive:new THREE.Color(color),emissiveIntensity:.4,metalness:.3,roughness:.6});
+  const wM = _Mat({color:0x223344,roughness:.9});
   const platform = new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);
   platform.position.y=.5; grp.add(platform);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.7,6),bM);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.7,_isMobile?4:6),bM);
   pole.position.set(0,.88,0); grp.add(pole);
   const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6),bM);
   bar.rotation.z=Math.PI/2; bar.position.set(0,1.2,0); grp.add(bar);
-  const wGeo=new THREE.TorusGeometry(.22,.055,6,12);
+  const wGeo=new THREE.TorusGeometry(.22,.055,_isMobile?4:6,_isMobile?8:12);
   [[-0.7,-.4],[-.7,.4],[.7,-.4],[.7,.4]].forEach(([x,z])=>{
     const w=new THREE.Mesh(wGeo,wM); w.position.set(x,.26,z); w.rotation.y=Math.PI/2; grp.add(w);
   });
-  const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),
+  const bec=new THREE.Mesh(new THREE.SphereGeometry(.18,_isMobile?5:6,_isMobile?4:5),
     new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85}));
   bec.position.set(0,1.6,0); grp.add(bec);
   grp.visible=false;

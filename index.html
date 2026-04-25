@@ -4320,8 +4320,24 @@ function _escHtml(s) {
 }
 
 // ── Local player identity ──
-let _myId = sessionStorage.getItem('mp_id');
-if (!_myId) { _myId = 'p_' + Math.random().toString(36).slice(2,10); sessionStorage.setItem('mp_id', _myId); }
+// localStorage (not sessionStorage) so ID persists across tab closes/refreshes.
+// ID is bound to username — changing username gets a new ID to keep leaderboard clean.
+let _myId = localStorage.getItem('mp_id');
+if (!_myId) {
+  _myId = 'p_' + Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,6);
+  localStorage.setItem('mp_id', _myId);
+}
+
+// If username changes, generate new ID so old scores don't get overwritten with new name
+function _resolvePlayerId(username) {
+  const storedName = localStorage.getItem('mp_username');
+  if (storedName && storedName !== username) {
+    // Username changed — new ID
+    _myId = 'p_' + Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,6);
+    localStorage.setItem('mp_id', _myId);
+  }
+  localStorage.setItem('mp_username', username);
+}
 
 function _getUsername() {
   const inp = document.getElementById('username-input');
@@ -4365,13 +4381,15 @@ let _mpUsername = 'Player';
 
 function chooseModeVsCPU() {
   _mpUsername = _getUsername();
+  _resolvePlayerId(_mpUsername);
   _gameMode = 'cpu';
-  showScr(''); // hide all overlays
+  showScr('');
   startGame();
 }
 
 function chooseModeVsPlayer() {
   _mpUsername = _getUsername();
+  _resolvePlayerId(_mpUsername);
   _gameMode = 'online';
   showScr('scr-lobby');
   document.getElementById('lobby-name-1').textContent = _mpUsername;
@@ -4557,6 +4575,7 @@ function _makeRemoteLabel(username, colorStr) {
 // ── mpStart: called from startGame() ──
 function mpStart() {
   _mpUsername = _getUsername();
+  _resolvePlayerId(_mpUsername); // bind ID to username
   _mpActive   = true;
   document.getElementById('lb-panel').style.display = 'block';
   _mpWriteSelf();
@@ -4717,6 +4736,15 @@ function updateMultiplayer(dt) {
 }
 
 window.addEventListener('beforeunload', ()=>{ if(_mpActive) mpStop(); });
+
+// ── Prefill username from localStorage on page load ──
+window.addEventListener('DOMContentLoaded', ()=>{
+  const saved = localStorage.getItem('mp_username');
+  if (saved) {
+    const inp = document.getElementById('username-input');
+    if (inp) inp.value = saved;
+  }
+});
 
 // ═══════════════════════════════════════════
 const clock=new THREE.Clock();let gt=0;

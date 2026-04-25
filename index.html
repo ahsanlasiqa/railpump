@@ -658,18 +658,22 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-'use strict';
+// ── Multiplayer state — declared early so HTML onclick handlers can use them ──
+let _mpUsername = 'Player';
+let _gameMode   = 'cpu';
+let _lobbyId    = null;
+let _lobbyRole  = null;
+let _lobbyOpponent = null;
 // ── Material helper: MeshLambertMaterial on mobile, MeshStandardMaterial on desktop ──
 // MeshLambertMaterial is ~8x cheaper on Adreno 610 (no PBR specular/metalness calc).
 // Parameters: accepts same keys as MeshStandardMaterial, strips unsupported ones for Lambert.
 function _Mat(params) {
-  if (!_isMobile) return _Mat(params);
-  // Lambert-compatible subset: color, emissive, emissiveIntensity, map, emissiveMap,
-  // transparent, opacity, side, depthWrite, wireframe, vertexColors
+  if (!_isMobile) return new THREE.MeshStandardMaterial(params);
   const lambertParams = {};
-  const lambertKeys = ['color','emissive','emissiveIntensity','map','emissiveMap',
-    'transparent','opacity','side','depthWrite','wireframe','vertexColors'];
-  lambertKeys.forEach(k => { if (params[k] !== undefined) lambertParams[k] = params[k]; });
+  ['color','emissive','emissiveIntensity','map','emissiveMap',
+   'transparent','opacity','side','depthWrite','wireframe','vertexColors'].forEach(k=>{
+    if(params[k]!==undefined) lambertParams[k]=params[k];
+  });
   return new THREE.MeshLambertMaterial(lambertParams);
 }
 
@@ -4380,10 +4384,10 @@ function _idToHex(id) {
 // ── Game mode state ──
 // 'cpu'    → vs AI (no online opponent)
 // 'online' → vs real player found in lobby
-let _gameMode      = 'cpu';
-let _lobbyId       = null;      // Firestore lobby doc ID
-let _lobbyRole     = null;      // 'player1' | 'player2'
-let _lobbyOpponent = null;      // { id, username } of opponent
+// (declared above) let _gameMode      = 'cpu';
+// (declared above) let _lobbyId       = null;      // Firestore lobby doc ID
+// (declared above) let _lobbyRole     = null;      // 'player1' | 'player2'
+// (declared above) let _lobbyOpponent = null;      // { id, username } of opponent
 let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
 let _lobbyTimer    = null;      // setInterval for countdown
 let _lobbySeconds  = 120;       // 2 min countdown
@@ -4394,7 +4398,7 @@ const MP_WRITE_INTERVAL = 0.25;
 
 // ── Remote players map ──
 const _remotePlayers = {};
-let _mpUsername = 'Player';
+// (declared above) let _mpUsername = 'Player';
 
 // ════════════════════════════
 //  MODE SELECTION HANDLERS

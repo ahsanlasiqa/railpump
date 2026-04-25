@@ -506,7 +506,11 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
       <span class="mode-sub">Wait for opponent</span>
     </button>
   </div>
-  <button class="btn btn-ghost" style="margin-top:10px" onclick="showScr('scr-keys')">⚙ Controls</button>
+  <button class="btn btn-ghost" style="margin-top:8px" onclick="showScr('scr-keys')">⚙ Controls</button>
+  <p style="margin-top:14px;font-size:14px;line-height:1.7;color:rgba(255,220,150,0.65);max-width:360px;text-align:center;">
+    Pump your rail trolley through a neon-lit cyberpunk city,<br> racing to deliver packages before your rival.<br><br>
+    <span style="color:rgba(255,160,180,0.75);">👵 Watch out for roaming Grannies <br>— they'll glue your wheels to the track!<br>you'll need to rocket them in time</span>
+  </p>
 </div>
 
 <!-- LOBBY SCREEN -->
@@ -546,6 +550,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <tr><td class="act">🛑 Brake alt</td><td><button class="kbtn" id="kb-brake2" onclick="listenFor('brake2')">↓ Arrow</button></td></tr>
     <tr><td class="act">↩ Switch Left</td><td><button class="kbtn" id="kb-left" onclick="listenFor('left')">← Arrow</button></td></tr>
     <tr><td class="act">↪ Switch Right</td><td><button class="kbtn" id="kb-right" onclick="listenFor('right')">→ Arrow</button></td></tr>
+    <tr><td class="act">🎯 Fire Rocket</td><td><button class="kbtn" id="kb-fire" onclick="listenFor('fire')">F</button></td></tr>
   </table>
   <p class="kb-tip">Saved automatically.</p>
   <button class="btn" onclick="closeKB()">✓ Done</button>
@@ -962,7 +967,7 @@ function makeChoices(fromSt, includeVip){
 // ═══════════════════════════════════════════
 //  KEY BINDINGS
 // ═══════════════════════════════════════════
-const DEFAULTS={pump:{code:'Space',label:'SPACE'},pump2:{code:'KeyW',label:'W'},brake:{code:'KeyB',label:'B'},brake2:{code:'ArrowDown',label:'↓ Arrow'},left:{code:'ArrowLeft',label:'← Arrow'},right:{code:'ArrowRight',label:'→ Arrow'}};
+const DEFAULTS={pump:{code:'Space',label:'SPACE'},pump2:{code:'KeyW',label:'W'},brake:{code:'KeyB',label:'B'},brake2:{code:'ArrowDown',label:'↓ Arrow'},left:{code:'ArrowLeft',label:'← Arrow'},right:{code:'ArrowRight',label:'→ Arrow'},fire:{code:'KeyF',label:'F'}};
 function loadKB(){try{return JSON.parse(localStorage.getItem('crp4_kb'))||cln(DEFAULTS);}catch(e){return cln(DEFAULTS);}}
 function cln(o){return JSON.parse(JSON.stringify(o));}
 let KB=loadKB(),listening=null;
@@ -989,7 +994,7 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
   if(e.code==='KeyV'){e.preventDefault();toggleView();}
-  if(e.code==='KeyF'){e.preventDefault();fireRocket();}
+  if(e.code===KB.fire.code){e.preventDefault();fireRocket();}
   if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
   if(e.code==='KeyE'){e.preventDefault();activateBoost();}
   if(e.code==='KeyM'){e.preventDefault();
@@ -1058,13 +1063,22 @@ const ROCKET_RADIUS=3.5;
 const canvas=document.getElementById('c');
 // OPT: stencil disabled (unused) → frees GPU memory; antialias off on mobile saves ~30% fill cost
 const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
-const renderer=new THREE.WebGLRenderer({canvas,antialias:!_isMobile,stencil:false,powerPreference:'high-performance'});
-// OPT: cap pixel ratio at 2 — Retina/4K screens would otherwise 4-9× the fragment load
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,stencil:false,depth:true,powerPreference:'high-performance'});
+// OPT: cap pixel ratio — mobile starts at 1.5, may upgrade after FPS check
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 1.5 : 2));
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=true;
-// OPT: PCFSoft on desktop, cheaper PCF on mobile
-renderer.shadowMap.type=_isMobile?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;
+// Shadow map — wrapped in try-catch: Adreno 610 crashes silently without it
+let _shadowEnabled = false;
+try {
+  if(!_isMobile){
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    _shadowEnabled = true;
+  }
+} catch(e){ renderer.shadowMap.enabled = false; }
+renderer.setClearColor(0x03040e,1);
+renderer.toneMapping = _isMobile ? THREE.LinearToneMapping : THREE.ReinhardToneMapping;
+renderer.toneMappingExposure = _isMobile ? 1.8 : 1.4;
 renderer.setClearColor(0x03040e,1);
 // Tone mapping makes emissive neons "bloom" without post-processing
 renderer.toneMapping=THREE.ReinhardToneMapping;
@@ -1076,18 +1090,19 @@ const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Night city: dark ambient + cold moonlight only — neons are the key light
-const ambLight=new THREE.AmbientLight(0x0d1528,0.8);scene.add(ambLight);
-const sunLight=new THREE.DirectionalLight(0x8899cc,0.5); // cold blue moon
-sunLight.position.set(60,100,40);sunLight.castShadow=true;
-// OPT: mobile uses 512 shadow map; desktop keeps 1024 — halves GPU shadow memory on mobile
-sunLight.shadow.mapSize.set(_isMobile?512:1024,_isMobile?512:1024);
-sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
-// OPT: tighten shadow frustum to actual grid bounds — removes wasted shadow texels outside play area
-sunLight.shadow.camera.left=-140;sunLight.shadow.camera.right=140;
-sunLight.shadow.camera.top=140;sunLight.shadow.camera.bottom=-140;
+const ambLight=new THREE.AmbientLight(0x0d1528,_isMobile?2.2:0.8);scene.add(ambLight);
+const sunLight=new THREE.DirectionalLight(0x8899cc,_isMobile?0.8:0.5);
+sunLight.position.set(60,100,40);
+sunLight.castShadow=_shadowEnabled;
+if(_shadowEnabled){
+  sunLight.shadow.mapSize.set(512,512);
+  sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
+  sunLight.shadow.camera.left=-140;sunLight.shadow.camera.right=140;
+  sunLight.shadow.camera.top=140;sunLight.shadow.camera.bottom=-140;
+}
 scene.add(sunLight);scene.add(sunLight.target);
-const fill1=new THREE.DirectionalLight(0x221133,0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
-const fill2=new THREE.DirectionalLight(0x112233,0.12);fill2.position.set(50,20,60);scene.add(fill2);
+const fill1=new THREE.DirectionalLight(_isMobile?0x4455aa:0x221133,_isMobile?0.5:0.15);fill1.position.set(-50,30,-70);scene.add(fill1);
+const fill2=new THREE.DirectionalLight(_isMobile?0x334466:0x112233,_isMobile?0.4:0.12);fill2.position.set(50,20,60);scene.add(fill2);
 
 // ── Trolley ──
 const trolley=new THREE.Group();scene.add(trolley);
@@ -1104,7 +1119,7 @@ const trolleyRefs={child:null,la:null,ra:null,lever:null};
   const pntM=new THREE.MeshStandardMaterial({color:0x334455});
   const hairM=new THREE.MeshStandardMaterial({color:0x2c1810});
   const hatM=new THREE.MeshStandardMaterial({color:0xe8c84a});
-  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);plat.castShadow=true;trolley.add(plat);
+  const plat=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1.1),wM);plat.position.set(0,.5,0);plat.castShadow=_shadowEnabled;trolley.add(plat);
   [-0.85,0.85].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.55,1.1),mM);b.position.set(x,.87,0);trolley.add(b);});
   const wGeo=new THREE.TorusGeometry(.26,.065,8,16);
   [[-0.72,-.44],[-0.72,.44],[.72,-.44],[.72,.44]].forEach(([x,z])=>{
@@ -1262,7 +1277,7 @@ function buildWorld(){
   // ── WET ground (reflective asphalt) ──
   const gndM=new THREE.MeshStandardMaterial({color:0x070810,roughness:0.1,metalness:0.5});
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(GW*CELL+80,GH*CELL+80),gndM);
-  gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=true;worldGrp.add(gnd);
+  gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.05;gnd.receiveShadow=_shadowEnabled;worldGrp.add(gnd);
 
   // ── Roads + rails — InstancedMesh for rails & ties (1 draw call each vs hundreds) ──
   const roadM=new THREE.MeshStandardMaterial({color:0x090b16,roughness:0.12,metalness:0.45});
@@ -1295,7 +1310,7 @@ function buildWorld(){
       const x0=OX+c*CELL,z0=OZ+r*CELL,x1=OX+(c+1)*CELL;
       const cx=(x0+x1)/2,cz=z0;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(CELL,.06,3.8),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=_shadowEnabled;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
         _mDummy.position.set(cx,.07,cz+off);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailH.setMatrixAt(riH++,_mDummy.matrix);
@@ -1312,7 +1327,7 @@ function buildWorld(){
       const x0=OX+c*CELL,z0=OZ+r*CELL,z1=OZ+(r+1)*CELL;
       const cx=x0,cz=(z0+z1)/2;
       const rd=new THREE.Mesh(new THREE.BoxGeometry(3.8,.06,CELL),roadM);
-      rd.position.set(cx,.03,cz);rd.receiveShadow=true;worldGrp.add(rd);
+      rd.position.set(cx,.03,cz);rd.receiveShadow=_shadowEnabled;worldGrp.add(rd);
       [-ROFF,ROFF].forEach(off=>{
         _mDummy.position.set(cx+off,.07,cz);_mDummy.rotation.set(0,0,0);_mDummy.scale.setScalar(1);
         _mDummy.updateMatrix();instRailV.setMatrixAt(riV++,_mDummy.matrix);
@@ -1399,6 +1414,7 @@ function buildWorld(){
   }
 
   // 8 shared area PointLights spread across the city — fixed count, no overflow
+  // OPT: mobile uses only 4 to stay under uniform limits
   const AREA_LIGHT_COLS=[0xff0066,0x00ffcc,0xff6600,0x9900ff,0x00ccff,0xff3399,0xcc00ff,0x33ffaa];
   const areaLightPositions=[
     [OX+CELL*2,  6, OZ+CELL*2],
@@ -1410,8 +1426,9 @@ function buildWorld(){
     [OX+CELL*8,  6, OZ+CELL*4],
     [OX+CELL*6,  6, OZ+CELL*2],
   ];
-  areaLightPositions.forEach(([x,y,z],i)=>{
-    const pl=new THREE.PointLight(AREA_LIGHT_COLS[i],3.5,40);
+  const _areaMax = _isMobile ? 4 : 8;
+  areaLightPositions.slice(0,_areaMax).forEach(([x,y,z],i)=>{
+    const pl=new THREE.PointLight(AREA_LIGHT_COLS[i],_isMobile?4.5:3.5,_isMobile?55:40);
     pl.position.set(x,y,z);worldGrp.add(pl);
   });
 
@@ -1442,7 +1459,7 @@ function buildWorld(){
       for(let t=0;t<numTiers;t++){
         const tH=fpTier*floorH+(t===numTiers-1?rng()*2:0);
         const body=new THREE.Mesh(getBldGeo(cW,parseFloat(tH.toFixed(1)),cD),bodyMat);
-        body.position.set(0,bot+tH/2,0);body.castShadow=true;body.receiveShadow=true;
+        body.position.set(0,bot+tH/2,0);body.castShadow=_shadowEnabled;body.receiveShadow=_shadowEnabled;
         bldGrp.add(body);
 
         // Windows — use shared materials and shared geometry (massive savings)
@@ -1516,17 +1533,18 @@ function buildWorld(){
   const polM=new THREE.MeshStandardMaterial({color:0x2a2a3a,metalness:.6,roughness:.5});
   const LAMP_COLS=[0xff00cc,0x00ffee,0xaa44ff,0x00aaff];
   let lampLightCount=0;
+  // OPT: no lamp PointLights on mobile — already have 4 area + sun + fills
+  const _lampLightMax = _isMobile ? 0 : 12;
   for(let r=0;r<=GH;r++) for(let c=0;c<=GW;c++){
     if(rng()>.5)continue;
     const p=npos(c,r);
     const lCol=LAMP_COLS[Math.floor(rng()*LAMP_COLS.length)];
     const lp=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,4.5,6),polM);
     lp.position.set(p.x+1.5,2.25,p.z+1.5);worldGrp.add(lp);
-    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:2.0});
+    const lampMat=new THREE.MeshStandardMaterial({color:lCol,emissive:new THREE.Color(lCol),emissiveIntensity:_isMobile?3.0:2.0});
     const ll=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),lampMat);
     ll.position.set(p.x+1.5,4.6,p.z+1.5);worldGrp.add(ll);
-    // Only add PointLight occasionally — strict cap to avoid overflow
-    if(lampLightCount<12&&rng()>.7){
+    if(lampLightCount<_lampLightMax&&rng()>.7){
       const ptL=new THREE.PointLight(lCol,1.8,14);
       ptL.position.set(p.x+1.5,4,p.z+1.5);worldGrp.add(ptL);
       lampLightCount++;
@@ -1537,55 +1555,47 @@ function buildWorld(){
   // ── SKY & CITY BACKDROP ──
   // ══════════════════════════════════════════════
 
-  // Sky dome — use vertex colors to simulate gradient (deep indigo at top → dark teal at horizon)
-  // We build it as a series of stacked rings tinted from dark blue → warm orange near horizon
+  // Sky dome
+  // OPT: mobile uses simple solid dome — no vertex color loop (saves 528 JS iterations)
   const SKY_R = 560;
+  if(_isMobile){
+    const skyGeo=new THREE.SphereGeometry(SKY_R,8,5);
+    worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({color:0x06080f,side:THREE.BackSide})));
+  } else {
   const skyGeo = new THREE.SphereGeometry(SKY_R, 32, 16);
-  // Paint vertex colors for gradient
   const skyColors = [];
   const skyPos = skyGeo.attributes.position;
   for(let i = 0; i < skyPos.count; i++){
     const y = skyPos.getY(i);
     const t = Math.max(0, Math.min(1, (y + SKY_R) / (SKY_R * 2)));
-    // top: deep navy #060818  mid: indigo-purple #0d0a28  horizon: dark warm #1a0a10
     let r,g,b;
-    if(t > 0.55){
-      // Upper sky — very dark navy/indigo
-      const u = (t - 0.55)/0.45;
-      r = 0.02 + u*0.01; g = 0.02 + u*0.02; b = 0.06 + u*0.04;
-    } else if(t > 0.25){
-      // Mid sky — deep purple-blue
-      const u = (t - 0.25)/0.30;
-      r = 0.06 + u*0.00; g = 0.02 + u*0.02; b = 0.10 + u*0.04;
-    } else {
-      // Near horizon — dark warm with neon glow tint
-      const u = t/0.25;
-      r = 0.18 - u*0.12; g = 0.04 + u*0.02; b = 0.14 + u*0.04;
-    }
-    skyColors.push(r, g, b);
+    if(t > 0.55){const u=(t-0.55)/0.45;r=0.02+u*0.01;g=0.02+u*0.02;b=0.06+u*0.04;}
+    else if(t > 0.25){const u=(t-0.25)/0.30;r=0.06+u*0.00;g=0.02+u*0.02;b=0.10+u*0.04;}
+    else{const u=t/0.25;r=0.18-u*0.12;g=0.04+u*0.02;b=0.14+u*0.04;}
+    skyColors.push(r,g,b);
   }
-  skyGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(skyColors), 3));
-  const skyMat = new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide});
-  worldGrp.add(new THREE.Mesh(skyGeo, skyMat));
+  skyGeo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(skyColors),3));
+  worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+  } // end desktop sky
 
-  // ── HORIZON GLOW BANDS (city light pollution) ──
-  // Multiple large flat planes at horizon with additive neon colors
+  // ── HORIZON GLOW BANDS — desktop only (32 transparent planes = too heavy for mobile) ──
+  if(!_isMobile){
   const horizonGlows = [
-    {col:0x330a22, w:1600, h:80,  y:8,   fog:0.55},  // magenta-red wide
-    {col:0x1a0828, w:1200, h:50,  y:14,  fog:0.35},  // deep purple
-    {col:0x0a1830, w:1000, h:35,  y:20,  fog:0.25},  // blue upper
-    {col:0x280a08, w: 900, h:45,  y:5,   fog:0.40},  // warm orange-red
+    {col:0x330a22, w:1600, h:80,  y:8,   fog:0.55},
+    {col:0x1a0828, w:1200, h:50,  y:14,  fog:0.35},
+    {col:0x0a1830, w:1000, h:35,  y:20,  fog:0.25},
+    {col:0x280a08, w: 900, h:45,  y:5,   fog:0.40},
   ];
-  const horizonDirs = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
-  horizonGlows.forEach(hg => {
-    horizonDirs.forEach(angle => {
-      const hMat = new THREE.MeshBasicMaterial({color:hg.col, transparent:true, opacity:hg.fog, depthWrite:false});
-      const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(hg.w, hg.h), hMat);
-      hMesh.rotation.y = angle;
-      hMesh.position.set(Math.sin(angle)*480, hg.y, Math.cos(angle)*480);
+  const horizonDirs = [0,Math.PI/4,Math.PI/2,Math.PI*3/4,Math.PI,Math.PI*5/4,Math.PI*3/2,Math.PI*7/4];
+  horizonGlows.forEach(hg=>{
+    horizonDirs.forEach(angle=>{
+      const hMat=new THREE.MeshBasicMaterial({color:hg.col,transparent:true,opacity:hg.fog,depthWrite:false});
+      const hMesh=new THREE.Mesh(new THREE.PlaneGeometry(hg.w,hg.h),hMat);
+      hMesh.rotation.y=angle;hMesh.position.set(Math.sin(angle)*480,hg.y,Math.cos(angle)*480);
       worldGrp.add(hMesh);
     });
   });
+  } // end desktop horizon
 
   // ── SILHOUETTE CITY SKYLINE around the edges ──
   // Randomly generated low-poly buildings placed in rings outside the grid
@@ -1596,7 +1606,8 @@ function buildWorld(){
 
   // Place silhouette buildings in a ring 60–220 units outside the grid
   // OPT: fewer background buildings on mobile — not visible at low res anyway
-  const silCount=_isMobile?80:180;
+  // OPT: 30 silhouettes on mobile (vs 180 desktop) — reduces ~150 Mesh allocations
+  const silCount=_isMobile?30:180;
   for(let i = 0; i < silCount; i++){
     const angle = silRng() * Math.PI * 2;
     const dist = gridHalf + 55 + silRng() * 170;
@@ -1690,39 +1701,26 @@ function buildWorld(){
   moonLight.position.set(-200,260,-400);
   scene.add(moonLight);
 
-  // ── Stars — 3 layers ──
-  // Large bright
-  const sBrPos=new Float32Array(150*3);
-  for(let i=0;i<150;i++){
+  // ── Stars ──
+  // OPT: mobile gets 1 small layer (60 pts) instead of 3 layers (1550 pts)
+  const _starCount = _isMobile ? 60 : 150;
+  const sBrPos=new Float32Array(_starCount*3);
+  for(let i=0;i<_starCount;i++){
     const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.55+0.05;
-    sBrPos[i*3]=Math.sin(b)*Math.cos(a)*530;
-    sBrPos[i*3+1]=Math.cos(b)*530;
-    sBrPos[i*3+2]=Math.sin(b)*Math.sin(a)*530;
+    sBrPos[i*3]=Math.sin(b)*Math.cos(a)*530;sBrPos[i*3+1]=Math.cos(b)*530;sBrPos[i*3+2]=Math.sin(b)*Math.sin(a)*530;
   }
   const sBrGeo=new THREE.BufferGeometry();sBrGeo.setAttribute('position',new THREE.BufferAttribute(sBrPos,3));
   worldGrp.add(new THREE.Points(sBrGeo,new THREE.PointsMaterial({color:0xffffff,size:1.5,transparent:true,opacity:0.95})));
-
-  // Medium blue-white
+  if(!_isMobile){
   const sPos=new Float32Array(900*3);
-  for(let i=0;i<900;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;
-    sPos[i*3]=Math.sin(b)*Math.cos(a)*540;
-    sPos[i*3+1]=Math.cos(b)*540;
-    sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;
-  }
+  for(let i=0;i<900;i++){const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.6+0.02;sPos[i*3]=Math.sin(b)*Math.cos(a)*540;sPos[i*3+1]=Math.cos(b)*540;sPos[i*3+2]=Math.sin(b)*Math.sin(a)*540;}
   const sGeo=new THREE.BufferGeometry();sGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
   worldGrp.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xaabbdd,size:0.7,transparent:true,opacity:0.82})));
-
-  // Small dim
   const sDimPos=new Float32Array(500*3);
-  for(let i=0;i<500;i++){
-    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.5+0.1;
-    sDimPos[i*3]=Math.sin(b)*Math.cos(a)*545;
-    sDimPos[i*3+1]=Math.cos(b)*545;
-    sDimPos[i*3+2]=Math.sin(b)*Math.sin(a)*545;
-  }
+  for(let i=0;i<500;i++){const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.5+0.1;sDimPos[i*3]=Math.sin(b)*Math.cos(a)*545;sDimPos[i*3+1]=Math.cos(b)*545;sDimPos[i*3+2]=Math.sin(b)*Math.sin(a)*545;}
   const sDimGeo=new THREE.BufferGeometry();sDimGeo.setAttribute('position',new THREE.BufferAttribute(sDimPos,3));
   worldGrp.add(new THREE.Points(sDimGeo,new THREE.PointsMaterial({color:0x6688cc,size:0.38,transparent:true,opacity:0.65})));
+  } // end desktop stars
 
   scene.add(worldGrp);
   mmStaticDirty=true; // rebake minimap grid+stations after world rebuild

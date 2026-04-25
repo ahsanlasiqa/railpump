@@ -461,7 +461,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="pump-wrap">
   <div id="pump-lbl">⚡ Pump Energy</div>
   <div id="pump-bg"><div id="pump-fill"></div></div>
-  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch &nbsp;·&nbsp; [ F ] Fire Rocket</div>
+  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch</div>
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
@@ -506,7 +506,11 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
       <span class="mode-sub">Wait for opponent</span>
     </button>
   </div>
-  <button class="btn btn-ghost" style="margin-top:10px" onclick="showScr('scr-keys')">⚙ Controls</button>
+  <p style="margin-top:14px;font-size:12px;line-height:1.7;color:rgba(255,220,150,0.65);max-width:360px;text-align:center;">
+    Pump your rail trolley through a neon-lit cyberpunk city, racing to deliver packages before your rival.<br>
+    <span style="color:rgba(255,160,180,0.75);">👵 Watch out for roaming Grannies — they'll glue your wheels to the track!</span>
+  </p>
+  <button class="btn btn-ghost" style="margin-top:8px" onclick="showScr('scr-keys')">⚙ Controls</button>
 </div>
 
 <!-- LOBBY SCREEN -->
@@ -546,6 +550,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
     <tr><td class="act">🛑 Brake alt</td><td><button class="kbtn" id="kb-brake2" onclick="listenFor('brake2')">↓ Arrow</button></td></tr>
     <tr><td class="act">↩ Switch Left</td><td><button class="kbtn" id="kb-left" onclick="listenFor('left')">← Arrow</button></td></tr>
     <tr><td class="act">↪ Switch Right</td><td><button class="kbtn" id="kb-right" onclick="listenFor('right')">→ Arrow</button></td></tr>
+    <tr><td class="act">🎯 Fire Rocket</td><td><button class="kbtn" id="kb-fire" onclick="listenFor('fire')">F</button></td></tr>
   </table>
   <p class="kb-tip">Saved automatically.</p>
   <button class="btn" onclick="closeKB()">✓ Done</button>
@@ -962,7 +967,7 @@ function makeChoices(fromSt, includeVip){
 // ═══════════════════════════════════════════
 //  KEY BINDINGS
 // ═══════════════════════════════════════════
-const DEFAULTS={pump:{code:'Space',label:'SPACE'},pump2:{code:'KeyW',label:'W'},brake:{code:'KeyB',label:'B'},brake2:{code:'ArrowDown',label:'↓ Arrow'},left:{code:'ArrowLeft',label:'← Arrow'},right:{code:'ArrowRight',label:'→ Arrow'}};
+const DEFAULTS={pump:{code:'Space',label:'SPACE'},pump2:{code:'KeyW',label:'W'},brake:{code:'KeyB',label:'B'},brake2:{code:'ArrowDown',label:'↓ Arrow'},left:{code:'ArrowLeft',label:'← Arrow'},right:{code:'ArrowRight',label:'→ Arrow'},fire:{code:'KeyF',label:'F'}};
 function loadKB(){try{return JSON.parse(localStorage.getItem('crp4_kb'))||cln(DEFAULTS);}catch(e){return cln(DEFAULTS);}}
 function cln(o){return JSON.parse(JSON.stringify(o));}
 let KB=loadKB(),listening=null;
@@ -989,7 +994,7 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
   if(e.code==='KeyV'){e.preventDefault();toggleView();}
-  if(e.code==='KeyF'){e.preventDefault();fireRocket();}
+  if(e.code===KB.fire.code){e.preventDefault();fireRocket();}
   if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
   if(e.code==='KeyE'){e.preventDefault();activateBoost();}
   if(e.code==='KeyM'){e.preventDefault();

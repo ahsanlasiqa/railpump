@@ -1531,28 +1531,70 @@ function buildWorld(){
       }
 
       // ── Neon signs ──
-      // Edge blocks (row 0, row GH-1, col 0, col GW-1) always get signs — even on mobile
-      // These are the most visible buildings approaching from any direction
-      // isEdgeBlock already declared above
-      const nSignProb   = isEdgeBlock ? 0.85 : (_isMobile ? 0 : 0.4);
-      const nSigns      = rng() < nSignProb ? 1 : 0;
-      if(nSigns){
-        const nCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
-        const kanji=KANJI[Math.floor(rng()*KANJI.length)];
-        const signH=1.4+rng()*1.8;
-        const yPos=floorH*1.2+rng()*(bot*0.5);
-        const side=Math.floor(rng()*4);
-        const tex=makeKanjiTex(kanji,nCol);
-        // OPT: reuse cached material per neon color (avoids new MeshStandardMaterial per sign)
-        const signMat=getNeonSignMat(nCol,tex);
-        const sign=new THREE.Mesh(new THREE.PlaneGeometry(.52,signH),signMat);
-        const off=bW/2+.06;
-        if(side===0) sign.position.set((rng()-.5)*bW*.5,yPos,off);
-        else if(side===1){sign.position.set((rng()-.5)*bW*.5,yPos,-off);sign.rotation.y=Math.PI;}
-        else if(side===2){sign.position.set(off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=Math.PI/2;}
-        else{sign.position.set(-off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=-Math.PI/2;}
-        bldGrp.add(sign);
+      // ── Neon signs ──
+      // 100% coverage for ALL edge buildings (sekeliling grid)
+      // Corner buildings get 2 signs facing their two outward sides
+      // Interior: desktop 40%, mobile 0%
+      const isCornerBlock=(r===0||r===GH-1)&&(c===0||c===GW-1);
+
+      // Determine which sides face "outward" for edge blocks
+      // so signs are placed on the most visible faces
+      const outwardSides=[];
+      if(isEdgeBlock){
+        if(r===0)   outwardSides.push(1);   // south face (toward player approaching from S)
+        if(r===GH-1) outwardSides.push(0);  // north face
+        if(c===0)   outwardSides.push(3);   // west face
+        if(c===GW-1) outwardSides.push(2);  // east face
       }
+
+      // Build sign placement list
+      const signPlacements=[];
+      if(isEdgeBlock){
+        // Place one sign per outward side (corners get 2, edges get 1)
+        outwardSides.forEach(side=>{
+          signPlacements.push({
+            col:  NEON_COLS[Math.floor(rng()*NEON_COLS.length)],
+            kanji:KANJI[Math.floor(rng()*KANJI.length)],
+            side
+          });
+        });
+      } else if(!_isMobile && rng()<0.4){
+        // Interior: random single sign on desktop only
+        signPlacements.push({
+          col:  NEON_COLS[Math.floor(rng()*NEON_COLS.length)],
+          kanji:KANJI[Math.floor(rng()*KANJI.length)],
+          side: Math.floor(rng()*4)
+        });
+      }
+
+      // Render each sign
+      const finalBot=bot; // bot has been incremented through tiers — use value at sign time
+      signPlacements.forEach(({col:nCol,kanji,side})=>{
+        const signH=1.6+rng()*1.6;
+        const yPos =Math.max(2.5, floorH*1.2+rng()*(finalBot*0.4));
+        const tex  =makeKanjiTex(kanji,nCol);
+        const signMat=getNeonSignMat(nCol,tex);
+        // Wider signs for edge buildings
+        const signW=isEdgeBlock?0.65:0.52;
+        const sign =new THREE.Mesh(new THREE.PlaneGeometry(signW,signH),signMat);
+        const off  =bW/2+.06;
+        if(side===0)      sign.position.set((rng()-.5)*bW*.5, yPos,  off);
+        else if(side===1){sign.position.set((rng()-.5)*bW*.5, yPos, -off); sign.rotation.y=Math.PI;}
+        else if(side===2){sign.position.set( off, yPos, (rng()-.5)*bD*.5); sign.rotation.y=Math.PI/2;}
+        else             {sign.position.set(-off, yPos, (rng()-.5)*bD*.5); sign.rotation.y=-Math.PI/2;}
+        bldGrp.add(sign);
+
+        // Extra: small horizontal neon bar above/below sign on edge buildings
+        if(isEdgeBlock){
+          const barCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
+          const barMat=new THREE.MeshBasicMaterial({color:barCol,transparent:true,opacity:0.85});
+          const bar=new THREE.Mesh(new THREE.BoxGeometry(signW+0.4,0.1,0.08),barMat);
+          bar.position.copy(sign.position);
+          bar.position.y+=signH/2+0.1;
+          bar.rotation.copy(sign.rotation);
+          bldGrp.add(bar);
+        }
+      });
 
       // Roof glow stripe — emissive only
       if(rng()>.5){

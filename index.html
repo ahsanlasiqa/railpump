@@ -119,12 +119,13 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #end-lb-table,#end-lb-table-lose{width:100%;border-collapse:collapse;}
 #end-lb-table th,#end-lb-table-lose th{font-size:9px;letter-spacing:1px;color:rgba(255,200,80,0.45);text-transform:uppercase;padding:3px 6px;text-align:left;border-bottom:1px solid rgba(255,200,80,0.14);}
 #end-lb-table th:nth-child(n+3),#end-lb-table-lose th:nth-child(n+3){text-align:right;}
-#end-lb-table td,#end-lb-table-lose td{font-size:11px;color:rgba(255,220,150,0.78);padding:5px 6px;border-bottom:1px solid rgba(255,255,255,0.04);}
-#end-lb-table tr.me td,#end-lb-table-lose tr.me td{color:#ffe680;font-weight:bold;background:rgba(255,200,80,0.06);}
-#end-lb-table .rank,#end-lb-table-lose .rank{color:rgba(255,200,80,0.55);width:26px;font-size:13px;}
-.lb-score-val{color:#ffe680;text-align:right;}
-.lb-time-val{color:rgba(180,220,255,0.75);font-size:10px;text-align:right;}
-#end-lb-loading,#end-lb-loading-lose{font-size:11px;color:rgba(255,200,80,0.4);text-align:center;padding:10px 0;}
+#end-lb-table td,#end-lb-table-lose td,#end-lb-table-session td{font-size:12px;color:#e8d5a0;padding:5px 6px;border-bottom:1px solid rgba(255,255,255,0.06);}
+#end-lb-table tr.me td,#end-lb-table-lose tr.me td,#end-lb-table-session tr.me td{color:#ffe680;font-weight:bold;background:rgba(255,200,80,0.09);}
+#end-lb-table td:nth-child(2),#end-lb-table-lose td:nth-child(2),#end-lb-table-session td:nth-child(2){color:#ffffff;} /* Name column — white */
+.lb-score-val{color:#ffe680;text-align:right;font-weight:bold;}
+.lb-time-val{color:#88ccff;font-size:10px;text-align:right;}
+#end-lb-table .rank,#end-lb-table-lose .rank,#end-lb-table-session .rank{color:rgba(255,200,80,0.7);width:26px;font-size:13px;}
+#end-lb-loading,#end-lb-loading-lose,#end-lb-loading-session{font-size:11px;color:rgba(255,200,80,0.4);text-align:center;padding:10px 0;}
 /* End-screen overlays: center when content fits, scroll when it doesn't */
 #scr-race-win,#scr-race-lose,#scr-win,#scr-fail{justify-content:flex-start;padding-top:max(20px,env(safe-area-inset-top,20px));}
 #mode-wrap{display:flex;gap:12px;margin-top:16px;justify-content:center;flex-wrap:wrap;}
@@ -830,7 +831,7 @@ const BGM=(()=>{
 
   function init(){
     if(audio)return;
-    audio=new Audio('viacheslavstarostin-action.mp3');
+    audio=new Audio('/viacheslavstarostin-action.mp3');
     audio.loop=true;
     audio.volume=0.01;
     audio.preload='auto';
@@ -4304,7 +4305,7 @@ async function _lbLoad(bodyId, loadingId, tableId, myScore) {
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
       return `<tr class="${isMe?'me':''}">
         <td class="rank">${medal}</td>
-        <td>${_escHtml(r.username||'?')}</td>
+        <td style="color:${isMe?'#ffe680':'#ffffff'};${isMe?'font-weight:bold;':''}">${_escHtml(r.username||'?')}</td>
         <td class="lb-score-val">${(r.score||0).toLocaleString()}</td>
         <td class="lb-time-val">${r.timeStr||'—'}</td>
       </tr>`;

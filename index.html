@@ -634,20 +634,12 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script async src="https://vibejam.cc/2026/widget.js"></script>
-<!-- Config: coba load dari /api/config, fallback graceful jika gagal -->
+<!-- Config: window.ENV diisi oleh config.js (static file, tidak di-commit ke Git) -->
+<!-- Jika config.js tidak ada, Firebase features dinonaktifkan gracefully -->
 <script>
-window.ENV = {};
-// Async fetch dari serverless function — tidak blocking, Firebase init akan tunggu
-(async () => {
-  try {
-    const res = await fetch('/api/config');
-    if (res.ok) window.ENV = await res.json();
-    else console.warn('[config] /api/config returned', res.status);
-  } catch(e) {
-    console.warn('[config] fetch failed, Firebase features disabled:', e.message);
-  }
-})();
+window.ENV = window.ENV || {}; // config.js akan override ini jika ada
 </script>
+<script src="/config.js" onerror="console.warn('[config] config.js not found — Firebase disabled')"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -4233,29 +4225,31 @@ let _lbCol       = null;
 let _firebaseReady = false;
 
 async function _initFirebase() {
-  // Tunggu window.ENV terisi oleh config.js (fetch dari /api/config)
-  await new Promise(resolve => {
-    const check = () => {
-      if (window.ENV && window.ENV.FIREBASE_API_KEY) resolve();
-      else setTimeout(check, 50);
-    };
-    check();
-  });
+  // config.js di-load synchronous sebelum script ini
+  // Jika window.ENV.FIREBASE_API_KEY kosong, Firebase dinonaktifkan
+  if (!window.ENV || !window.ENV.FIREBASE_API_KEY) {
+    console.warn('[Firebase] Config tidak tersedia — multiplayer dinonaktifkan');
+    return;
+  }
 
-  firebase.initializeApp({
-    apiKey:            window.ENV.FIREBASE_API_KEY,
-    authDomain:        window.ENV.FIREBASE_AUTH_DOMAIN,
-    projectId:         window.ENV.FIREBASE_PROJECT_ID,
-    storageBucket:     window.ENV.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: window.ENV.FIREBASE_MESSAGING_ID,
-    appId:             window.ENV.FIREBASE_APP_ID
-  });
+  try {
+    firebase.initializeApp({
+      apiKey:            window.ENV.FIREBASE_API_KEY,
+      authDomain:        window.ENV.FIREBASE_AUTH_DOMAIN,
+      projectId:         window.ENV.FIREBASE_PROJECT_ID,
+      storageBucket:     window.ENV.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: window.ENV.FIREBASE_MESSAGING_ID,
+      appId:             window.ENV.FIREBASE_APP_ID
+    });
 
-  _db         = firebase.firestore();
-  _playersCol = _db.collection('players');
-  _lobbiesCol = _db.collection('lobbies');
-  _lbCol      = _db.collection('leaderboard');
-  _firebaseReady = true;
+    _db         = firebase.firestore();
+    _playersCol = _db.collection('players');
+    _lobbiesCol = _db.collection('lobbies');
+    _lbCol      = _db.collection('leaderboard');
+    _firebaseReady = true;
+  } catch(e) {
+    console.error('[Firebase] Init gagal:', e);
+  }
 }
 _initFirebase();
 

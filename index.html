@@ -1065,7 +1065,7 @@ const canvas=document.getElementById('c');
 const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:false,stencil:false,depth:true,powerPreference:'high-performance'});
 // OPT: cap pixel ratio — mobile starts at 1.5, may upgrade after FPS check
-renderer.setPixelRatio(_isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 1.5 : 2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 // Shadow map — wrapped in try-catch: Adreno 610 crashes silently without it
 let _shadowEnabled = false;
@@ -1079,9 +1079,12 @@ try {
 renderer.setClearColor(0x03040e,1);
 renderer.toneMapping = _isMobile ? THREE.LinearToneMapping : THREE.ReinhardToneMapping;
 renderer.toneMappingExposure = _isMobile ? 1.8 : 1.4;
+renderer.setClearColor(0x03040e,1);
+// Tone mapping makes emissive neons "bloom" without post-processing
+renderer.toneMapping=THREE.ReinhardToneMapping;
+renderer.toneMappingExposure=1.4;
 const scene=new THREE.Scene();
-// Denser fog on mobile reduces fill rate (fewer far fragments to shade)
-scene.fog=new THREE.FogExp2(_isMobile?0x0a0318:0x05060f, _isMobile?0.007:0.0028);
+scene.fog=new THREE.FogExp2(0x05060f,0.0028);
 // Narrow FOV — cinematic, city feels denser
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,700);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
@@ -1443,8 +1446,6 @@ function buildWorld(){
       const bx=OX+c*CELL+CELL/2, bz=OZ+r*CELL+CELL/2;
       const bldGrp=new THREE.Group();
       bldGrp.position.set(bx,0,bz);worldGrp.add(bldGrp);
-      // Edge block: front row/col — most visible
-      const isEdgeBlock=(r===0||r===GH-1||c===0||c===GW-1);
 
       const bW=CELL-5.5, bD=CELL-5.5;
       const totalFloors=3+Math.floor(rng()*7);
@@ -1461,28 +1462,25 @@ function buildWorld(){
         body.position.set(0,bot+tH/2,0);body.castShadow=_shadowEnabled;body.receiveShadow=_shadowEnabled;
         bldGrp.add(body);
 
-        // Windows — 100% all buildings, all devices
-        // Mobile: front face only per building (1/4 draw calls vs desktop)
-        // Desktop: all 4 faces
+        // Windows — use shared materials and shared geometry (massive savings)
         for(let f=0;f<fpTier;f++){
           const wy=bot+f*floorH+1.5;
           for(let w=-1;w<=1;w++){
             if(rng()<0.14)continue;
+            // Pick a shared material (no new object created)
             const mIdx=Math.floor(rng()*WIN_SHARED_MATS.length);
             const wMat=WIN_SHARED_MATS[mIdx];
             const wf=new THREE.Mesh(WIN_GEO,wMat);wf.position.set(w*(cW/3.5),wy,cD/2+.01);bldGrp.add(wf);
-            if(!_isMobile){
-              const wb=new THREE.Mesh(WIN_GEO,wMat);wb.position.set(w*(cW/3.5),wy,-cD/2-.01);wb.rotation.y=Math.PI;bldGrp.add(wb);
-              const ws=new THREE.Mesh(WIN_GEO,wMat);ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
-              const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
-            }
+            const wb=new THREE.Mesh(WIN_GEO,wMat);wb.position.set(w*(cW/3.5),wy,-cD/2-.01);wb.rotation.y=Math.PI;bldGrp.add(wb);
+            const ws=new THREE.Mesh(WIN_GEO,wMat);ws.position.set(cW/2+.01,wy,w*(cD/3.5));ws.rotation.y=Math.PI/2;bldGrp.add(ws);
+            const ws2=new THREE.Mesh(WIN_GEO,wMat);ws2.position.set(-cW/2-.01,wy,w*(cD/3.5));ws2.rotation.y=-Math.PI/2;bldGrp.add(ws2);
           }
         }
         bot+=tH;cW*=0.82;cD*=0.82;
       }
 
-      // ── Neon signs — 100% edge buildings, 60% interior all devices ──
-      const nSigns = isEdgeBlock ? 1 : (rng()<0.6 ? 1 : 0);
+      // ── Neon signs — emissive only, NO PointLight (prevents uniform overflow) ──
+      const nSigns=rng()>.4?1:0; // only 60% of buildings get a sign, max 1
       if(nSigns){
         const nCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
         const kanji=KANJI[Math.floor(rng()*KANJI.length)];
@@ -2359,7 +2357,7 @@ function doDeliver(){
 //  NPC TROLLEYS — "Grandma" obstacle trolleys
 // ═══════════════════════════════════════════
 const NPC_COUNT=3;
-const NPC_MAX=_isMobile?5:10;
+const NPC_MAX=10;
 const NPC_COLORS=[0x9944cc,0x44cc99,0xcc4499,0xff6633,0x33aaff,0xffcc00,0x55dd55,0xff44aa,0x00cccc,0xffaa33];
 const npcTrolleys=[];
 
@@ -3014,7 +3012,7 @@ function raceOver(winner) {
 // ═══════════════════════════════════════════
 
 // ── Glue puddle object pool — avoids new THREE.Group/Mesh allocation on every drop ──
-const GLUE_POOL_SIZE=_isMobile?4:8;
+const GLUE_POOL_SIZE=8;
 const _gluePuddlePool=[];
 (function buildGluePuddlePool(){
   const discGeo=new THREE.CylinderGeometry(2.2,2.2,.08,16);
@@ -3446,7 +3444,7 @@ function updRocketHUD(){
 
 // Build a rocket mesh (small elongated cylinder with glow)
 // ── Pre-created rocket mesh pool (avoid GC on fire) ──
-const ROCKET_POOL_SIZE=_isMobile?3:5;
+const ROCKET_POOL_SIZE=5;
 const _rocketPool=[];
 (function buildRocketPool(){
   const bGeo=new THREE.CylinderGeometry(.1,.1,.8,8);
@@ -3502,7 +3500,7 @@ function fireRocket(){
 }
 
 // ── Pre-created explosion pool (avoid GC on hit) ──
-const EXPL_POOL_SIZE=_isMobile?2:4;
+const EXPL_POOL_SIZE=4;
 const _explPool=[];
 (function buildExplPool(){
   const fbGeo=new THREE.SphereGeometry(.8,8,6);

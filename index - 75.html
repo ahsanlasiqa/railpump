@@ -1554,8 +1554,8 @@ function buildWorld(){
             side
           });
         });
-      } else {
-        // 100% of interior buildings on ALL devices
+      } else if(rng()<0.75){
+        // 75% of interior buildings on ALL devices
         signPlacements.push({
           col:  NEON_COLS[Math.floor(rng()*NEON_COLS.length)],
           kanji:KANJI[Math.floor(rng()*KANJI.length)],
@@ -1592,7 +1592,7 @@ function buildWorld(){
       // ── Neon window lights for 50% of interior buildings (all devices) ──
       // Use MeshBasicMaterial dots — cheaper than WIN_SHARED_MATS (no emissive shader)
       // Skip edge buildings (they get the full window treatment above)
-      if(!isEdgeBlock){
+      if(!isEdgeBlock && rng()<0.75){
         const winLitCols=[0xffeeaa,0xaaccff,0xffcc88,0x88aaff,0xffaacc,0x99ffcc];
         // Place 3-8 lit window dots on random positions on the facade
         const dotCount=3+Math.floor(rng()*6);

@@ -1532,25 +1532,21 @@ function buildWorld(){
 
       // ── Neon signs ──
       // ── Neon signs ──
-      // 100% coverage for ALL edge buildings (sekeliling grid)
-      // Corner buildings get 2 signs facing their two outward sides
-      // Interior: desktop 40%, mobile 0%
+      // 100% edge buildings (sekeliling), 50% interior buildings — all devices
       const isCornerBlock=(r===0||r===GH-1)&&(c===0||c===GW-1);
 
-      // Determine which sides face "outward" for edge blocks
-      // so signs are placed on the most visible faces
+      // Outward-facing sides for edge blocks
       const outwardSides=[];
       if(isEdgeBlock){
-        if(r===0)   outwardSides.push(1);   // south face (toward player approaching from S)
-        if(r===GH-1) outwardSides.push(0);  // north face
-        if(c===0)   outwardSides.push(3);   // west face
-        if(c===GW-1) outwardSides.push(2);  // east face
+        if(r===0)    outwardSides.push(1);
+        if(r===GH-1) outwardSides.push(0);
+        if(c===0)    outwardSides.push(3);
+        if(c===GW-1) outwardSides.push(2);
       }
 
-      // Build sign placement list
+      // Sign placement list
       const signPlacements=[];
       if(isEdgeBlock){
-        // Place one sign per outward side (corners get 2, edges get 1)
         outwardSides.forEach(side=>{
           signPlacements.push({
             col:  NEON_COLS[Math.floor(rng()*NEON_COLS.length)],
@@ -1558,8 +1554,8 @@ function buildWorld(){
             side
           });
         });
-      } else if(!_isMobile && rng()<0.4){
-        // Interior: random single sign on desktop only
+      } else if(rng()<0.5){
+        // 50% of interior buildings on ALL devices
         signPlacements.push({
           col:  NEON_COLS[Math.floor(rng()*NEON_COLS.length)],
           kanji:KANJI[Math.floor(rng()*KANJI.length)],
@@ -1567,34 +1563,58 @@ function buildWorld(){
         });
       }
 
-      // Render each sign
-      const finalBot=bot; // bot has been incremented through tiers — use value at sign time
+      const finalBot=bot;
       signPlacements.forEach(({col:nCol,kanji,side})=>{
         const signH=1.6+rng()*1.6;
-        const yPos =Math.max(2.5, floorH*1.2+rng()*(finalBot*0.4));
-        const tex  =makeKanjiTex(kanji,nCol);
+        const yPos=Math.max(2.5, floorH*1.2+rng()*(finalBot*0.4));
+        const tex=makeKanjiTex(kanji,nCol);
         const signMat=getNeonSignMat(nCol,tex);
-        // Wider signs for edge buildings
         const signW=isEdgeBlock?0.65:0.52;
-        const sign =new THREE.Mesh(new THREE.PlaneGeometry(signW,signH),signMat);
-        const off  =bW/2+.06;
-        if(side===0)      sign.position.set((rng()-.5)*bW*.5, yPos,  off);
-        else if(side===1){sign.position.set((rng()-.5)*bW*.5, yPos, -off); sign.rotation.y=Math.PI;}
-        else if(side===2){sign.position.set( off, yPos, (rng()-.5)*bD*.5); sign.rotation.y=Math.PI/2;}
-        else             {sign.position.set(-off, yPos, (rng()-.5)*bD*.5); sign.rotation.y=-Math.PI/2;}
+        const sign=new THREE.Mesh(new THREE.PlaneGeometry(signW,signH),signMat);
+        const off=bW/2+.06;
+        if(side===0)      sign.position.set((rng()-.5)*bW*.5,yPos,off);
+        else if(side===1){sign.position.set((rng()-.5)*bW*.5,yPos,-off);sign.rotation.y=Math.PI;}
+        else if(side===2){sign.position.set(off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=Math.PI/2;}
+        else             {sign.position.set(-off,yPos,(rng()-.5)*bD*.5);sign.rotation.y=-Math.PI/2;}
         bldGrp.add(sign);
-
-        // Extra: small horizontal neon bar above/below sign on edge buildings
+        // Neon bar above sign
         if(isEdgeBlock){
           const barCol=NEON_COLS[Math.floor(rng()*NEON_COLS.length)];
-          const barMat=new THREE.MeshBasicMaterial({color:barCol,transparent:true,opacity:0.85});
-          const bar=new THREE.Mesh(new THREE.BoxGeometry(signW+0.4,0.1,0.08),barMat);
+          const bar=new THREE.Mesh(new THREE.BoxGeometry(signW+0.4,0.1,0.08),
+            new THREE.MeshBasicMaterial({color:barCol,transparent:true,opacity:0.85}));
           bar.position.copy(sign.position);
           bar.position.y+=signH/2+0.1;
           bar.rotation.copy(sign.rotation);
           bldGrp.add(bar);
         }
       });
+
+      // ── Neon window lights for 50% of interior buildings (all devices) ──
+      // Use MeshBasicMaterial dots — cheaper than WIN_SHARED_MATS (no emissive shader)
+      // Skip edge buildings (they get the full window treatment above)
+      if(!isEdgeBlock && rng()<0.5){
+        const winLitCols=[0xffeeaa,0xaaccff,0xffcc88,0x88aaff,0xffaacc,0x99ffcc];
+        // Place 3-8 lit window dots on random positions on the facade
+        const dotCount=3+Math.floor(rng()*6);
+        const dotMat=new THREE.MeshBasicMaterial({
+          color:winLitCols[Math.floor(rng()*winLitCols.length)],
+          transparent:true, opacity:0.9
+        });
+        const dotGeo=new THREE.PlaneGeometry(0.35,0.48);
+        for(let d=0;d<dotCount;d++){
+          const dy=1.2+rng()*(bot*0.75);
+          const side2=Math.floor(rng()*2); // front or back
+          const xOff=(rng()-.5)*bW*0.7;
+          const dot=new THREE.Mesh(dotGeo,dotMat);
+          if(side2===0){
+            dot.position.set(xOff,dy,bD/2+0.04);
+          } else {
+            dot.position.set(xOff,dy,-bD/2-0.04);
+            dot.rotation.y=Math.PI;
+          }
+          bldGrp.add(dot);
+        }
+      }
 
       // Roof glow stripe — emissive only
       if(rng()>.5){

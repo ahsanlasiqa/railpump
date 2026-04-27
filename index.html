@@ -1065,7 +1065,7 @@ const canvas=document.getElementById('c');
 const _isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||window.matchMedia('(pointer:coarse)').matches;
 const renderer=new THREE.WebGLRenderer({canvas,antialias:false,stencil:false,depth:true,powerPreference:'high-performance'});
 // OPT: cap pixel ratio — mobile starts at 1.5, may upgrade after FPS check
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 0.5 : 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 0.75 : 2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 // Shadow map — wrapped in try-catch: Adreno 610 crashes silently without it
 let _shadowEnabled = false;

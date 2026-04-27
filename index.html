@@ -1002,9 +1002,11 @@ window.addEventListener('keydown',e=>{
     const m=BGM.toggleMute();
     if(btn){btn.textContent=m?'🔇':'🎵';btn.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';}
   }
-  // Glue mash to break free
+  // Glue mash — only increment mash counter here
+  // Timer reduction is handled in doPump() to avoid double-counting
   if(GLUE.stuck&&(e.code===KB.pump.code||e.code===KB.pump2.code)){
-    e.preventDefault();GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.4);
+    e.preventDefault();
+    // doPump() will be called from main loop via pumpPressed — it handles the reduction
   }
 },true);
 window.addEventListener('keyup',e=>{if(e.code===KB.pump.code||e.code===KB.pump2.code)pumpHeld=false;if(e.code===KB.brake.code||e.code===KB.brake2.code)keys.brake=false;},true);
@@ -1050,6 +1052,7 @@ const GLUE={
   timer:0,         // seconds remaining
   mashes:0,        // SPACE mashes to break free faster
   maxTime:5,
+  freeCooldown:0,  // invincibility after breaking free (prevents immediate re-glue)
 };
 let glueWarningShown=false;
 
@@ -3088,6 +3091,15 @@ function applyGlue(){
 function releaseGlue(){
   GLUE.stuck=false;
   GLUE.timer=0;
+  GLUE.freeCooldown=3.0; // 3s invincibility — time to roll off the puddle
+  // Remove the puddle on player's current node so they dont re-glue immediately
+  const _pc=tNode%NX, _pr=Math.floor(tNode/NX);
+  for(let i=gluePuddles.length-1;i>=0;i--){
+    if(gluePuddles[i].col===_pc&&gluePuddles[i].row===_pr){
+      releaseGluePuddle(gluePuddles[i].mesh);
+      gluePuddles.splice(i,1);
+    }
+  }
   document.getElementById('glue-overlay').classList.remove('active');
   document.getElementById('glue-hud').style.display='none';
   showNotif('✅ Free at last!','#88ffcc');
@@ -3096,6 +3108,9 @@ function releaseGlue(){
 }
 
 function updateGlue(dt){
+  // Tick down post-free invincibility cooldown
+  if(GLUE.freeCooldown>0) GLUE.freeCooldown=Math.max(0,GLUE.freeCooldown-dt);
+
   // Update puddle lifetimes
   for(let i=gluePuddles.length-1;i>=0;i--){
     const p=gluePuddles[i];
@@ -3106,7 +3121,8 @@ function updateGlue(dt){
     p.mesh.children[0].material.opacity=0.6+Math.sin(p.age*2)*0.25;
 
     // Check if player trolley hits puddle
-    if(!GLUE.stuck){
+    // Skip if player is still in invincibility window after breaking free
+    if(!GLUE.stuck&&GLUE.freeCooldown<=0){
       const pc=tNode%NX,pr=Math.floor(tNode/NX);
       if(pc===p.col&&pr===p.row){applyGlue();}
     }
@@ -3227,7 +3243,8 @@ function doPump(){
   if(!gameRunning||GS.cd>0)return;
   if(GLUE.stuck){
     // While glued, pumping contributes to breaking free
-    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.35);
+    // Same reduction as keydown handler (0.4) for consistency
+    GLUE.mashes++;GLUE.timer=Math.max(0,GLUE.timer-0.4);
     GS.shake=0.5;return;
   }
   if(GS.energy<3)return;

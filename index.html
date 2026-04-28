@@ -466,7 +466,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="pump-wrap">
   <div id="pump-lbl">⚡ Pump Energy</div>
   <div id="pump-bg"><div id="pump-fill"></div></div>
-  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch &nbsp;·&nbsp; [ F ] Fire</div>
+  <div id="pump-hint">[ <span id="h-pump">SPACE</span> ] Pump &nbsp;·&nbsp; [ <span id="h-brake">B</span> ] Brake &nbsp;·&nbsp; [ E ] Boost &nbsp;·&nbsp; [ ← → ] Switch</div>
 </div>
 
 <div id="spd-panel"><div id="spd-val">0</div><div id="spd-lbl">km/h</div></div>
@@ -3526,7 +3526,7 @@ function fireRocket(){
   GS.shake=1.0;
   SFX.rocket();
   flash('f-pump',120);
-  showNotif('🚀 PFIEWN!','#ff8866');
+  showNotif('🚀 FIRE!','#ff8866');
 }
 
 // ── Pre-created explosion pool (avoid GC on hit) ──
@@ -3824,16 +3824,17 @@ function drawMM(){
     mmCtx2.textAlign='center';mmCtx2.fillText('AI',ax,ay-7);
   }
 
-  // ── Remote player dots on minimap ──
-  Object.values(_remotePlayers).forEach(rp=>{
-    if(!rp.mesh.visible) return;
-    const fc=(rp.x-OX)/CELL, fr=(rp.z-OZ)/CELL;
-    const{x:rx,y:ry2}=mmPf(fc,fr);
-    if(rx<mmPad||rx>MM-mmPad||ry2<mmPad||ry2>MM-mmPad) return;
-    // Coloured dot
-    mmCtx2.beginPath();mmCtx2.arc(rx,ry2,3.5,0,Math.PI*2);
-    mmCtx2.fillStyle=rp.colorStr||'#aaffee';mmCtx2.fill();
-  });
+  // ── Remote player dots on minimap — only in VS Player mode ──
+  if(_gameMode==='online'){
+    Object.values(_remotePlayers).forEach(rp=>{
+      if(!rp.mesh||!rp.mesh.visible) return;
+      const fc=(rp.x-OX)/CELL, fr=(rp.z-OZ)/CELL;
+      const{x:rx,y:ry2}=mmPf(fc,fr);
+      if(rx<mmPad||rx>MM-mmPad||ry2<mmPad||ry2>MM-mmPad) return;
+      mmCtx2.beginPath();mmCtx2.arc(rx,ry2,3.5,0,Math.PI*2);
+      mmCtx2.fillStyle=rp.colorStr||'#aaffee';mmCtx2.fill();
+    });
+  }
   function mmPfWorld(wx, wz) {
     // Convert world X/Z to minimap pixel (same formula as mmPf but takes raw coords)
     const fc = (wx - OX) / CELL;
@@ -4399,7 +4400,7 @@ let _lobbyRole     = null;      // 'player1' | 'player2'
 let _lobbyOpponent = null;      // { id, username } of opponent
 let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
 let _lobbyTimer    = null;      // setInterval for countdown
-let _lobbySeconds  = 10;       // 10 sec countdown
+let _lobbySeconds  = 10;       // 10 second countdown
 let _mpActive      = false;
 let _mpUnsubscribe = null;
 let _mpWriteTimer  = 0;
@@ -4662,22 +4663,33 @@ function mpStart() {
     });
 
   } else {
-    // CPU mode: subscribe to all players (casual, no restriction)
+    // CPU mode: subscribe to all players for LEADERBOARD ONLY
+    // Do NOT create trolley meshes or labels — each player is fighting their own CPU,
+    // there is no interaction between players, showing them is misleading.
     _mpUnsubscribe = _playersCol.onSnapshot(snapshot => {
       snapshot.docChanges().forEach(change => {
         const id  = change.doc.id;
         if (id === _myId) return;
-        if (change.type === 'removed') { _mpRemovePlayer(id); return; }
+        if (change.type === 'removed') {
+          // Clean up leaderboard entry only (no mesh to remove)
+          delete _remotePlayers[id];
+          _mpUpdateLeaderboard();
+          return;
+        }
         const dat = change.doc.data();
-        if (dat.ts && (Date.now() - dat.ts) > 10000) { _mpRemovePlayer(id); return; }
+        if (dat.ts && (Date.now() - dat.ts) > 10000) {
+          delete _remotePlayers[id];
+          _mpUpdateLeaderboard();
+          return;
+        }
+        // Store score data for leaderboard — but NO mesh, NO label, NOT visible in world
         if (!_remotePlayers[id]) {
-          const hex = _idToHex(id);
-          const colorStr = _idToColor(id);
           _remotePlayers[id] = {
-            mesh:    _makeRemoteTrolley(hex),
-            label:   _makeRemoteLabel(dat.username||'Player', colorStr),
-            colorStr, x:0, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0,
-            username: dat.username
+            mesh:    null,   // no 3D trolley in CPU mode
+            label:   null,   // no floating label in CPU mode
+            colorStr: _idToColor(id),
+            x:0, z:0, ry:0, score:0, targetX:0, targetZ:0, targetRy:0,
+            username: dat.username || 'Player'
           };
         }
         const rp = _remotePlayers[id];
@@ -4686,7 +4698,7 @@ function mpStart() {
         rp.targetRy = dat.ry  || 0;
         rp.score    = dat.score || 0;
         rp.username = dat.username || 'Player';
-        rp.mesh.visible = true;
+        // mesh stays null — not visible in world
       });
       _mpUpdateLeaderboard();
     });
@@ -4710,7 +4722,7 @@ function _mpWriteSelf() {
 function _mpRemovePlayer(id) {
   const rp = _remotePlayers[id];
   if (!rp) return;
-  scene.remove(rp.mesh);
+  if (rp.mesh) scene.remove(rp.mesh); // null in CPU mode
   if (rp.label && rp.label.parentNode) rp.label.parentNode.removeChild(rp.label);
   delete _remotePlayers[id];
   _mpUpdateLeaderboard();
@@ -4748,6 +4760,7 @@ function updateMultiplayer(dt) {
     _mpUpdateLeaderboard();
   }
   Object.values(_remotePlayers).forEach(rp => {
+    if (!rp.mesh) return; // CPU mode — no mesh, leaderboard only
     if (!rp.mesh.visible) return;
     rp.x  += (rp.targetX - rp.x)  * 0.2;
     rp.z  += (rp.targetZ - rp.z)  * 0.2;

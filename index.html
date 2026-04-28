@@ -205,6 +205,10 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 #settings-btn:hover{background:rgba(255,200,80,0.12);transform:rotate(45deg);}
 #quit-btn{position:fixed;top:62px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,100,80,0.35);color:#ff8866;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:25;backdrop-filter:blur(8px);transition:background .2s;}
 #quit-btn:hover{background:rgba(255,100,80,0.15);}
+/* ── Day/Night toggle ── */
+#daynight-btn{position:fixed;top:62px;left:60px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:25;backdrop-filter:blur(8px);transition:all .2s;display:none;}
+#daynight-btn:hover{background:rgba(255,200,80,0.15);}
+#daynight-btn.day-mode{border-color:rgba(255,220,80,0.6);background:rgba(255,200,50,0.12);}
 /* lb-panel shifted down so quit-btn stays visible */
 #lb-panel{position:fixed;top:112px;right:12px;z-index:20;background:rgba(4,6,18,0.88);border:1px solid rgba(255,200,80,0.22);border-radius:10px;padding:7px 12px;min-width:148px;max-width:180px;display:none;backdrop-filter:blur(8px);}#mute-btn{position:fixed;top:211px;right:16px;width:40px;height:40px;border-radius:9px;background:rgba(6,10,22,0.85);border:1px solid rgba(255,200,80,0.3);color:#ffe680;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:15;backdrop-filter:blur(8px);transition:background .2s;}
 #mute-btn:hover{background:rgba(255,200,80,0.12);}
@@ -336,6 +340,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div id="ai-exclaim">❗</div>
 <button id="settings-btn" title="Controls">⚙</button>
 <button id="quit-btn" title="End session & see results" onclick="if(gameRunning){levelComplete();}">🏁</button>
+<button id="daynight-btn" title="Toggle Day/Night [N]" onclick="toggleDayNight()">🌙</button>
 <button id="mute-btn" title="Toggle Music [M]" onclick="const m=BGM.toggleMute();this.textContent=m?'🔇':'🎵';this.style.borderColor=m?'rgba(255,100,80,0.4)':'rgba(255,200,80,0.3)';">🎵</button>
 <button id="view-btn" title="Toggle First/Third Person [V]" onclick="toggleView()">👁️</button>
 <div id="view-lbl">3rd Person</div>
@@ -994,6 +999,7 @@ window.addEventListener('keydown',e=>{
   if(e.code===KB.left.code){e.preventDefault();setSW(-1);}
   if(e.code===KB.right.code){e.preventDefault();setSW(1);}
   if(e.code==='KeyV'){e.preventDefault();toggleView();}
+  if(e.code==='KeyN'&&gameRunning){e.preventDefault();toggleDayNight();}
   if(e.code===KB.fire.code){e.preventDefault();fireRocket();}
   if(e.code==='KeyR'&&!e.repeat){e.preventDefault();openShop();}
   if(e.code==='KeyE'){e.preventDefault();activateBoost();}
@@ -1561,9 +1567,13 @@ function buildWorld(){
   // Sky dome
   // OPT: mobile uses simple solid dome — no vertex color loop (saves 528 JS iterations)
   const SKY_R = 560;
+  _dnSkyMesh = null; // reset sky mesh reference
   if(_isMobile){
     const skyGeo=new THREE.SphereGeometry(SKY_R,8,5);
-    worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({color:0x06080f,side:THREE.BackSide})));
+    const skyMat=new THREE.MeshBasicMaterial({color:0x06080f,side:THREE.BackSide});
+    const skyM=new THREE.Mesh(skyGeo,skyMat);
+    worldGrp.add(skyM);
+    _dnSkyMesh=skyM; // capture for day/night color transition
   } else {
   const skyGeo = new THREE.SphereGeometry(SKY_R, 32, 16);
   const skyColors = [];
@@ -1578,7 +1588,10 @@ function buildWorld(){
     skyColors.push(r,g,b);
   }
   skyGeo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(skyColors),3));
-  worldGrp.add(new THREE.Mesh(skyGeo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+  const skyMatD=new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide});
+  const skyMD=new THREE.Mesh(skyGeo,skyMatD);
+  worldGrp.add(skyMD);
+  _dnSkyMesh=skyMD; // capture for day/night transition (desktop: override to solid color)
   } // end desktop sky
 
   // ── HORIZON GLOW BANDS — desktop only (32 transparent planes = too heavy for mobile) ──
@@ -3893,9 +3906,14 @@ function startGame(){
   }
   BGM.play();
   setTimeout(()=>SFX.startGame(),200);
-  _gameStartTime = Date.now(); // start timer for leaderboard
-  if(_mpActive) mpStop(); // stop previous session if restarting
-  mpStart(); // join multiplayer session
+  _gameStartTime = Date.now();
+  if(_mpActive) mpStop();
+  mpStart();
+  // Show day/night toggle button, reset to night on new game
+  const _dnBtn=document.getElementById('daynight-btn');
+  if(_dnBtn){_dnBtn.style.display='flex';_dnBtn.textContent='☀️';_dnBtn.title='Switch to Day [N]';_dnBtn.classList.remove('day-mode');}
+  DAY_NIGHT.isDay=false;DAY_NIGHT.progress=0;DAY_NIGHT.transitioning=false;
+  _applyDNProgress(0);
   startMissions();
 }
 
@@ -4763,6 +4781,229 @@ window.addEventListener('DOMContentLoaded', ()=>{
 });
 
 // ═══════════════════════════════════════════
+//  DAY / NIGHT TOGGLE SYSTEM
+// ═══════════════════════════════════════════
+const DN={isDay:false,transitioning:false,t:0,speed:0.6};
+
+const DN_NIGHT={
+  fogColor:new THREE.Color(0x0a0318), fogDensity:_isMobile?0.007:0.0028,
+  clearColor:new THREE.Color(0x03040e),
+  ambColor:new THREE.Color(0x0d1528), ambIntensity:_isMobile?2.2:0.8,
+  sunColor:new THREE.Color(0x8899cc), sunIntensity:_isMobile?0.8:0.5,
+  f1Color:new THREE.Color(_isMobile?0x4455aa:0x221133), f1Int:_isMobile?0.5:0.15,
+  f2Color:new THREE.Color(_isMobile?0x334466:0x112233), f2Int:_isMobile?0.4:0.12,
+  exposure:_isMobile?1.8:1.4,
+};
+const DN_DAY={
+  fogColor:new THREE.Color(0xc0d8f0), fogDensity:_isMobile?0.005:0.0016,
+  clearColor:new THREE.Color(0x7ab0d8),
+  ambColor:new THREE.Color(0xfff5e0), ambIntensity:_isMobile?3.5:2.2,
+  sunColor:new THREE.Color(0xfff5c0), sunIntensity:_isMobile?2.0:1.8,
+  f1Color:new THREE.Color(0xd4e8ff), f1Int:_isMobile?0.8:0.6,
+  f2Color:new THREE.Color(0xffe0c0), f2Int:_isMobile?0.6:0.45,
+  exposure:_isMobile?1.2:1.0,
+};
+
+const _dc=new THREE.Color(); // scratch color for lerp
+
+function _lc(a,b,t,o){o.r=a.r+(b.r-a.r)*t;o.g=a.g+(b.g-a.g)*t;o.b=a.b+(b.b-a.b)*t;}
+
+function toggleDayNight(){
+  DN.isDay=!DN.isDay;
+  DN.transitioning=true;
+  const btn=document.getElementById('daynight-btn');
+  if(DN.isDay){btn.textContent='☀️';btn.classList.add('day-mode');showNotif('☀️ Good morning!','#ffe680');}
+  else{btn.textContent='🌙';btn.classList.remove('day-mode');showNotif('🌙 Night falls...','#8899cc');}
+}
+
+function updateDayNight(dt){
+  if(!DN.transitioning)return;
+  const target=DN.isDay?1:0;
+  const diff=target-DN.t;
+  if(Math.abs(diff)<0.003){DN.t=target;DN.transitioning=false;}
+  else DN.t+=diff*DN.speed*dt*3;
+  const t=DN.t,N=DN_NIGHT,D=DN_DAY;
+
+  // Fog
+  _lc(N.fogColor,D.fogColor,t,_dc);
+  if(scene.fog){scene.fog.color.copy(_dc);scene.fog.density=N.fogDensity+(D.fogDensity-N.fogDensity)*t;}
+
+  // Sky clear color
+  _lc(N.clearColor,D.clearColor,t,_dc);renderer.setClearColor(_dc,1);
+
+  // Ambient
+  _lc(N.ambColor,D.ambColor,t,_dc);ambLight.color.copy(_dc);
+  ambLight.intensity=N.ambIntensity+(D.ambIntensity-N.ambIntensity)*t;
+
+  // Sun — also arc across sky (low at night, high at day)
+  _lc(N.sunColor,D.sunColor,t,_dc);sunLight.color.copy(_dc);
+  sunLight.intensity=N.sunIntensity+(D.sunIntensity-N.sunIntensity)*t;
+  const ang=Math.PI*(0.08+t*0.38);
+  sunLight.position.set(Math.cos(ang)*100,Math.sin(ang)*100,40);
+
+  // Fill lights
+  _lc(N.f1Color,D.f1Color,t,_dc);fill1.color.copy(_dc);
+  fill1.intensity=N.f1Int+(D.f1Int-N.f1Int)*t;
+  _lc(N.f2Color,D.f2Color,t,_dc);fill2.color.copy(_dc);
+  fill2.intensity=N.f2Int+(D.f2Int-N.f2Int)*t;
+
+  // Exposure & trolley light
+  renderer.toneMappingExposure=N.exposure+(D.exposure-N.exposure)*t;
+  if(trolleyLight)trolleyLight.intensity=4.5-t*3.2;
+}
+
+// Key [N] to toggle
+window.addEventListener('keydown',e=>{
+  if(e.code==='KeyN'&&gameRunning){e.preventDefault();toggleDayNight();}
+},false);
+
+// ═══════════════════════════════════════════
+//  DAY / NIGHT SYSTEM
+// ═══════════════════════════════════════════
+// Two presets: night (default cyberpunk) and day (bright city)
+// Transition is smooth over 1.5 seconds using lerp on all light values.
+
+const DAY_NIGHT = {
+  isDay: false,
+  transitioning: false,
+  progress: 0, // 0 = full night, 1 = full day
+  speed: 1.0,  // transition speed (1 = 1 second)
+};
+
+const DN_PRESETS = {
+  night: {
+    fogColor:    [0x05/255, 0x06/255, 0x0f/255],
+    fogDensity:  0.0028,
+    clearColor:  0x03040e,
+    ambColor:    [0x0d/255, 0x15/255, 0x28/255],
+    ambIntensity: _isMobile ? 2.2 : 0.8,
+    sunColor:    [0x88/255, 0x99/255, 0xcc/255],
+    sunIntensity: _isMobile ? 0.8 : 0.5,
+    sunPos:      [60, 100, 40],
+    fill1Color:  _isMobile ? [0x44/255,0x55/255,0xaa/255] : [0x22/255,0x11/255,0x33/255],
+    fill1Int:    _isMobile ? 0.5 : 0.15,
+    fill2Color:  _isMobile ? [0x33/255,0x44/255,0x66/255] : [0x11/255,0x22/255,0x33/255],
+    fill2Int:    _isMobile ? 0.4 : 0.12,
+    exposure:    _isMobile ? 1.8 : 1.4,
+    skyColor:    0x06080f,
+    trolleyLightInt: 4.5,
+  },
+  day: {
+    fogColor:    [0x87/255, 0xce/255, 0xeb/255], // sky blue
+    fogDensity:  0.006,
+    clearColor:  0x87ceeb,
+    ambColor:    [1.0, 0.98, 0.92],
+    ambIntensity: 1.8,
+    sunColor:    [1.0, 0.98, 0.88],  // warm sunlight
+    sunIntensity: 2.2,
+    sunPos:      [120, 200, 80],     // higher sun for daytime
+    fill1Color:  [0.6, 0.75, 0.95],  // sky fill
+    fill1Int:    0.6,
+    fill2Color:  [0.95, 0.92, 0.80], // warm ground bounce
+    fill2Int:    0.4,
+    exposure:    1.0,
+    skyColor:    0x87ceeb,
+    trolleyLightInt: 0.5,            // barely visible in daylight
+  },
+};
+
+// Helper: lerp between two [r,g,b] arrays
+function _lerpCol(a, b, t) {
+  return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+}
+
+// Apply interpolated lighting based on DAY_NIGHT.progress
+function _applyDNProgress(p) {
+  const n = DN_PRESETS.night, d = DN_PRESETS.day;
+  const t = p; // 0=night, 1=day
+
+  // Fog
+  const fc = _lerpCol(n.fogColor, d.fogColor, t);
+  scene.fog.color.setRGB(fc[0], fc[1], fc[2]);
+  scene.fog.density = n.fogDensity + (d.fogDensity - n.fogDensity) * t;
+
+  // Clear color
+  const cc = _lerpCol(
+    [0x03/255, 0x04/255, 0x0e/255],
+    [0x87/255, 0xce/255, 0xeb/255], t
+  );
+  renderer.setClearColor(new THREE.Color(cc[0], cc[1], cc[2]), 1);
+  renderer.toneMappingExposure = n.exposure + (d.exposure - n.exposure) * t;
+
+  // Ambient
+  const ac = _lerpCol(n.ambColor, d.ambColor, t);
+  ambLight.color.setRGB(ac[0], ac[1], ac[2]);
+  ambLight.intensity = n.ambIntensity + (d.ambIntensity - n.ambIntensity) * t;
+
+  // Sun
+  const sc = _lerpCol(n.sunColor, d.sunColor, t);
+  sunLight.color.setRGB(sc[0], sc[1], sc[2]);
+  sunLight.intensity = n.sunIntensity + (d.sunIntensity - n.sunIntensity) * t;
+  sunLight.position.set(
+    n.sunPos[0] + (d.sunPos[0] - n.sunPos[0]) * t,
+    n.sunPos[1] + (d.sunPos[1] - n.sunPos[1]) * t,
+    n.sunPos[2] + (d.sunPos[2] - n.sunPos[2]) * t,
+  );
+
+  // Fill lights
+  const f1c = _lerpCol(n.fill1Color, d.fill1Color, t);
+  fill1.color.setRGB(f1c[0], f1c[1], f1c[2]);
+  fill1.intensity = n.fill1Int + (d.fill1Int - n.fill1Int) * t;
+
+  const f2c = _lerpCol(n.fill2Color, d.fill2Color, t);
+  fill2.color.setRGB(f2c[0], f2c[1], f2c[2]);
+  fill2.intensity = n.fill2Int + (d.fill2Int - n.fill2Int) * t;
+
+  // Trolley light dims in daylight
+  trolleyLight.intensity = n.trolleyLightInt + (d.trolleyLightInt - n.trolleyLightInt) * t;
+
+  // Sky dome color transition
+  if (_dnSkyMesh) {
+    const sk = _lerpCol(
+      [0x06/255, 0x08/255, 0x0f/255],
+      [0x87/255, 0xce/255, 0xeb/255], t
+    );
+    // Switch material to solid color for transition (works for both mobile and desktop)
+    if (!_dnSkyMesh.material._isTransitionMat) {
+      // Replace with a solid-color material that supports color lerp
+      _dnSkyMesh.material = new THREE.MeshBasicMaterial({color:0x06080f,side:THREE.BackSide});
+      _dnSkyMesh.material._isTransitionMat = true;
+    }
+    _dnSkyMesh.material.color.setRGB(sk[0], sk[1], sk[2]);
+  }
+}
+
+// Reference to sky mesh for color update (set in buildWorld)
+let _dnSkyMesh = null;
+
+// Update function — called from main loop
+function updateDayNight(dt) {
+  if (!DAY_NIGHT.transitioning) return;
+  const target = DAY_NIGHT.isDay ? 1 : 0;
+  const diff = target - DAY_NIGHT.progress;
+  if (Math.abs(diff) < 0.002) {
+    DAY_NIGHT.progress = target;
+    DAY_NIGHT.transitioning = false;
+  } else {
+    DAY_NIGHT.progress += diff * Math.min(dt * 2.5, 1); // smooth, ~0.4s transition
+  }
+  _applyDNProgress(DAY_NIGHT.progress);
+}
+
+// Toggle function — called by button or N key
+function toggleDayNight() {
+  DAY_NIGHT.isDay = !DAY_NIGHT.isDay;
+  DAY_NIGHT.transitioning = true;
+  const btn = document.getElementById('daynight-btn');
+  if (btn) {
+    btn.textContent = DAY_NIGHT.isDay ? '🌙' : '☀️';
+    btn.title = DAY_NIGHT.isDay ? 'Switch to Night [N]' : 'Switch to Day [N]';
+    btn.classList.toggle('day-mode', DAY_NIGHT.isDay);
+  }
+  showNotif(DAY_NIGHT.isDay ? '☀️ Day mode' : '🌙 Night mode', DAY_NIGHT.isDay ? '#ffe680' : '#aaccff');
+}
+
+// ═══════════════════════════════════════════
 const clock=new THREE.Clock();let gt=0;
 let _skipFrame=false;
 let _fpsSmooth=60;
@@ -4780,7 +5021,7 @@ let _fpsSmooth=60;
     updPUs(dt,gt);updateMission(dt);updateChoiceMarkers(gt);
     updateNpcTrolleys(dt,gt);updateRockets(dt);updateExplosions(dt);
     updateBoost(dt);updateGlue(dt);updateAI(dt,gt);updatePortals(dt);
-    updateMultiplayer(dt);
+    updateMultiplayer(dt);updateDayNight(dt);
     if(Math.floor(gt*60)%3===0) drawMM(); // minimap only needs 20fps
   }
   if(_skipFrame)return; // OPT: skip GPU work on low-end mobile

@@ -522,7 +522,7 @@ body{background:#080812;overflow:hidden;font-family:'Georgia',serif;}
 <div class="overlay" id="scr-lobby" style="display:none">
   <h1 style="font-size:clamp(18px,4vw,28px)">🚉 Waiting for Opponent</h1>
   <div id="lobby-status">Looking for a player...</div>
-  <div id="lobby-timer">2:00</div>
+  <div id="lobby-timer">0:10</div>
   <div id="lobby-sub">Auto-starts vs CPU if no one joins</div>
   <div id="lobby-players">
     <div class="lobby-slot filled" id="lobby-slot-1">
@@ -4399,7 +4399,7 @@ let _lobbyRole     = null;      // 'player1' | 'player2'
 let _lobbyOpponent = null;      // { id, username } of opponent
 let _lobbyUnsub    = null;      // Firestore snapshot unsubscribe
 let _lobbyTimer    = null;      // setInterval for countdown
-let _lobbySeconds  = 120;       // 2 min countdown
+let _lobbySeconds  = 10;       // 10 sec countdown
 let _mpActive      = false;
 let _mpUnsubscribe = null;
 let _mpWriteTimer  = 0;
@@ -4522,7 +4522,7 @@ function _lobbyShowOpponent(name, ready) {
 }
 
 function _lobbyStartCountdown() {
-  _lobbySeconds = 30;
+  _lobbySeconds = 10;
   _lobbyUpdateTimer();
   _lobbyTimer = setInterval(() => {
     _lobbySeconds--;
